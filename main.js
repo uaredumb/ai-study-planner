@@ -54,9 +54,16 @@ summaryModeInputs.forEach((input) => {
 setSummaryMode(loadSummaryMode());
 
 if (appLogo) {
-  appLogo.addEventListener("error", () => {
+  const hideBrokenLogo = () => {
     appLogo.style.display = "none";
-  });
+  };
+
+  appLogo.addEventListener("error", hideBrokenLogo);
+
+  // If the image failed before listeners were attached, hide it on load.
+  if (appLogo.complete && appLogo.naturalWidth === 0) {
+    hideBrokenLogo();
+  }
 }
 
 async function handleCleanNotes() {
