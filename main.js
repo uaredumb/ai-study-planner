@@ -21,12 +21,9 @@ const articleModeButton = document.getElementById("articleModeButton");
 const summaryModeInputs = document.querySelectorAll('input[name="summaryMode"]');
 
 const THEME_KEY = "ai-study-planner-theme";
-const OPENROUTER_KEY_STORAGE = "openrouter_api_key";
-const OPENROUTER_MODEL_STORAGE = "openrouter_model";
 const STUDY_FILES_STORAGE = "study_files_v1";
 const ACTIVE_FILE_ID_STORAGE = "active_study_file_id_v1";
 const SUMMARY_MODE_STORAGE = "summary_mode_v1";
-const DEFAULT_MODEL = "arcee-ai/trinity-large-preview:free";
 
 let studyFiles = loadStudyFiles();
 let activeFileId = loadActiveFileId(studyFiles);
@@ -129,65 +126,31 @@ async function summarizeArticleFromLink() {
 }
 
 async function cleanNotesWithOpenRouter(rawNotes) {
-  const apiKey = getOpenRouterApiKey();
-  const model = localStorage.getItem(OPENROUTER_MODEL_STORAGE) || DEFAULT_MODEL;
-  const referer = window.location.origin && window.location.origin !== "null"
-    ? window.location.origin
-    : "http://localhost";
+  // Use the Cloudflare Worker backend
+  const workerUrl = "https://ai-study-planner-backend.mavrick-blackburn.workers.dev/api/clean-notes";
 
-  const systemPrompt = [
-    "You turn messy student notes into a clean study plan.",
-    "Return ONLY valid JSON in this exact shape:",
-    "{",
-    '  "cleanNotes": ["..."],',
-    '  "studyTasks": ["..."],',
-    '  "studyOrder": ["..."]',
-    "}",
-    "Rules:",
-    "- Keep each array between 3 and 8 items.",
-    "- Detect subjects (Math, Science, History, etc.) inside cleanNotes.",
-    "- Keep language beginner-friendly."
-  ].join("\n");
-
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const response = await fetch(workerUrl, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": referer,
-      "X-Title": "AI Study Planner"
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Messy notes:\n${rawNotes}` }
-      ]
+      notes: rawNotes
     })
   });
 
-  const bodyText = await response.text();
-  let payload;
-
-  try {
-    payload = JSON.parse(bodyText);
-  } catch (_error) {
-    throw new Error("OpenRouter returned a non-JSON response.");
-  }
-
   if (!response.ok) {
-    const apiError = payload?.error?.message || payload?.message || "OpenRouter request failed.";
-    throw new Error(apiError);
+    const error = await response.json();
+    throw new Error(error.error || "Failed to clean notes");
   }
 
-  const messageText = payload?.choices?.[0]?.message?.content || "";
-  const parsed = parseModelJson(messageText);
+  const result = await response.json();
 
   return {
-    cleanNotes: ensureStringArray(parsed.cleanNotes),
-    studyTasks: ensureStringArray(parsed.studyTasks),
-    studyOrder: ensureStringArray(parsed.studyOrder)
+    cleanNotes: ensureStringArray(result.cleanNotes),
+    studyTasks: ensureStringArray(result.studyTasks),
+    studyOrder: ensureStringArray(result.studyOrder)
+  };
   };
 }
 
@@ -421,22 +384,7 @@ function deleteActiveFile() {
   statusText.textContent = "File deleted.";
 }
 
-function getOpenRouterApiKey() {
-  let key = localStorage.getItem(OPENROUTER_KEY_STORAGE);
 
-  if (!key) {
-    key = window.prompt("Paste your OpenRouter API key (saved locally in this browser):");
-
-    if (!key || !key.trim()) {
-      throw new Error("OpenRouter API key is required.");
-    }
-
-    localStorage.setItem(OPENROUTER_KEY_STORAGE, key.trim());
-    key = key.trim();
-  }
-
-  return key;
-}
 
 function ensureStringArray(value) {
   if (!Array.isArray(value)) {
