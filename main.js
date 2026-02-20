@@ -151,7 +151,6 @@ async function cleanNotesWithOpenRouter(rawNotes) {
     studyTasks: ensureStringArray(result.studyTasks),
     studyOrder: ensureStringArray(result.studyOrder)
   };
-  };
 }
 
 function loadStudyFiles() {
