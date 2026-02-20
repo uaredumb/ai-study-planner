@@ -82,6 +82,11 @@ Notes:
 - The backend code lives inside the ignored `backend/` folder so the frontend repo won't track it.
 - The `deploy` scripts require `gh` to be installed and authenticated. If you want me to create the remote directly, provide a GitHub token or let me know and I can attempt it using your `gh` setup.
 
+Repository links
+
+- Frontend: https://github.com/uaredumb/ai-study-planner
+- Backend: https://github.com/uaredumb/ai-study-planner-backend
+
 ## API route
 
 - `POST /api/clean-notes`
