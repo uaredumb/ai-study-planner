@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Study Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-shape bg-shape-1" aria-hidden="true"></div>
+  <div class="bg-shape bg-shape-2" aria-hidden="true"></div>
+
+  <main class="app-shell">
+    <header class="top-bar">
+      <div class="brand-block">
+        <img id="appLogo" class="app-logo" src="logo.png" alt="AI Study Buddy logo" />
+        <p class="eyebrow">AI Tools for Students</p>
+        <h1>AI Study Planner</h1>
+      </div>
+      <button id="themeToggle" class="theme-btn" aria-label="Toggle color theme">Dark Mode</button>
+    </header>
+
+    <section class="card files-card">
+      <div class="files-header">
+        <h2>Study Files</h2>
+        <div class="file-actions">
+          <button id="newFileButton" class="secondary-btn">New File</button>
+          <button id="saveFileButton" class="secondary-btn">Save File</button>
+          <button id="renameFileButton" class="secondary-btn">Rename</button>
+          <button id="deleteFileButton" class="secondary-btn danger-btn">Delete</button>
+        </div>
+      </div>
+      <ul id="filesList" class="files-list"></ul>
+    </section>
+
+    <section class="card summarize-mode-card">
+      <p class="input-label">What would you like to summarize?</p>
+      <div class="mode-row">
+        <button id="notesModeButton" class="secondary-btn mode-btn active" type="button">Summarize Notes</button>
+        <button id="articleModeButton" class="secondary-btn mode-btn" type="button">Summarize Article</button>
+      </div>
+
+      <div id="articleInputWrap" class="article-row hidden">
+        <input
+          id="articleUrlInput"
+          type="url"
+          placeholder="https://example.com/article"
+        />
+      </div>
+    </section>
+
+    <section class="card input-card">
+      <div id="notesInputWrap">
+        <label for="notesInput" class="input-label">Paste your messy notes</label>
+        <textarea
+          id="notesInput"
+          placeholder="Example: math ch 4?? finish practice, history civil war notes incomplete, science quiz Friday maybe?"
+        ></textarea>
+      </div>
+      <div class="actions-row">
+        <button id="cleanButton" class="primary-btn">Summarize Notes</button>
+        <button id="summarizeLinkButton" class="primary-btn hidden">Summarize Article</button>
+        <p id="statusText" class="status-text">Ready</p>
+      </div>
+    </section>
+
+    <section id="resultsSection" class="results-grid" aria-live="polite">
+      <article class="card result-card">
+        <h2>Clean Notes</h2>
+        <ul id="cleanNotesList" class="result-list">
+          <li>Add notes, then click "Summarize Notes".</li>
+        </ul>
+      </article>
+
+      <article class="card result-card">
+        <h2>Study Tasks</h2>
+        <ul id="studyTasksList" class="result-list">
+          <li>Your tasks will appear here.</li>
+        </ul>
+      </article>
+
+      <article class="card result-card">
+        <h2>Suggested Study Order</h2>
+        <ol id="studyOrderList" class="result-list ordered-list">
+          <li>Suggested order will appear here.</li>
+        </ol>
+      </article>
+    </section>
+  </main>
+
+  <script src="main.js?v=6"></script>
+</body>
+</html>

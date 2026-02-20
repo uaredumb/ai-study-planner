@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -e
+
+# Deploys backend (in ./backend) to a GitHub repo using the gh CLI.
+# Usage: ./deploy [repo-name]
+REPO_NAME=${1:-ai-study-planner-backend}
+BACKEND_DIR="backend"
+
+if [ ! -d "$BACKEND_DIR" ]; then
+  echo "Backend directory '$BACKEND_DIR' not found." >&2
+  exit 1
+fi
+
+if ! command -v gh >/dev/null 2>&1; then
+  echo "gh CLI is required to create/push the remote repo. Install and authenticate: https://cli.github.com/" >&2
+  exit 1
+fi
+
+pushd "$BACKEND_DIR" >/dev/null
+
+# Initialize git if needed
+if [ ! -d .git ]; then
+  git init
+  git add -A
+  git commit -m "Initial backend commit"
+fi
+
+# Create remote repo and push (gh will create under the authenticated user's account)
+# If repo already exists, `gh repo create` will fail; in that case just push to origin.
+if gh repo view "$REPO_NAME" >/dev/null 2>&1; then
+  echo "Remote repo '$REPO_NAME' already exists. Pushing to origin..."
+  git push -u origin HEAD
+else
+  echo "Creating remote repo '$REPO_NAME' and pushing..."
+  gh repo create "$REPO_NAME" --public --source=. --remote=origin --push
+fi
+
+popd >/dev/null
+
+echo "Backend deployed to GitHub repository: $REPO_NAME"
