@@ -108,10 +108,10 @@ const tutorialSteps = [
   {
     title: "Outputs + Buttons",
     target: "outputs",
-    text: "In this corner, pick outputs (tasks, plan, clean notes, flashcards, quiz). Top-right buttons are Performance and Dark/Light mode.",
+    text: "Pick outputs you want in your study pack: tasks, plan, clean notes, flashcards, and quiz questions.",
     exampleLabel: "Try",
     example:
-      "Try: Study Tasks + Study Plan + Flashcards."
+      "Study Tasks + Study Plan + Flashcards."
   },
   {
     title: "Try Generate",
@@ -516,12 +516,6 @@ function renderFiles() {
     button.className = `file-chip${file.id === activeFileId ? " active" : ""}`;
     button.textContent = file.name;
     button.disabled = isGenerating;
-    if (file.id === createdFileIdForAnimation) {
-      button.classList.add("file-create-in");
-      setTimeout(() => {
-        button.classList.remove("file-create-in");
-      }, 320);
-    }
     button.addEventListener("click", () => {
       if (isGenerating) {
         statusText.textContent = "Please wait for generation to finish before switching files.";
@@ -536,6 +530,9 @@ function renderFiles() {
     });
     li.appendChild(button);
     filesList.appendChild(li);
+    if (file.id === createdFileIdForAnimation) {
+      playTransientAnimation(button, "file-create-in");
+    }
   });
 
   if (createdFileIdForAnimation) {
@@ -1036,8 +1033,8 @@ function updateThemeButtonLabel(isDark) {
   }
 
   themeToggle.innerHTML = isDark
-    ? '<span class="btn-icon" aria-hidden="true">☀️</span><span class="btn-label">Light Mode</span>'
-    : '<span class="btn-icon" aria-hidden="true">🌙</span><span class="btn-label">Dark Mode</span>';
+    ? '<img class="btn-icon" src="icons/theme-light.svg" alt="" aria-hidden="true" /><span class="btn-label">Light Mode</span>'
+    : '<img class="btn-icon" src="icons/theme-dark.svg" alt="" aria-hidden="true" /><span class="btn-label">Dark Mode</span>';
 }
 
 async function togglePerformanceMode() {
@@ -1077,8 +1074,8 @@ function updatePerformanceButtonLabel(enabled) {
   }
 
   performanceToggle.innerHTML = enabled
-    ? '<span class="btn-icon" aria-hidden="true">🚀</span><span class="btn-label">Performance Mode: On</span>'
-    : '<span class="btn-icon" aria-hidden="true">⚡</span><span class="btn-label">Performance Mode: Off</span>';
+    ? '<img class="btn-icon" src="icons/performance-on.svg" alt="" aria-hidden="true" /><span class="btn-label">Performance Mode: On</span>'
+    : '<img class="btn-icon" src="icons/performance-off.svg" alt="" aria-hidden="true" /><span class="btn-label">Performance Mode: Off</span>';
 }
 
 function loadSummaryMode() {
@@ -1527,3 +1524,4 @@ function clearTransientAnimationClasses() {
     );
   });
 }
+

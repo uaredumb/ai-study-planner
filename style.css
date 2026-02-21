@@ -192,10 +192,10 @@ h1 {
 }
 
 .btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
+  width: 1rem;
+  height: 1rem;
+  display: inline-block;
+  object-fit: contain;
 }
 
 .primary-btn {
@@ -514,10 +514,10 @@ input,
 }
 
 .output-icon {
-  display: inline-flex;
   width: 1.05rem;
-  justify-content: center;
-  line-height: 1;
+  height: 1.05rem;
+  display: inline-block;
+  object-fit: contain;
 }
 
 .output-option input[type="checkbox"] {
