@@ -1,5 +1,6 @@
 const notesInput = document.getElementById("notesInput");
 const notesInputWrap = document.getElementById("notesInputWrap");
+const inputCard = document.querySelector(".input-card");
 const cleanButton = document.getElementById("cleanButton");
 const statusText = document.getElementById("statusText");
 const cleanNotesList = document.getElementById("cleanNotesList");
@@ -17,6 +18,13 @@ const outputStudyPlan = document.getElementById("outputStudyPlan");
 const outputCleanNotes = document.getElementById("outputCleanNotes");
 const outputFlashcards = document.getElementById("outputFlashcards");
 const outputQuizQuestions = document.getElementById("outputQuizQuestions");
+const outputOptionInputs = [
+  outputStudyTasks,
+  outputStudyPlan,
+  outputCleanNotes,
+  outputFlashcards,
+  outputQuizQuestions
+].filter(Boolean);
 const themeToggle = document.getElementById("themeToggle");
 const appLogo = document.getElementById("appLogo");
 
@@ -29,6 +37,14 @@ const renameModal = document.getElementById("renameModal");
 const renameForm = document.getElementById("renameForm");
 const renameInput = document.getElementById("renameInput");
 const renameCancelButton = document.getElementById("renameCancelButton");
+const newFileModal = document.getElementById("newFileModal");
+const newFileForm = document.getElementById("newFileForm");
+const newFileInput = document.getElementById("newFileInput");
+const newFileCancelButton = document.getElementById("newFileCancelButton");
+const deleteFileModal = document.getElementById("deleteFileModal");
+const deleteFileMessage = document.getElementById("deleteFileMessage");
+const deleteFileCancelButton = document.getElementById("deleteFileCancelButton");
+const deleteFileConfirmButton = document.getElementById("deleteFileConfirmButton");
 const articleUrlInput = document.getElementById("articleUrlInput");
 const summarizeLinkButton = document.getElementById("summarizeLinkButton");
 const articleInputWrap = document.getElementById("articleInputWrap");
@@ -67,9 +83,43 @@ if (renameModal) {
     }
   });
 }
+if (newFileForm) {
+  newFileForm.addEventListener("submit", submitCreateFile);
+}
+if (newFileCancelButton) {
+  newFileCancelButton.addEventListener("click", closeNewFileModal);
+}
+if (newFileModal) {
+  newFileModal.addEventListener("click", (event) => {
+    if (event.target === newFileModal) {
+      closeNewFileModal();
+    }
+  });
+}
+if (deleteFileCancelButton) {
+  deleteFileCancelButton.addEventListener("click", closeDeleteFileModal);
+}
+if (deleteFileConfirmButton) {
+  deleteFileConfirmButton.addEventListener("click", confirmDeleteFile);
+}
+if (deleteFileModal) {
+  deleteFileModal.addEventListener("click", (event) => {
+    if (event.target === deleteFileModal) {
+      closeDeleteFileModal();
+    }
+  });
+}
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && renameModal && !renameModal.classList.contains("hidden")) {
     closeRenameModal();
+    return;
+  }
+  if (event.key === "Escape" && newFileModal && !newFileModal.classList.contains("hidden")) {
+    closeNewFileModal();
+    return;
+  }
+  if (event.key === "Escape" && deleteFileModal && !deleteFileModal.classList.contains("hidden")) {
+    closeDeleteFileModal();
   }
 });
 if (summarizeLinkButton) {
@@ -379,20 +429,7 @@ function saveActiveFileResults(result) {
 }
 
 function createFile() {
-  const name = window.prompt("New file name:", `Study Notes ${studyFiles.length + 1}`);
-
-  if (!name || !name.trim()) {
-    return;
-  }
-
-  const newFile = createStudyFile(name.trim());
-  studyFiles.push(newFile);
-  activeFileId = newFile.id;
-
-  persistFiles();
-  renderFiles();
-  loadActiveFileIntoEditor();
-  statusText.textContent = `Created file: ${newFile.name}`;
+  openNewFileModal();
 }
 
 function exportActiveFile() {
@@ -498,6 +535,53 @@ function submitRenameFile(event) {
   statusText.textContent = `Renamed file to: ${activeFile.name}`;
 }
 
+function openNewFileModal() {
+  if (!newFileModal || !newFileInput) {
+    return;
+  }
+
+  newFileInput.value = `Study Notes ${studyFiles.length + 1}`;
+  newFileModal.classList.remove("hidden");
+  setTimeout(() => {
+    newFileInput.focus();
+    newFileInput.select();
+  }, 0);
+}
+
+function closeNewFileModal() {
+  if (!newFileModal) {
+    return;
+  }
+
+  newFileModal.classList.add("hidden");
+}
+
+function submitCreateFile(event) {
+  event.preventDefault();
+
+  if (!newFileInput) {
+    closeNewFileModal();
+    return;
+  }
+
+  const name = newFileInput.value.trim();
+  if (!name) {
+    statusText.textContent = "Please enter a file name.";
+    newFileInput.focus();
+    return;
+  }
+
+  const newFile = createStudyFile(name);
+  studyFiles.push(newFile);
+  activeFileId = newFile.id;
+
+  persistFiles();
+  renderFiles();
+  loadActiveFileIntoEditor();
+  closeNewFileModal();
+  statusText.textContent = `Created file: ${newFile.name}`;
+}
+
 function deleteActiveFile() {
   const activeFile = getActiveFile();
 
@@ -505,9 +589,33 @@ function deleteActiveFile() {
     return;
   }
 
-  const shouldDelete = window.confirm(`Delete "${activeFile.name}"?`);
+  openDeleteFileModal(activeFile.name);
+}
 
-  if (!shouldDelete) {
+function openDeleteFileModal(fileName) {
+  if (!deleteFileModal) {
+    return;
+  }
+
+  if (deleteFileMessage) {
+    deleteFileMessage.textContent = `Are you sure you want to delete "${fileName}"? This cannot be undone.`;
+  }
+  deleteFileModal.classList.remove("hidden");
+}
+
+function closeDeleteFileModal() {
+  if (!deleteFileModal) {
+    return;
+  }
+
+  deleteFileModal.classList.add("hidden");
+}
+
+function confirmDeleteFile() {
+  const activeFile = getActiveFile();
+
+  if (!activeFile) {
+    closeDeleteFileModal();
     return;
   }
 
@@ -524,6 +632,7 @@ function deleteActiveFile() {
   persistFiles();
   renderFiles();
   loadActiveFileIntoEditor();
+  closeDeleteFileModal();
   statusText.textContent = "File deleted.";
 }
 
@@ -537,6 +646,9 @@ function ensureStringArray(value) {
 
 function setLoadingState(isLoading, mode = "clean") {
   cleanButton.disabled = isLoading;
+  outputOptionInputs.forEach((input) => {
+    input.disabled = isLoading;
+  });
   cleanButton.classList.toggle("is-loading", isLoading && mode === "clean");
   if (summarizeLinkButton) {
     summarizeLinkButton.disabled = isLoading;
@@ -667,14 +779,33 @@ function setCardVisibility(card, isVisible) {
     return;
   }
 
-  const wasHidden = card.classList.contains("hidden");
-  card.classList.toggle("hidden", !isVisible);
+  const existingTimer = Number(card.dataset.hideTimer || 0);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    card.dataset.hideTimer = "";
+  }
 
-  if (isVisible && wasHidden) {
+  const wasHidden = card.classList.contains("hidden");
+  if (isVisible) {
+    card.classList.remove("hidden", "pop-out");
     card.classList.remove("pop-in");
     void card.offsetWidth;
     card.classList.add("pop-in");
+    return;
   }
+
+  if (wasHidden) {
+    return;
+  }
+
+  card.classList.remove("pop-in");
+  card.classList.add("pop-out");
+  const timerId = setTimeout(() => {
+    card.classList.add("hidden");
+    card.classList.remove("pop-out");
+    card.dataset.hideTimer = "";
+  }, 220);
+  card.dataset.hideTimer = String(timerId);
 }
 
 function generateFlashcards(sourceLines) {
@@ -725,10 +856,27 @@ function handleSummaryModeChange(mode) {
   const isArticle = mode === "article";
 
   if (articleInputWrap) {
-    articleInputWrap.classList.toggle("hidden", !isArticle);
+    const shouldShowArticle = isArticle;
+    const wasArticleHidden = articleInputWrap.classList.contains("hidden");
+    articleInputWrap.classList.toggle("hidden", !shouldShowArticle);
+    if (shouldShowArticle && wasArticleHidden) {
+      articleInputWrap.classList.remove("mode-pop-in");
+      void articleInputWrap.offsetWidth;
+      articleInputWrap.classList.add("mode-pop-in");
+    }
   }
   if (notesInputWrap) {
     notesInputWrap.classList.toggle("hidden", isArticle);
+  }
+  if (inputCard) {
+    const shouldShowNotesCard = !isArticle;
+    const wasNotesCardHidden = inputCard.classList.contains("hidden");
+    inputCard.classList.toggle("hidden", !shouldShowNotesCard);
+    if (shouldShowNotesCard && wasNotesCardHidden) {
+      inputCard.classList.remove("mode-pop-in");
+      void inputCard.offsetWidth;
+      inputCard.classList.add("mode-pop-in");
+    }
   }
   notesInput.disabled = isArticle;
   if (summarizeLinkButton) {

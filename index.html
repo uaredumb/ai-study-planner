@@ -145,6 +145,31 @@
     </div>
   </div>
 
+  <div id="newFileModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="newFileModalTitle">
+    <div class="modal-card">
+      <h2 id="newFileModalTitle">Create New Study File</h2>
+      <form id="newFileForm" class="modal-form">
+        <label for="newFileInput" class="input-label">File name</label>
+        <input id="newFileInput" class="modal-input" type="text" maxlength="80" />
+        <div class="modal-actions">
+          <button id="newFileCancelButton" type="button" class="secondary-btn">Cancel</button>
+          <button id="newFileSaveButton" type="submit" class="primary-btn">Create File</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="deleteFileModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="deleteFileModalTitle">
+    <div class="modal-card">
+      <h2 id="deleteFileModalTitle">Delete Study File</h2>
+      <p id="deleteFileMessage" class="modal-message">Are you sure you want to delete this file?</p>
+      <div class="modal-actions">
+        <button id="deleteFileCancelButton" type="button" class="secondary-btn">Cancel</button>
+        <button id="deleteFileConfirmButton" type="button" class="secondary-btn danger-btn">Delete File</button>
+      </div>
+    </div>
+  </div>
+
   <script src="main.js?v=6"></script>
 </body>
 </html>

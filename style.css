@@ -31,6 +31,7 @@ body {
   background: radial-gradient(circle at 10% 12%, #dce4ff 0%, transparent 38%),
     radial-gradient(circle at 88% 20%, #d8fff4 0%, transparent 34%),
     var(--bg);
+  background-attachment: fixed, fixed, fixed;
   color: var(--text);
   transition: background 0.25s ease, color 0.25s ease;
   position: relative;
@@ -41,6 +42,7 @@ body.dark {
   background: radial-gradient(circle at 10% 12%, #1a2a63 0%, transparent 32%),
     radial-gradient(circle at 88% 20%, #20524c 0%, transparent 32%),
     var(--bg);
+  background-attachment: fixed, fixed, fixed;
 }
 
 .bg-shape {
@@ -422,6 +424,15 @@ textarea {
   accent-color: var(--accent);
 }
 
+.output-option input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.mode-pop-in {
+  animation: modePopIn 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .actions-row {
   margin-top: 0.9rem;
   display: flex;
@@ -466,6 +477,12 @@ textarea {
   gap: 0.75rem;
 }
 
+.modal-message {
+  margin: 0 0 0.8rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .modal-input {
   width: 100%;
   border-radius: 12px;
@@ -505,6 +522,10 @@ textarea {
   animation: cardPopIn 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.result-card.pop-out {
+  animation: cardPopOut 220ms cubic-bezier(0.55, 0, 0.7, 0.2);
+}
+
 .result-card h2 {
   margin: 0 0 0.8rem;
   font-size: clamp(1.5rem, 2.2vw, 2rem);
@@ -539,6 +560,28 @@ textarea {
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes cardPopOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+}
+
+@keyframes modePopIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
