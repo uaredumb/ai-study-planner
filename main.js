@@ -1526,15 +1526,48 @@ function loadScript(src) {
   });
 }
 
-async function ensureClerkLoaded() {
+function decodeFrontendApiFromPublishableKey(key) {
+  if (!key || typeof key !== "string") {
+    return "";
+  }
+
+  const parts = key.split("_");
+  if (parts.length < 3) {
+    return "";
+  }
+
+  try {
+    const payload = parts.slice(2).join("_");
+    const padded = payload.padEnd(Math.ceil(payload.length / 4) * 4, "=");
+    const decoded = atob(padded);
+    return decoded.endsWith("$") ? decoded.slice(0, -1) : decoded;
+  } catch (_error) {
+    return "";
+  }
+}
+
+function getClerkScriptCandidates(publishableKey) {
+  const candidates = [];
+  const frontendApi = decodeFrontendApiFromPublishableKey(publishableKey);
+
+  if (frontendApi) {
+    candidates.push(`https://${frontendApi}/npm/@clerk/clerk-js@latest/dist/clerk.browser.js`);
+  }
+
+  candidates.push(
+    "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js",
+    "https://unpkg.com/@clerk/clerk-js@latest/dist/clerk.browser.js"
+  );
+
+  return candidates;
+}
+
+async function ensureClerkLoaded(publishableKey) {
   if (window.Clerk) {
     return true;
   }
 
-  const candidates = [
-    "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js",
-    "https://unpkg.com/@clerk/clerk-js@latest/dist/clerk.browser.js"
-  ];
+  const candidates = getClerkScriptCandidates(publishableKey);
 
   for (const src of candidates) {
     try {
@@ -1569,7 +1602,7 @@ async function initializeAuthGate() {
     return;
   }
 
-  const hasClerk = await ensureClerkLoaded();
+  const hasClerk = await ensureClerkLoaded(clerkPublishableKey);
   if (!hasClerk || !window.Clerk) {
     if (authGateTitle) {
       authGateTitle.textContent = "Login script failed to load";
