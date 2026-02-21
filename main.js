@@ -1484,6 +1484,53 @@ async function handleAuthSignedOut() {
   await switchAuthView(authView);
 }
 
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      if (window.Clerk) {
+        resolve();
+        return;
+      }
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error(`Failed: ${src}`)), { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = src;
+    script.crossOrigin = "anonymous";
+    script.async = true;
+    script.addEventListener("load", () => resolve(), { once: true });
+    script.addEventListener("error", () => reject(new Error(`Failed: ${src}`)), { once: true });
+    document.head.appendChild(script);
+  });
+}
+
+async function ensureClerkLoaded() {
+  if (window.Clerk) {
+    return true;
+  }
+
+  const candidates = [
+    "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js",
+    "https://unpkg.com/@clerk/clerk-js@latest/dist/clerk.browser.js"
+  ];
+
+  for (const src of candidates) {
+    try {
+      await loadScript(src);
+      if (window.Clerk) {
+        return true;
+      }
+    } catch (_error) {
+      // Try next CDN source.
+    }
+  }
+
+  return Boolean(window.Clerk);
+}
+
 async function initializeAuthGate() {
   const clerkPublishableKey = getClerkPublishableKey();
   lockAppForAuth();
@@ -1502,12 +1549,14 @@ async function initializeAuthGate() {
     return;
   }
 
-  if (!window.Clerk) {
+  const hasClerk = await ensureClerkLoaded();
+  if (!hasClerk || !window.Clerk) {
     if (authGateTitle) {
       authGateTitle.textContent = "Login script failed to load";
     }
     if (authGateText) {
-      authGateText.textContent = "Reload and try again. If it persists, verify internet access.";
+      authGateText.textContent =
+        "Could not load Clerk from CDN. Disable strict blockers or try another network.";
     }
     return;
   }
