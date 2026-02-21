@@ -1151,41 +1151,20 @@ function handleSummaryModeChange(mode) {
   }
 
   if (articleInputWrap) {
-    const shouldShowArticle = isArticle;
-    const wasArticleHidden = articleInputWrap.classList.contains("hidden");
-    articleInputWrap.classList.toggle("hidden", !shouldShowArticle);
-    if (shouldShowArticle && wasArticleHidden) {
-      articleInputWrap.classList.remove("mode-pop-in");
-      void articleInputWrap.offsetWidth;
-      articleInputWrap.classList.add("mode-pop-in");
-    }
+    articleInputWrap.classList.toggle("hidden", !isArticle);
   }
   // Keep the notes island content structurally visible; the parent card handles show/hide by mode.
   if (notesInputWrap) {
     notesInputWrap.classList.remove("hidden");
   }
   if (inputCard) {
-    const shouldShowNotesCard = !isArticle;
-    const wasNotesCardHidden = inputCard.classList.contains("hidden");
-    if (shouldShowNotesCard) {
-      const existingHideTimer = Number(inputCard.dataset.hideTimer || 0);
-      if (existingHideTimer) {
-        clearTimeout(existingHideTimer);
-        inputCard.dataset.hideTimer = "";
-      }
-      inputCard.classList.remove("hidden", "mode-pop-out");
-      inputCard.classList.remove("mode-pop-in");
-      void inputCard.offsetWidth;
-      inputCard.classList.add("mode-pop-in");
-    } else if (!wasNotesCardHidden) {
-      const existingHideTimer = Number(inputCard.dataset.hideTimer || 0);
-      if (existingHideTimer) {
-        clearTimeout(existingHideTimer);
-        inputCard.dataset.hideTimer = "";
-      }
-      inputCard.classList.remove("mode-pop-in", "mode-pop-out");
-      inputCard.classList.add("hidden");
+    const existingHideTimer = Number(inputCard.dataset.hideTimer || 0);
+    if (existingHideTimer) {
+      clearTimeout(existingHideTimer);
+      inputCard.dataset.hideTimer = "";
     }
+    inputCard.classList.remove("mode-pop-in", "mode-pop-out");
+    inputCard.classList.toggle("hidden", isArticle);
   }
   notesInput.disabled = isArticle;
   if (summarizeLinkButton) {
