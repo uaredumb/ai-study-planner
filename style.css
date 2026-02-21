@@ -706,19 +706,6 @@ input,
   animation: tutorialPulse 1.3s ease-in-out infinite;
 }
 
-body.tutorial-lock .app-shell * {
-  pointer-events: none;
-}
-
-body.tutorial-lock .tutorial-highlight,
-body.tutorial-lock .tutorial-highlight * {
-  pointer-events: auto;
-}
-
-body.tutorial-lock .tutorial-coach,
-body.tutorial-lock .tutorial-coach * {
-  pointer-events: auto;
-}
 
 .performance-loader {
   position: fixed;

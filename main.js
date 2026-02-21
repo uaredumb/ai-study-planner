@@ -70,6 +70,11 @@ const tutorialText = document.getElementById("tutorialText");
 const tutorialExample = document.getElementById("tutorialExample");
 const tutorialStepCounter = document.getElementById("tutorialStepCounter");
 const tutorialExampleWrap = document.querySelector(".tutorial-example-wrap");
+const welcomeModal = document.getElementById("welcomeModal");
+const welcomeStartButton = document.getElementById("welcomeStartButton");
+const tutorialSkipConfirmModal = document.getElementById("tutorialSkipConfirmModal");
+const tutorialSkipCancelButton = document.getElementById("tutorialSkipCancelButton");
+const tutorialSkipConfirmButton = document.getElementById("tutorialSkipConfirmButton");
 const articleUrlInput = document.getElementById("articleUrlInput");
 const summarizeLinkButton = document.getElementById("summarizeLinkButton");
 const articleInputWrap = document.getElementById("articleInputWrap");
@@ -111,7 +116,7 @@ const tutorialSteps = [
     text: "Pick outputs you want in your study pack: tasks, plan, clean notes, flashcards, and quiz questions.",
     exampleLabel: "Try",
     example:
-      "Study Tasks + Study Plan + Flashcards."
+      "Try these outputs: Study Tasks + Study Plan + Flashcards."
   },
   {
     title: "Try Generate",
@@ -197,6 +202,18 @@ if (deleteFileModal) {
 if (tutorialCloseButton) {
   tutorialCloseButton.addEventListener("click", skipTutorial);
 }
+if (welcomeStartButton) {
+  welcomeStartButton.addEventListener("click", startTutorialFromWelcome);
+}
+if (tutorialSkipCancelButton) {
+  tutorialSkipCancelButton.addEventListener("click", () => closeModalWithAnimation(tutorialSkipConfirmModal));
+}
+if (tutorialSkipConfirmButton) {
+  tutorialSkipConfirmButton.addEventListener("click", () => {
+    closeModalWithAnimation(tutorialSkipConfirmModal);
+    skipTutorial();
+  });
+}
 if (tutorialBackButton) {
   tutorialBackButton.addEventListener("click", goToPreviousTutorialStep);
 }
@@ -220,6 +237,32 @@ document.addEventListener("keydown", (event) => {
     skipTutorial();
   }
 });
+document.addEventListener(
+  "click",
+  (event) => {
+    if (!isTutorialActive() || tutorialStepIndex !== 0) {
+      return;
+    }
+
+    const target = event.target;
+    const clickedCoach = target instanceof HTMLElement && target.closest("#tutorialCoach");
+    const clickedSkipConfirm = target instanceof HTMLElement && target.closest("#tutorialSkipConfirmModal");
+    const highlightTarget = getTutorialTarget(tutorialSteps[tutorialStepIndex]?.target);
+    const clickedHighlight =
+      highlightTarget &&
+      target instanceof Node &&
+      (target === highlightTarget || (highlightTarget instanceof HTMLElement && highlightTarget.contains(target)));
+
+    if (clickedCoach || clickedHighlight || clickedSkipConfirm) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    openTutorialSkipConfirm();
+  },
+  true
+);
 document.addEventListener("copy", (event) => {
   if (allowNativeCopyOnce) {
     allowNativeCopyOnce = false;
@@ -1345,6 +1388,24 @@ function showTutorialIfNeeded() {
     return;
   }
 
+  if (welcomeModal) {
+    welcomeModal.classList.remove("hidden");
+    return;
+  }
+
+  startTutorial();
+}
+
+function startTutorialFromWelcome() {
+  closeModalWithAnimation(welcomeModal);
+  startTutorial();
+}
+
+function startTutorial() {
+  if (!tutorialCoach) {
+    return;
+  }
+
   tutorialStepIndex = 0;
   renderTutorialStep();
   document.body.classList.add("tutorial-lock");
@@ -1421,6 +1482,8 @@ function finishTutorial() {
   localStorage.setItem(TUTORIAL_SEEN_KEY, "yes");
   clearTutorialHighlights();
   document.body.classList.remove("tutorial-lock");
+  closeModalWithAnimation(tutorialSkipConfirmModal);
+  closeModalWithAnimation(welcomeModal);
   if (tutorialCoach) {
     tutorialCoach.classList.add("hidden");
   }
@@ -1483,6 +1546,17 @@ function clearTutorialHighlights() {
   document.querySelectorAll(".tutorial-highlight").forEach((element) => {
     element.classList.remove("tutorial-highlight");
   });
+}
+
+function isTutorialActive() {
+  return Boolean(tutorialCoach && !tutorialCoach.classList.contains("hidden"));
+}
+
+function openTutorialSkipConfirm() {
+  if (!tutorialSkipConfirmModal || tutorialSkipConfirmModal.classList.contains("modal-closing")) {
+    return;
+  }
+  tutorialSkipConfirmModal.classList.remove("hidden");
 }
 
 function showPerformanceLoader() {

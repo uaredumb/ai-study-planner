@@ -64,17 +64,17 @@
         <p class="input-label">Choose outputs for your Study Pack</p>
         <div class="output-options-grid">
           <label class="output-option">
-            <input id="outputStudyTasks" type="checkbox" checked />
+            <input id="outputStudyTasks" type="checkbox" />
             <img class="output-icon" src="icons/output-tasks.svg" alt="" aria-hidden="true" />
             <span>Study Tasks</span>
           </label>
           <label class="output-option">
-            <input id="outputStudyPlan" type="checkbox" checked />
+            <input id="outputStudyPlan" type="checkbox" />
             <img class="output-icon" src="icons/output-plan.svg" alt="" aria-hidden="true" />
             <span>Study Plan</span>
           </label>
           <label class="output-option">
-            <input id="outputCleanNotes" type="checkbox" checked />
+            <input id="outputCleanNotes" type="checkbox" />
             <img class="output-icon" src="icons/output-clean-notes.svg" alt="" aria-hidden="true" />
             <span>Clean Notes</span>
           </label>
@@ -212,6 +212,27 @@
       <button id="tutorialCloseButton" type="button" class="secondary-btn tutorial-close-btn">Skip</button>
     </div>
   </aside>
+
+  <div id="welcomeModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="welcomeModalTitle">
+    <div class="modal-card">
+      <h2 id="welcomeModalTitle">Welcome to AI Study Buddy</h2>
+      <p class="modal-message">We will walk you through a quick setup so your first study pack is easy.</p>
+      <div class="modal-actions">
+        <button id="welcomeStartButton" type="button" class="primary-btn">Get Started</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tutorialSkipConfirmModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="tutorialSkipConfirmTitle">
+    <div class="modal-card">
+      <h2 id="tutorialSkipConfirmTitle">Skip Tutorial?</h2>
+      <p class="modal-message">Are you sure you want to skip the tutorial?</p>
+      <div class="modal-actions">
+        <button id="tutorialSkipCancelButton" type="button" class="secondary-btn">Stay in Tutorial</button>
+        <button id="tutorialSkipConfirmButton" type="button" class="secondary-btn danger-btn">Skip Tutorial</button>
+      </div>
+    </div>
+  </div>
 
   <div id="performanceLoader" class="performance-loader hidden" aria-live="polite">
     <div class="performance-loader-card">
