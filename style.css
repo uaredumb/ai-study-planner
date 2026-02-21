@@ -578,6 +578,7 @@ input,
   gap: 1.1rem;
 }
 
+.summarize-mode-card.file-open-in,
 .input-card.file-open-in,
 .results-grid.file-open-in {
   animation: fileOpenIn 240ms cubic-bezier(0.22, 1, 0.36, 1);
