@@ -114,7 +114,7 @@ let isUserAuthenticated = false;
 let authView = "sign-in";
 let clerkLoaded = false;
 const FALLBACK_CLERK_PUBLISHABLE_KEY = "pk_test_YXJyaXZpbmctaGVyb24tNTQuY2xlcmsuYWNjb3VudHMuZGV2JA";
-const ALLOW_GUEST_FALLBACK = true;
+const ALLOW_GUEST_FALLBACK = false;
 
 const tutorialSteps = [
   {
