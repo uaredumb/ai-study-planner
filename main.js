@@ -67,6 +67,7 @@ const tutorialBackButton = document.getElementById("tutorialBackButton");
 const tutorialNextButton = document.getElementById("tutorialNextButton");
 const tutorialText = document.getElementById("tutorialText");
 const tutorialExample = document.getElementById("tutorialExample");
+const tutorialExampleLabel = document.getElementById("tutorialExampleLabel");
 const tutorialStepCounter = document.getElementById("tutorialStepCounter");
 const tutorialExampleWrap = document.querySelector(".tutorial-example-wrap");
 const articleUrlInput = document.getElementById("articleUrlInput");
@@ -93,11 +94,13 @@ let createdFileIdForAnimation = "";
 let tutorialStepIndex = 0;
 let allowNativeCopyOnce = false;
 let isPerformanceToggleBusy = false;
+let tutorialWaitingForGeneration = false;
 
 const tutorialSteps = [
   {
     title: "Welcome",
     target: "summarize",
+    exampleLabel: "Tip",
     text: "This island controls your study workflow. Use Notes/Article mode and start from here.",
     example:
       "Tip: You can switch between Summarize Notes and Summarize Article anytime."
@@ -106,13 +109,14 @@ const tutorialSteps = [
     title: "Outputs + Buttons",
     target: "outputs",
     text: "In this corner, pick outputs (tasks, plan, clean notes, flashcards, quiz). Top-right buttons are Performance and Dark/Light mode.",
+    exampleLabel: "Try",
     example:
       "Try: Study Tasks + Study Plan + Flashcards."
   },
   {
     title: "Try Generate",
     target: "generate",
-    text: "Now click Generate Study Pack once. This step auto-continues when you click it.",
+    text: "Now click Generate Study Pack once. This step continues only after generation fully completes.",
     waitForAction: "generate",
     hideExample: true,
     fillNotesText:
@@ -121,6 +125,7 @@ const tutorialSteps = [
   {
     title: "Tasks Section",
     target: "tasks",
+    exampleLabel: "Assignment",
     text: "This area shows Study Tasks first. Each output card has its own Copy button.",
     example:
       "Use tasks as your action checklist for today."
@@ -128,6 +133,7 @@ const tutorialSteps = [
   {
     title: "Done",
     target: "files",
+    exampleLabel: "Workflow",
     text: "Use New/Save/Rename/Delete to manage files in this section. You can switch files anytime (except during generation).",
     example:
       "Create one file per subject for cleaner study sessions."
@@ -339,6 +345,7 @@ async function handleCleanNotes() {
     saveActiveFileResults(result);
 
     statusText.textContent = "Done. Your study pack is ready.";
+    handleTutorialGenerationCompleted();
   } catch (error) {
     statusText.textContent = error.message;
   } finally {
@@ -374,6 +381,7 @@ async function summarizeArticleFromLink() {
     saveActiveFileResults(result);
 
     statusText.textContent = "Article converted into your study pack.";
+    handleTutorialGenerationCompleted();
   } catch (error) {
     statusText.textContent = error.message;
   } finally {
@@ -1103,6 +1111,9 @@ function handleSummaryModeChange(mode) {
       articleInputWrap.classList.add("mode-pop-in");
     }
   }
+  if (isArticle && articleUrlInput && !articleUrlInput.value.trim()) {
+    articleUrlInput.value = "https://www.britannica.com/biography/George-Washington";
+  }
   if (notesInputWrap) {
     notesInputWrap.classList.toggle("hidden", isArticle);
   }
@@ -1377,6 +1388,14 @@ function renderTutorialStep() {
   if (tutorialExample) {
     tutorialExample.textContent = step.example || "";
   }
+  if (tutorialExampleLabel) {
+    if (step.exampleLabel) {
+      tutorialExampleLabel.textContent = step.exampleLabel;
+    } else {
+    const looksLikeTip = typeof step.example === "string" && step.example.trim().toLowerCase().startsWith("tip:");
+    tutorialExampleLabel.textContent = looksLikeTip ? "Tip" : "Example";
+    }
+  }
   if (step.fillNotesText && notesInput) {
     notesInput.value = step.fillNotesText;
     saveCurrentFileText();
@@ -1384,6 +1403,7 @@ function renderTutorialStep() {
   tutorialBackButton.disabled = tutorialStepIndex === 0;
   tutorialNextButton.disabled = step.waitForAction === "generate";
   tutorialNextButton.textContent = tutorialStepIndex === tutorialSteps.length - 1 ? "Finish" : "Next";
+  tutorialWaitingForGeneration = false;
 }
 
 function goToNextTutorialStep() {
@@ -1424,6 +1444,16 @@ function handleTutorialGenerateAction() {
     return;
   }
 
+  tutorialWaitingForGeneration = true;
+}
+
+function handleTutorialGenerationCompleted() {
+  const step = tutorialSteps[tutorialStepIndex];
+  if (!step || step.waitForAction !== "generate" || !tutorialWaitingForGeneration) {
+    return;
+  }
+
+  tutorialWaitingForGeneration = false;
   tutorialNextButton.disabled = false;
   goToNextTutorialStep();
 }
