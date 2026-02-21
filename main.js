@@ -938,7 +938,13 @@ function loadTheme() {
 }
 
 function updateThemeButtonLabel(isDark) {
-  themeToggle.textContent = isDark ? "Light Mode" : "Dark Mode";
+  if (!themeToggle) {
+    return;
+  }
+
+  themeToggle.innerHTML = isDark
+    ? '<span class="btn-icon" aria-hidden="true">☀️</span><span class="btn-label">Light Mode</span>'
+    : '<span class="btn-icon" aria-hidden="true">🌙</span><span class="btn-label">Dark Mode</span>';
 }
 
 function togglePerformanceMode() {
@@ -958,9 +964,9 @@ function updatePerformanceButtonLabel(enabled) {
     return;
   }
 
-  performanceToggle.textContent = enabled
-    ? "Performance Mode: On"
-    : "Performance Mode: Off";
+  performanceToggle.innerHTML = enabled
+    ? '<span class="btn-icon" aria-hidden="true">🚀</span><span class="btn-label">Performance Mode: On</span>'
+    : '<span class="btn-icon" aria-hidden="true">⚡</span><span class="btn-label">Performance Mode: Off</span>';
 }
 
 function loadSummaryMode() {
