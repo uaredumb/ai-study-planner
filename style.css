@@ -509,6 +509,10 @@ input,
   accent-color: var(--accent);
 }
 
+.output-option input[type="checkbox"].check-pop {
+  animation: checkPop 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .output-option input[type="checkbox"]:disabled {
   cursor: not-allowed;
   opacity: 0.65;
@@ -734,6 +738,18 @@ input,
   100% {
     opacity: 0;
     transform: scale(0.97) translateY(8px);
+  }
+}
+
+@keyframes checkPop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 

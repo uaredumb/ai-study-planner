@@ -169,19 +169,34 @@ summaryModeInputs.forEach((input) => {
   input.addEventListener("change", () => setSummaryMode(input.value));
 });
 if (outputCleanNotes) {
-  outputCleanNotes.addEventListener("change", updateOptionalOutputCards);
+  outputCleanNotes.addEventListener("change", () => {
+    triggerCheckboxAnimation(outputCleanNotes);
+    updateOptionalOutputCards();
+  });
 }
 if (outputStudyTasks) {
-  outputStudyTasks.addEventListener("change", updateOptionalOutputCards);
+  outputStudyTasks.addEventListener("change", () => {
+    triggerCheckboxAnimation(outputStudyTasks);
+    updateOptionalOutputCards();
+  });
 }
 if (outputStudyPlan) {
-  outputStudyPlan.addEventListener("change", updateOptionalOutputCards);
+  outputStudyPlan.addEventListener("change", () => {
+    triggerCheckboxAnimation(outputStudyPlan);
+    updateOptionalOutputCards();
+  });
 }
 if (outputFlashcards) {
-  outputFlashcards.addEventListener("change", updateOptionalOutputCards);
+  outputFlashcards.addEventListener("change", () => {
+    triggerCheckboxAnimation(outputFlashcards);
+    updateOptionalOutputCards();
+  });
 }
 if (outputQuizQuestions) {
-  outputQuizQuestions.addEventListener("change", updateOptionalOutputCards);
+  outputQuizQuestions.addEventListener("change", () => {
+    triggerCheckboxAnimation(outputQuizQuestions);
+    updateOptionalOutputCards();
+  });
 }
 setSummaryMode(loadSummaryMode());
 updateOptionalOutputCards();
@@ -775,6 +790,16 @@ async function renderResultsWithTyping(result) {
   setCopyButtonEnabledByContent(copyFlashcardsButton, flashcardsList);
   await renderListWithTyping(quizQuestionsList, result.quizQuestions);
   setCopyButtonEnabledByContent(copyQuizButton, quizQuestionsList);
+}
+
+function triggerCheckboxAnimation(checkbox) {
+  if (!checkbox) {
+    return;
+  }
+
+  checkbox.classList.remove("check-pop");
+  void checkbox.offsetWidth;
+  checkbox.classList.add("check-pop");
 }
 
 async function renderListWithTyping(listElement, items) {
