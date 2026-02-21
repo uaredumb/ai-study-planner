@@ -31,7 +31,15 @@ const outputOptionInputs = [
   outputFlashcards,
   outputQuizQuestions
 ].filter(Boolean);
+const copyTargets = [
+  { button: copyStudyTasksButton, list: studyTasksList },
+  { button: copyStudyPlanButton, list: studyOrderList },
+  { button: copyCleanNotesButton, list: cleanNotesList },
+  { button: copyFlashcardsButton, list: flashcardsList },
+  { button: copyQuizButton, list: quizQuestionsList }
+];
 const themeToggle = document.getElementById("themeToggle");
+const performanceToggle = document.getElementById("performanceToggle");
 const appLogo = document.getElementById("appLogo");
 
 const filesList = document.getElementById("filesList");
@@ -60,6 +68,7 @@ const articleModeButton = document.getElementById("articleModeButton");
 const summaryModeInputs = document.querySelectorAll('input[name="summaryMode"]');
 
 const THEME_KEY = "ai-study-planner-theme";
+const PERFORMANCE_MODE_KEY = "performance_mode_v1";
 const STUDY_FILES_STORAGE = "study_files_v1";
 const ACTIVE_FILE_ID_STORAGE = "active_study_file_id_v1";
 const SUMMARY_MODE_STORAGE = "summary_mode_v1";
@@ -69,11 +78,15 @@ let activeFileId = loadActiveFileId(studyFiles);
 let isGenerating = false;
 
 loadTheme();
+loadPerformanceMode();
 renderFiles();
 loadActiveFileIntoEditor();
 
 cleanButton.addEventListener("click", handleCleanNotes);
 themeToggle.addEventListener("click", toggleTheme);
+if (performanceToggle) {
+  performanceToggle.addEventListener("click", togglePerformanceMode);
+}
 newFileButton.addEventListener("click", createFile);
 saveFileButton.addEventListener("click", exportActiveFile);
 renameFileButton.addEventListener("click", renameActiveFile);
@@ -683,6 +696,11 @@ function setLoadingState(isLoading, mode = "clean") {
   fileButtons.forEach((button) => {
     button.disabled = isLoading;
   });
+  if (isLoading) {
+    setAllCopyButtonsEnabled(false);
+  } else {
+    refreshCopyButtonsFromContent();
+  }
   cleanButton.classList.toggle("is-loading", isLoading && mode === "clean");
   if (summarizeLinkButton) {
     summarizeLinkButton.disabled = isLoading;
@@ -727,6 +745,7 @@ function renderList(listElement, items) {
 }
 
 async function renderResultsWithTyping(result) {
+  setAllCopyButtonsEnabled(false);
   setCardVisibility(studyTasksCard, result.selectedOutputs?.studyTasks);
   setCardVisibility(studyPlanCard, result.selectedOutputs?.studyPlan);
   setCardVisibility(cleanNotesCard, result.selectedOutputs?.cleanNotes);
@@ -734,10 +753,15 @@ async function renderResultsWithTyping(result) {
   setCardVisibility(quizQuestionsCard, result.selectedOutputs?.quizQuestions);
 
   await renderListWithTyping(studyTasksList, result.studyTasks);
+  setCopyButtonEnabledByContent(copyStudyTasksButton, studyTasksList);
   await renderListWithTyping(studyOrderList, result.studyOrder);
+  setCopyButtonEnabledByContent(copyStudyPlanButton, studyOrderList);
   await renderListWithTyping(cleanNotesList, result.cleanNotes);
+  setCopyButtonEnabledByContent(copyCleanNotesButton, cleanNotesList);
   await renderListWithTyping(flashcardsList, result.flashcards);
+  setCopyButtonEnabledByContent(copyFlashcardsButton, flashcardsList);
   await renderListWithTyping(quizQuestionsList, result.quizQuestions);
+  setCopyButtonEnabledByContent(copyQuizButton, quizQuestionsList);
 }
 
 async function renderListWithTyping(listElement, items) {
@@ -784,6 +808,7 @@ function renderFileResults(file) {
     renderList(flashcardsList, []);
     renderList(quizQuestionsList, []);
     updateOptionalOutputCards();
+    refreshCopyButtonsFromContent();
     return;
   }
 
@@ -798,6 +823,7 @@ function renderFileResults(file) {
   setCardVisibility(studyPlanCard, file.studyOrder.length > 0 || Boolean(outputStudyPlan?.checked));
   setCardVisibility(flashcardsCard, file.flashcards.length > 0 || Boolean(outputFlashcards?.checked));
   setCardVisibility(quizQuestionsCard, file.quizQuestions.length > 0 || Boolean(outputQuizQuestions?.checked));
+  refreshCopyButtonsFromContent();
 }
 
 function updateOptionalOutputCards() {
@@ -875,6 +901,28 @@ function loadTheme() {
 
 function updateThemeButtonLabel(isDark) {
   themeToggle.textContent = isDark ? "Light Mode" : "Dark Mode";
+}
+
+function togglePerformanceMode() {
+  const enabled = document.body.classList.toggle("performance-mode");
+  localStorage.setItem(PERFORMANCE_MODE_KEY, enabled ? "on" : "off");
+  updatePerformanceButtonLabel(enabled);
+}
+
+function loadPerformanceMode() {
+  const enabled = localStorage.getItem(PERFORMANCE_MODE_KEY) === "on";
+  document.body.classList.toggle("performance-mode", enabled);
+  updatePerformanceButtonLabel(enabled);
+}
+
+function updatePerformanceButtonLabel(enabled) {
+  if (!performanceToggle) {
+    return;
+  }
+
+  performanceToggle.textContent = enabled
+    ? "Performance Mode: On"
+    : "Performance Mode: Off";
 }
 
 function loadSummaryMode() {
@@ -1020,6 +1068,34 @@ function getListLines(listElement, ordered) {
   }
 
   return rawItems.map((item, index) => `${index + 1}. ${item}`);
+}
+
+function hasCopyableItems(listElement) {
+  return getListLines(listElement, false).length > 0;
+}
+
+function setCopyButtonEnabled(button, enabled) {
+  if (!button) {
+    return;
+  }
+
+  button.disabled = !enabled;
+}
+
+function setCopyButtonEnabledByContent(button, listElement) {
+  setCopyButtonEnabled(button, hasCopyableItems(listElement));
+}
+
+function setAllCopyButtonsEnabled(enabled) {
+  copyTargets.forEach(({ button }) => {
+    setCopyButtonEnabled(button, enabled);
+  });
+}
+
+function refreshCopyButtonsFromContent() {
+  copyTargets.forEach(({ button, list }) => {
+    setCopyButtonEnabledByContent(button, list);
+  });
 }
 
 async function copyTextToClipboard(text) {
