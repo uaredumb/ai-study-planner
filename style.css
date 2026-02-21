@@ -647,12 +647,14 @@ body.dark .output-icon {
   right: 1rem;
   bottom: 1rem;
   width: min(420px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
   z-index: 30;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow: var(--shadow);
   padding: 0.9rem;
+  overflow: auto;
   animation: cardPopIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -692,6 +694,8 @@ body.dark .output-icon {
   font-family: inherit;
   line-height: 1.4;
   user-select: none;
+  max-height: 160px;
+  overflow: auto;
 }
 
 .tutorial-actions {
@@ -973,6 +977,42 @@ body.dark .output-icon {
 
   .result-card:nth-child(3) {
     grid-column: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .tutorial-coach {
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: max(0.6rem, env(safe-area-inset-bottom));
+    width: auto;
+    max-height: calc(100dvh - 1.2rem - env(safe-area-inset-bottom));
+    border-radius: 14px;
+    padding: 0.8rem;
+  }
+
+  .tutorial-coach h2 {
+    font-size: 1.15rem;
+    margin: 0.2rem 0 0.45rem;
+  }
+
+  .tutorial-step {
+    font-size: 0.8rem;
+  }
+
+  .tutorial-actions {
+    gap: 0.45rem;
+  }
+
+  .tutorial-actions .primary-btn,
+  .tutorial-actions .secondary-btn {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .tutorial-actions .tutorial-close-btn,
+  .tutorial-actions #tutorialBackButton {
+    flex: 1 1 calc(50% - 0.225rem);
   }
 }
 
