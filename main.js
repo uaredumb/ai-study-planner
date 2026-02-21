@@ -48,6 +48,7 @@ const deleteFileConfirmButton = document.getElementById("deleteFileConfirmButton
 const articleUrlInput = document.getElementById("articleUrlInput");
 const summarizeLinkButton = document.getElementById("summarizeLinkButton");
 const articleInputWrap = document.getElementById("articleInputWrap");
+const summarizeModeCard = document.querySelector(".summarize-mode-card");
 const notesModeButton = document.getElementById("notesModeButton");
 const articleModeButton = document.getElementById("articleModeButton");
 const summaryModeInputs = document.querySelectorAll('input[name="summaryMode"]');
@@ -854,6 +855,12 @@ function setSummaryMode(mode) {
 
 function handleSummaryModeChange(mode) {
   const isArticle = mode === "article";
+
+  if (summarizeModeCard && isArticle) {
+    summarizeModeCard.classList.remove("island-pop");
+    void summarizeModeCard.offsetWidth;
+    summarizeModeCard.classList.add("island-pop");
+  }
 
   if (articleInputWrap) {
     const shouldShowArticle = isArticle;
