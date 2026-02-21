@@ -1593,7 +1593,7 @@ async function initializeAuthGate() {
     }
     if (authGateText) {
       authGateText.textContent =
-        "Set CLERK_PUBLISHABLE_KEY in config.js to enable login and access the app.";
+        "Set a Clerk publishable key via meta tag, config.js, or window.APP_CONFIG.";
     }
     if (clerkAuthMount) {
       clerkAuthMount.innerHTML = "";
