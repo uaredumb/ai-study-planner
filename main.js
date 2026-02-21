@@ -6,6 +6,11 @@ const statusText = document.getElementById("statusText");
 const cleanNotesList = document.getElementById("cleanNotesList");
 const studyTasksList = document.getElementById("studyTasksList");
 const studyOrderList = document.getElementById("studyOrderList");
+const copyStudyTasksButton = document.getElementById("copyStudyTasksButton");
+const copyStudyPlanButton = document.getElementById("copyStudyPlanButton");
+const copyCleanNotesButton = document.getElementById("copyCleanNotesButton");
+const copyFlashcardsButton = document.getElementById("copyFlashcardsButton");
+const copyQuizButton = document.getElementById("copyQuizButton");
 const studyTasksCard = document.getElementById("studyTasksCard");
 const studyPlanCard = document.getElementById("studyPlanCard");
 const flashcardsList = document.getElementById("flashcardsList");
@@ -123,6 +128,17 @@ document.addEventListener("keydown", (event) => {
     closeDeleteFileModal();
   }
 });
+document.addEventListener("copy", (event) => {
+  const target = event.target;
+  const isEditable =
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    (target instanceof HTMLElement && target.isContentEditable);
+
+  if (!isEditable) {
+    event.preventDefault();
+  }
+});
 if (summarizeLinkButton) {
   summarizeLinkButton.addEventListener("click", summarizeArticleFromLink);
 }
@@ -153,6 +169,7 @@ if (outputQuizQuestions) {
 }
 setSummaryMode(loadSummaryMode());
 updateOptionalOutputCards();
+bindCopyButtons();
 
 if (appLogo) {
   const logoCandidates = [
@@ -958,6 +975,72 @@ async function fetchArticleTextFromUrl(articleUrl) {
   }
 
   return text.slice(0, 14000);
+}
+
+function bindCopyButtons() {
+  bindCopyButton(copyStudyTasksButton, "Study Tasks", studyTasksList, false);
+  bindCopyButton(copyStudyPlanButton, "Study Plan", studyOrderList, true);
+  bindCopyButton(copyCleanNotesButton, "Clean Notes", cleanNotesList, false);
+  bindCopyButton(copyFlashcardsButton, "Flashcards", flashcardsList, false);
+  bindCopyButton(copyQuizButton, "Quiz Questions", quizQuestionsList, true);
+}
+
+function bindCopyButton(button, title, listElement, ordered) {
+  if (!button || !listElement) {
+    return;
+  }
+
+  button.addEventListener("click", async () => {
+    const lines = getListLines(listElement, ordered);
+
+    if (lines.length === 0) {
+      statusText.textContent = `No ${title.toLowerCase()} to copy yet.`;
+      return;
+    }
+
+    const text = `${title}\n${lines.join("\n")}`;
+    const copied = await copyTextToClipboard(text);
+    statusText.textContent = copied
+      ? `${title} copied.`
+      : "Could not copy automatically. Please try again.";
+  });
+}
+
+function getListLines(listElement, ordered) {
+  const rawItems = Array.from(listElement.querySelectorAll("li"))
+    .map((li) => li.textContent.trim())
+    .filter((text) => text.length > 0 && text !== "No items generated yet.");
+
+  if (!ordered) {
+    return rawItems.map((item) => `- ${item}`);
+  }
+
+  return rawItems.map((item, index) => `${index + 1}. ${item}`);
+}
+
+async function copyTextToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (_error) {
+    const temp = document.createElement("textarea");
+    temp.value = text;
+    temp.setAttribute("readonly", "");
+    temp.style.position = "fixed";
+    temp.style.opacity = "0";
+    document.body.appendChild(temp);
+    temp.select();
+
+    let copied = false;
+    try {
+      copied = document.execCommand("copy");
+    } catch (_execError) {
+      copied = false;
+    }
+
+    temp.remove();
+    return copied;
+  }
 }
 
 function slugifyFileName(input) {
