@@ -600,6 +600,7 @@ input,
   margin: 0 0 0.8rem;
   color: var(--muted);
   line-height: 1.45;
+  user-select: none;
 }
 
 .modal-input {
@@ -624,15 +625,29 @@ input,
   flex-wrap: wrap;
 }
 
-.tutorial-card {
-  width: min(520px, 94vw);
+.tutorial-coach {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  width: min(420px, calc(100vw - 2rem));
+  z-index: 30;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 0.9rem;
+  animation: cardPopIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.tutorial-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.8rem;
+.tutorial-step {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.tutorial-coach h2 {
+  margin: 0.25rem 0 0.55rem;
 }
 
 .tutorial-close-btn {
@@ -656,14 +671,64 @@ input,
 
 .tutorial-example {
   margin: 0;
-  white-space: pre-wrap;
+  white-space: pre-line;
   font-family: inherit;
   line-height: 1.4;
-  user-select: text;
+  user-select: none;
 }
 
 .tutorial-actions {
   margin-top: 0.85rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tutorial-highlight {
+  position: relative;
+  z-index: 2;
+  outline: 3px solid color-mix(in srgb, var(--accent), transparent 35%);
+  outline-offset: 3px;
+  border-radius: 12px;
+  animation: tutorialPulse 1.3s ease-in-out infinite;
+}
+
+.performance-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 15, 32, 0.42);
+  backdrop-filter: blur(2px);
+}
+
+.performance-loader-card {
+  width: min(320px, 90vw);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  display: grid;
+  place-items: center;
+  gap: 0.55rem;
+}
+
+.performance-loader-card p {
+  margin: 0;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.performance-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 3px solid color-mix(in srgb, var(--accent), transparent 70%);
+  border-top-color: var(--accent);
+  animation: loaderSpin 0.85s linear infinite;
 }
 
 .results-grid {
@@ -800,6 +865,24 @@ input,
   }
 }
 
+@keyframes tutorialPulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent), transparent 70%);
+  }
+  100% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
+
+@keyframes loaderSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes checkPop {
   0% {
     transform: scale(1);
@@ -880,4 +963,8 @@ body.performance-mode *::before,
 body.performance-mode *::after {
   animation: none !important;
   transition: none !important;
+}
+
+body.performance-mode .performance-spinner {
+  animation: loaderSpin 0.85s linear infinite !important;
 }

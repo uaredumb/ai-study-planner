@@ -40,6 +40,8 @@ const copyTargets = [
 ];
 const themeToggle = document.getElementById("themeToggle");
 const performanceToggle = document.getElementById("performanceToggle");
+const performanceLoader = document.getElementById("performanceLoader");
+const performanceLoaderText = document.getElementById("performanceLoaderText");
 const appLogo = document.getElementById("appLogo");
 
 const filesList = document.getElementById("filesList");
@@ -59,16 +61,19 @@ const deleteFileModal = document.getElementById("deleteFileModal");
 const deleteFileMessage = document.getElementById("deleteFileMessage");
 const deleteFileCancelButton = document.getElementById("deleteFileCancelButton");
 const deleteFileConfirmButton = document.getElementById("deleteFileConfirmButton");
-const tutorialModal = document.getElementById("tutorialModal");
+const tutorialCoach = document.getElementById("tutorialCoach");
 const tutorialCloseButton = document.getElementById("tutorialCloseButton");
 const tutorialBackButton = document.getElementById("tutorialBackButton");
 const tutorialNextButton = document.getElementById("tutorialNextButton");
 const tutorialText = document.getElementById("tutorialText");
 const tutorialExample = document.getElementById("tutorialExample");
+const tutorialStepCounter = document.getElementById("tutorialStepCounter");
 const articleUrlInput = document.getElementById("articleUrlInput");
 const summarizeLinkButton = document.getElementById("summarizeLinkButton");
 const articleInputWrap = document.getElementById("articleInputWrap");
 const summarizeModeCard = document.querySelector(".summarize-mode-card");
+const topActions = document.querySelector(".top-actions");
+const outputOptionsWrap = document.querySelector(".output-options-wrap");
 const notesModeButton = document.getElementById("notesModeButton");
 const articleModeButton = document.getElementById("articleModeButton");
 const summaryModeInputs = document.querySelectorAll('input[name="summaryMode"]');
@@ -85,22 +90,45 @@ let activeFileId = loadActiveFileId(studyFiles);
 let isGenerating = false;
 let createdFileIdForAnimation = "";
 let tutorialStepIndex = 0;
+let allowNativeCopyOnce = false;
+let isPerformanceToggleBusy = false;
 
 const tutorialSteps = [
   {
-    text: "Paste messy class notes once and generate a full study pack in one click.",
+    title: "Welcome",
+    target: "summarize",
+    text: "This island controls your study workflow. Use Notes/Article mode and start from here.",
     example:
-      "math ch 4?? finish practice\nhistory civil war notes incomplete\nscience quiz friday maybe"
+      "Tip: You can switch between Summarize Notes and Summarize Article anytime."
   },
   {
-    text: "Pick multiple outputs with checkboxes: tasks, plan, clean notes, flashcards, and quiz questions.",
+    title: "Outputs + Buttons",
+    target: "outputs",
+    text: "In this corner, pick outputs (tasks, plan, clean notes, flashcards, quiz). Top-right buttons are Performance and Dark/Light mode.",
     example:
-      "Try this combo:\n- Study Tasks\n- Study Plan\n- Flashcards\n- Quiz Questions"
+      "Try: Study Tasks + Study Plan + Flashcards."
   },
   {
-    text: "Use Summarize Article mode to turn a link into study material, then copy each section with the Copy buttons.",
+    title: "Try Generate",
+    target: "generate",
+    text: "Now click Generate Study Pack once. This step auto-continues when you click it.",
+    waitForAction: "generate",
     example:
-      "https://example.com/article\n\nTip: you can save each file and switch between study sets."
+      "Example messy notes:\nmath ch 4?? finish practice\nhistory notes incomplete\nscience quiz friday"
+  },
+  {
+    title: "Tasks Section",
+    target: "tasks",
+    text: "This area shows Study Tasks first. Each output card has its own Copy button.",
+    example:
+      "Use tasks as your action checklist for today."
+  },
+  {
+    title: "Done",
+    target: "files",
+    text: "Use New/Save/Rename/Delete to manage files in this section. You can switch files anytime (except during generation).",
+    example:
+      "Create one file per subject for cleaner study sessions."
   }
 ];
 
@@ -166,13 +194,6 @@ if (tutorialBackButton) {
 if (tutorialNextButton) {
   tutorialNextButton.addEventListener("click", goToNextTutorialStep);
 }
-if (tutorialModal) {
-  tutorialModal.addEventListener("click", (event) => {
-    if (event.target === tutorialModal) {
-      skipTutorial();
-    }
-  });
-}
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && renameModal && !renameModal.classList.contains("hidden")) {
     closeRenameModal();
@@ -186,18 +207,30 @@ document.addEventListener("keydown", (event) => {
     closeDeleteFileModal();
     return;
   }
-  if (event.key === "Escape" && tutorialModal && !tutorialModal.classList.contains("hidden")) {
+  if (event.key === "Escape" && tutorialCoach && !tutorialCoach.classList.contains("hidden")) {
     skipTutorial();
   }
 });
 document.addEventListener("copy", (event) => {
-  const target = event.target;
-  const isEditable =
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLTextAreaElement ||
-    (target instanceof HTMLElement && target.isContentEditable);
+  if (allowNativeCopyOnce) {
+    allowNativeCopyOnce = false;
+    return;
+  }
 
-  if (!isEditable) {
+  event.preventDefault();
+});
+document.addEventListener("cut", (event) => {
+  if (allowNativeCopyOnce) {
+    allowNativeCopyOnce = false;
+    return;
+  }
+
+  event.preventDefault();
+});
+document.addEventListener("contextmenu", (event) => {
+  const target = event.target;
+  const isCopyButton = target instanceof HTMLElement && target.closest(".copy-btn");
+  if (!isCopyButton) {
     event.preventDefault();
   }
 });
@@ -210,6 +243,9 @@ if (notesModeButton) {
 }
 if (articleModeButton) {
   articleModeButton.addEventListener("click", () => setSummaryMode("article"));
+}
+if (cleanButton) {
+  cleanButton.addEventListener("click", handleTutorialGenerateAction);
 }
 summaryModeInputs.forEach((input) => {
   input.addEventListener("change", () => setSummaryMode(input.value));
@@ -994,10 +1030,27 @@ function updateThemeButtonLabel(isDark) {
     : '<span class="btn-icon" aria-hidden="true">🌙</span><span class="btn-label">Dark Mode</span>';
 }
 
-function togglePerformanceMode() {
+async function togglePerformanceMode() {
+  if (isPerformanceToggleBusy) {
+    return;
+  }
+
+  isPerformanceToggleBusy = true;
+  if (performanceToggle) {
+    performanceToggle.disabled = true;
+  }
+  showPerformanceLoader();
+  await delay(320);
+
   const enabled = document.body.classList.toggle("performance-mode");
   localStorage.setItem(PERFORMANCE_MODE_KEY, enabled ? "on" : "off");
   updatePerformanceButtonLabel(enabled);
+
+  hidePerformanceLoader();
+  if (performanceToggle) {
+    performanceToggle.disabled = false;
+  }
+  isPerformanceToggleBusy = false;
 }
 
 function loadPerformanceMode() {
@@ -1204,6 +1257,7 @@ async function copyTextToClipboard(text) {
 
     let copied = false;
     try {
+      allowNativeCopyOnce = true;
       copied = document.execCommand("copy");
     } catch (_execError) {
       copied = false;
@@ -1258,7 +1312,7 @@ function triggerFileOpenAnimation() {
 }
 
 function showTutorialIfNeeded() {
-  if (!tutorialModal) {
+  if (!tutorialCoach) {
     return;
   }
 
@@ -1269,7 +1323,7 @@ function showTutorialIfNeeded() {
 
   tutorialStepIndex = 0;
   renderTutorialStep();
-  tutorialModal.classList.remove("hidden");
+  tutorialCoach.classList.remove("hidden");
 }
 
 function renderTutorialStep() {
@@ -1278,11 +1332,31 @@ function renderTutorialStep() {
     return;
   }
 
+  if (step.target === "generate") {
+    setSummaryMode("notes");
+  }
+
+  clearTutorialHighlights();
+  const target = getTutorialTarget(step.target);
+  if (target) {
+    target.classList.add("tutorial-highlight");
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  if (tutorialStepCounter) {
+    tutorialStepCounter.textContent = `Step ${tutorialStepIndex + 1} of ${tutorialSteps.length}`;
+  }
+  if (step.title) {
+    const titleNode = document.getElementById("tutorialTitle");
+    if (titleNode) {
+      titleNode.textContent = step.title;
+    }
+  }
   tutorialText.textContent = step.text;
   tutorialExample.textContent = step.example;
   tutorialBackButton.disabled = tutorialStepIndex === 0;
-  tutorialNextButton.textContent =
-    tutorialStepIndex === tutorialSteps.length - 1 ? "Finish" : "Next";
+  tutorialNextButton.disabled = step.waitForAction === "generate";
+  tutorialNextButton.textContent = tutorialStepIndex === tutorialSteps.length - 1 ? "Finish" : "Next";
 }
 
 function goToNextTutorialStep() {
@@ -1310,5 +1384,69 @@ function skipTutorial() {
 
 function finishTutorial() {
   localStorage.setItem(TUTORIAL_SEEN_KEY, "yes");
-  closeModalWithAnimation(tutorialModal);
+  clearTutorialHighlights();
+  if (tutorialCoach) {
+    tutorialCoach.classList.add("hidden");
+  }
+}
+
+function handleTutorialGenerateAction() {
+  const step = tutorialSteps[tutorialStepIndex];
+  if (!step || step.waitForAction !== "generate") {
+    return;
+  }
+
+  tutorialNextButton.disabled = false;
+  goToNextTutorialStep();
+}
+
+function getTutorialTarget(targetKey) {
+  if (targetKey === "summarize") {
+    return summarizeModeCard;
+  }
+  if (targetKey === "outputs") {
+    return outputOptionsWrap;
+  }
+  if (targetKey === "generate") {
+    return cleanButton;
+  }
+  if (targetKey === "tasks") {
+    return studyTasksCard;
+  }
+  if (targetKey === "files") {
+    return filesList;
+  }
+  if (targetKey === "topActions") {
+    return topActions;
+  }
+  return null;
+}
+
+function clearTutorialHighlights() {
+  document.querySelectorAll(".tutorial-highlight").forEach((element) => {
+    element.classList.remove("tutorial-highlight");
+  });
+}
+
+function showPerformanceLoader() {
+  if (!performanceLoader) {
+    return;
+  }
+
+  if (performanceLoaderText) {
+    performanceLoaderText.textContent = "Applying performance mode...";
+  }
+  performanceLoader.classList.remove("hidden");
+}
+
+function hidePerformanceLoader() {
+  if (!performanceLoader) {
+    return;
+  }
+
+  performanceLoader.classList.add("hidden");
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

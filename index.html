@@ -199,21 +199,25 @@
     </div>
   </div>
 
-  <div id="tutorialModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
-    <div class="modal-card tutorial-card">
-      <div class="tutorial-top">
-        <h2 id="tutorialTitle">Get Started</h2>
-        <button id="tutorialCloseButton" type="button" class="secondary-btn tutorial-close-btn">Skip</button>
-      </div>
-      <p id="tutorialText" class="modal-message">Welcome! Let’s walk through AI Study Buddy in under a minute.</p>
-      <div class="tutorial-example-wrap">
-        <p class="tutorial-label">Example</p>
-        <pre id="tutorialExample" class="tutorial-example"></pre>
-      </div>
-      <div class="modal-actions tutorial-actions">
-        <button id="tutorialBackButton" type="button" class="secondary-btn">Back</button>
-        <button id="tutorialNextButton" type="button" class="primary-btn">Next</button>
-      </div>
+  <aside id="tutorialCoach" class="tutorial-coach hidden" aria-live="polite">
+    <div class="tutorial-step" id="tutorialStepCounter">Step 1 of 5</div>
+    <h2 id="tutorialTitle">Get Started</h2>
+    <p id="tutorialText" class="modal-message">Welcome! Let’s walk through AI Study Buddy in under a minute.</p>
+    <div class="tutorial-example-wrap">
+      <p class="tutorial-label">Example</p>
+      <pre id="tutorialExample" class="tutorial-example"></pre>
+    </div>
+    <div class="tutorial-actions">
+      <button id="tutorialBackButton" type="button" class="secondary-btn">Back</button>
+      <button id="tutorialNextButton" type="button" class="primary-btn">Next</button>
+      <button id="tutorialCloseButton" type="button" class="secondary-btn tutorial-close-btn">Skip</button>
+    </div>
+  </aside>
+
+  <div id="performanceLoader" class="performance-loader hidden" aria-live="polite">
+    <div class="performance-loader-card">
+      <div class="performance-spinner" aria-hidden="true"></div>
+      <p id="performanceLoaderText">Applying performance mode...</p>
     </div>
   </div>
 
