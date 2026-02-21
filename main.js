@@ -76,6 +76,7 @@ const SUMMARY_MODE_STORAGE = "summary_mode_v1";
 let studyFiles = loadStudyFiles();
 let activeFileId = loadActiveFileId(studyFiles);
 let isGenerating = false;
+let createdFileIdForAnimation = "";
 
 loadTheme();
 loadPerformanceMode();
@@ -407,6 +408,12 @@ function renderFiles() {
     button.className = `file-chip${file.id === activeFileId ? " active" : ""}`;
     button.textContent = file.name;
     button.disabled = isGenerating;
+    if (file.id === createdFileIdForAnimation) {
+      button.classList.add("file-create-in");
+      setTimeout(() => {
+        button.classList.remove("file-create-in");
+      }, 320);
+    }
     button.addEventListener("click", () => {
       if (isGenerating) {
         statusText.textContent = "Please wait for generation to finish before switching files.";
@@ -422,6 +429,10 @@ function renderFiles() {
     li.appendChild(button);
     filesList.appendChild(li);
   });
+
+  if (createdFileIdForAnimation) {
+    createdFileIdForAnimation = "";
+  }
 }
 
 function getActiveFile() {
@@ -605,10 +616,12 @@ function submitCreateFile(event) {
   const newFile = createStudyFile(name);
   studyFiles.push(newFile);
   activeFileId = newFile.id;
+  createdFileIdForAnimation = newFile.id;
 
   persistFiles();
   renderFiles();
   loadActiveFileIntoEditor();
+  triggerFileOpenAnimation();
   closeNewFileModal();
   statusText.textContent = `Created file: ${newFile.name}`;
 }
@@ -1155,7 +1168,7 @@ function triggerFileOpenAnimation() {
     activeChip.classList.add("file-open-in");
   }
 
-  [inputCard, resultsSection].forEach((element) => {
+  [summarizeModeCard, inputCard, resultsSection].forEach((element) => {
     if (!element || element.classList.contains("hidden")) {
       return;
     }

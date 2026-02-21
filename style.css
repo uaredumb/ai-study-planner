@@ -423,6 +423,10 @@ body.dark .mode-btn.active {
   animation: fileOpenIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.file-chip.file-create-in {
+  animation: fileCreateIn 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .input-label {
   display: block;
   margin-bottom: 0.6rem;
@@ -658,6 +662,21 @@ input,
   0% {
     opacity: 0.78;
     transform: translateY(6px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fileCreateIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.02);
   }
   100% {
     opacity: 1;
