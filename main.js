@@ -1452,7 +1452,7 @@ function renderTutorialStep() {
     notesInput.value = step.fillNotesText;
     saveCurrentFileText();
   }
-  tutorialBackButton.disabled = tutorialStepIndex === 0;
+  tutorialBackButton.disabled = tutorialStepIndex === 0 || tutorialStepIndex === 3;
   tutorialNextButton.disabled =
     step.waitForAction === "generate" ||
     step.waitForAction === "create-file" ||
@@ -1482,7 +1482,7 @@ function goToNextTutorialStep() {
 }
 
 function goToPreviousTutorialStep() {
-  if (tutorialStepIndex <= 0) {
+  if (tutorialStepIndex <= 0 || tutorialStepIndex === 3) {
     return;
   }
 
@@ -1616,6 +1616,7 @@ function buildDynamicOutputStep() {
       target: "plan",
       exampleLabel: "Assignment",
       text: "This section orders your study session step-by-step.",
+      hideExample: true,
       example: "Follow the order from top to bottom for focused study flow."
     };
   }
@@ -1626,6 +1627,7 @@ function buildDynamicOutputStep() {
       target: "clean",
       exampleLabel: "Assignment",
       text: "This section rewrites messy notes into clearer study notes.",
+      hideExample: true,
       example: "Use these clean notes as your main review sheet."
     };
   }
@@ -1636,6 +1638,7 @@ function buildDynamicOutputStep() {
       target: "flashcards",
       exampleLabel: "Assignment",
       text: "This section creates quick flashcards for active recall.",
+      hideExample: true,
       example: "Review cards in short rounds: 5 to 10 minutes each."
     };
   }
@@ -1646,6 +1649,7 @@ function buildDynamicOutputStep() {
       target: "quiz",
       exampleLabel: "Assignment",
       text: "This section gives practice quiz questions from your notes.",
+      hideExample: true,
       example: "Answer without looking, then check and correct."
     };
   }
@@ -1655,6 +1659,7 @@ function buildDynamicOutputStep() {
     target: "tasks",
     exampleLabel: "Assignment",
     text: "This section shows actionable tasks to complete first.",
+    hideExample: true,
     example: "Use tasks as your checklist and mark them off as you finish."
   };
 }
