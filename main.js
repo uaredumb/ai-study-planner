@@ -68,6 +68,7 @@ const tutorialBackButton = document.getElementById("tutorialBackButton");
 const tutorialNextButton = document.getElementById("tutorialNextButton");
 const tutorialText = document.getElementById("tutorialText");
 const tutorialExample = document.getElementById("tutorialExample");
+const tutorialExampleLabel = document.getElementById("tutorialExampleLabel");
 const tutorialStepCounter = document.getElementById("tutorialStepCounter");
 const tutorialExampleWrap = document.querySelector(".tutorial-example-wrap");
 const welcomeModal = document.getElementById("welcomeModal");
@@ -1441,6 +1442,9 @@ function renderTutorialStep() {
   tutorialText.textContent = step.text;
   if (tutorialExampleWrap) {
     tutorialExampleWrap.classList.toggle("hidden", Boolean(step.hideExample));
+  }
+  if (tutorialExampleLabel) {
+    tutorialExampleLabel.textContent = "Assignment";
   }
   if (tutorialExample) {
     tutorialExample.textContent = step.example || "";
