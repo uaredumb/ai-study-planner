@@ -113,6 +113,7 @@ let didRunTutorialGateCheck = false;
 let isUserAuthenticated = false;
 let authView = "sign-in";
 let clerkLoaded = false;
+const FALLBACK_CLERK_PUBLISHABLE_KEY = "pk_test_YXJyaXZpbmctaGVyb24tNTQuY2xlcmsuYWNjb3VudHMuZGV2JA";
 
 const tutorialSteps = [
   {
@@ -1383,9 +1384,13 @@ function playTransientAnimation(element, className) {
 }
 
 function getClerkPublishableKey() {
+  const metaKey =
+    document.querySelector('meta[name="clerk-publishable-key"]')?.getAttribute("content") || "";
   const key =
     window.APP_CONFIG?.CLERK_PUBLISHABLE_KEY ||
     window.CLERK_PUBLISHABLE_KEY ||
+    metaKey ||
+    FALLBACK_CLERK_PUBLISHABLE_KEY ||
     "";
   return typeof key === "string" ? key.trim() : "";
 }
