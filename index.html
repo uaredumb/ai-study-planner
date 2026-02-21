@@ -21,6 +21,7 @@
         <p class="eyebrow">One Input. Full Study Pack. Faster Learning.</p>
       </div>
       <div class="top-actions">
+        <div id="clerkUserButton" class="clerk-user-button hidden" aria-label="Account"></div>
         <button id="performanceToggle" class="theme-btn" aria-label="Toggle performance mode">
           <img class="btn-icon" src="icons/performance-off.svg" alt="" aria-hidden="true" />
           <span class="btn-label">Performance Mode: Off</span>
@@ -160,6 +161,19 @@
     </section>
   </main>
 
+  <section id="authGate" class="auth-gate" aria-live="polite">
+    <div class="auth-gate-panel card">
+      <p class="auth-kicker">Secure Access</p>
+      <h2 id="authGateTitle">Sign in to continue</h2>
+      <p id="authGateText" class="modal-message">Login is required before the app and tutorial are available.</p>
+      <div class="auth-switch-row">
+        <button id="authSignInTab" class="secondary-btn auth-tab-btn active" type="button">Sign In</button>
+        <button id="authSignUpTab" class="secondary-btn auth-tab-btn" type="button">Sign Up</button>
+      </div>
+      <div id="clerkAuthMount" class="clerk-auth-mount"></div>
+    </div>
+  </section>
+
   <div id="renameModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
     <div class="modal-card">
       <h2 id="renameModalTitle">Rename Study File</h2>
@@ -242,7 +256,9 @@
     </div>
   </div>
 
-  <script src="main.js?v=6"></script>
+  <script src="config.js"></script>
+  <script crossorigin="anonymous" data-clerk-js-script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+  <script src="main.js?v=7"></script>
 </body>
 </html>
 

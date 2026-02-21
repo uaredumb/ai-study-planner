@@ -62,6 +62,22 @@ npm start
 
 7. Open: `http://localhost:3000`
 
+## Clerk Login Setup
+
+1. Copy `config.example.js` to `config.js`.
+2. Set your Clerk publishable key:
+
+```js
+window.APP_CONFIG = {
+  CLERK_PUBLISHABLE_KEY: "pk_test_your_key_here"
+};
+```
+
+Notes:
+- `config.js` is gitignored so each environment can use its own key.
+- The app is locked until login succeeds.
+- Tutorial starts only after the user is authenticated.
+
 ## Deploying the backend to GitHub
 
 - A `deploy` (bash) and `deploy.ps1` (PowerShell) script are included at the repository root.

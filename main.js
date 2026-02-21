@@ -85,6 +85,13 @@ const outputOptionsWrap = document.querySelector(".output-options-wrap");
 const notesModeButton = document.getElementById("notesModeButton");
 const articleModeButton = document.getElementById("articleModeButton");
 const summaryModeInputs = document.querySelectorAll('input[name="summaryMode"]');
+const authGate = document.getElementById("authGate");
+const authGateTitle = document.getElementById("authGateTitle");
+const authGateText = document.getElementById("authGateText");
+const authSignInTab = document.getElementById("authSignInTab");
+const authSignUpTab = document.getElementById("authSignUpTab");
+const clerkAuthMount = document.getElementById("clerkAuthMount");
+const clerkUserButton = document.getElementById("clerkUserButton");
 
 const THEME_KEY = "ai-study-planner-theme";
 const PERFORMANCE_MODE_KEY = "performance_mode_v1";
@@ -102,6 +109,10 @@ let allowNativeCopyOnce = false;
 let isPerformanceToggleBusy = false;
 let tutorialPendingAction = "";
 let tutorialDynamicStep = null;
+let didRunTutorialGateCheck = false;
+let isUserAuthenticated = false;
+let authView = "sign-in";
+let clerkLoaded = false;
 
 const tutorialSteps = [
   {
@@ -291,6 +302,12 @@ if (notesModeButton) {
 if (articleModeButton) {
   articleModeButton.addEventListener("click", () => setSummaryMode("article"));
 }
+if (authSignInTab) {
+  authSignInTab.addEventListener("click", () => switchAuthView("sign-in"));
+}
+if (authSignUpTab) {
+  authSignUpTab.addEventListener("click", () => switchAuthView("sign-up"));
+}
 if (cleanButton) {
   cleanButton.addEventListener("click", handleTutorialGenerateAction);
 }
@@ -335,7 +352,7 @@ if (outputQuizQuestions) {
 setSummaryMode(loadSummaryMode());
 updateOptionalOutputCards();
 bindCopyButtons();
-showTutorialIfNeeded();
+initializeAuthGate();
 
 if (appLogo) {
   const logoCandidates = [
@@ -1365,8 +1382,176 @@ function playTransientAnimation(element, className) {
   );
 }
 
+function getClerkPublishableKey() {
+  const key =
+    window.APP_CONFIG?.CLERK_PUBLISHABLE_KEY ||
+    window.CLERK_PUBLISHABLE_KEY ||
+    "";
+  return typeof key === "string" ? key.trim() : "";
+}
+
+function lockAppForAuth() {
+  document.body.classList.add("auth-locked");
+  if (authGate) {
+    authGate.classList.remove("hidden");
+  }
+  if (clerkUserButton) {
+    clerkUserButton.classList.add("hidden");
+  }
+}
+
+function unlockAppAfterAuth() {
+  document.body.classList.remove("auth-locked");
+  if (authGate) {
+    authGate.classList.add("hidden");
+  }
+  if (clerkUserButton) {
+    clerkUserButton.classList.remove("hidden");
+  }
+}
+
+function updateAuthTabs(view) {
+  if (authSignInTab) {
+    authSignInTab.classList.toggle("active", view === "sign-in");
+  }
+  if (authSignUpTab) {
+    authSignUpTab.classList.toggle("active", view === "sign-up");
+  }
+}
+
+async function switchAuthView(nextView) {
+  if (!clerkLoaded || !window.Clerk || !clerkAuthMount) {
+    return;
+  }
+
+  authView = nextView === "sign-up" ? "sign-up" : "sign-in";
+  updateAuthTabs(authView);
+
+  if (authGateTitle) {
+    authGateTitle.textContent = authView === "sign-up" ? "Create your account" : "Sign in to continue";
+  }
+  if (authGateText) {
+    authGateText.textContent =
+      authView === "sign-up"
+        ? "Create an account, then the app and tutorial will unlock."
+        : "Login is required before the app and tutorial are available.";
+  }
+
+  clerkAuthMount.innerHTML = "";
+  const appearance = {
+    variables: {
+      colorPrimary: "#3557ff",
+      colorBackground: "transparent",
+      colorText: "#1d2240",
+      colorInputBackground: "#ffffff",
+      colorInputText: "#1d2240",
+      borderRadius: "12px",
+      fontFamily: "Outfit, sans-serif"
+    }
+  };
+
+  if (authView === "sign-up") {
+    await window.Clerk.mountSignUp(clerkAuthMount, {
+      appearance,
+      signInUrl: "#sign-in"
+    });
+    return;
+  }
+
+  await window.Clerk.mountSignIn(clerkAuthMount, {
+    appearance,
+    signUpUrl: "#sign-up"
+  });
+}
+
+function handleAuthSignedIn() {
+  isUserAuthenticated = true;
+  unlockAppAfterAuth();
+  if (!didRunTutorialGateCheck) {
+    didRunTutorialGateCheck = true;
+    showTutorialIfNeeded();
+  }
+}
+
+async function handleAuthSignedOut() {
+  isUserAuthenticated = false;
+  lockAppForAuth();
+  await switchAuthView(authView);
+}
+
+async function initializeAuthGate() {
+  const clerkPublishableKey = getClerkPublishableKey();
+  lockAppForAuth();
+
+  if (!clerkPublishableKey) {
+    if (authGateTitle) {
+      authGateTitle.textContent = "Missing Clerk key";
+    }
+    if (authGateText) {
+      authGateText.textContent =
+        "Set CLERK_PUBLISHABLE_KEY in config.js to enable login and access the app.";
+    }
+    if (clerkAuthMount) {
+      clerkAuthMount.innerHTML = "";
+    }
+    return;
+  }
+
+  if (!window.Clerk) {
+    if (authGateTitle) {
+      authGateTitle.textContent = "Login script failed to load";
+    }
+    if (authGateText) {
+      authGateText.textContent = "Reload and try again. If it persists, verify internet access.";
+    }
+    return;
+  }
+
+  try {
+    await window.Clerk.load({
+      publishableKey: clerkPublishableKey
+    });
+    clerkLoaded = true;
+
+    if (window.Clerk.user) {
+      if (clerkUserButton) {
+        await window.Clerk.mountUserButton(clerkUserButton, {
+          appearance: {
+            variables: {
+              colorPrimary: "#3557ff",
+              fontFamily: "Outfit, sans-serif"
+            }
+          }
+        });
+      }
+      handleAuthSignedIn();
+    } else {
+      await switchAuthView(authView);
+    }
+
+    window.Clerk.addListener(({ user }) => {
+      if (user) {
+        handleAuthSignedIn();
+      } else {
+        handleAuthSignedOut();
+      }
+    });
+  } catch (error) {
+    if (authGateTitle) {
+      authGateTitle.textContent = "Could not initialize login";
+    }
+    if (authGateText) {
+      authGateText.textContent = error?.message || "Unexpected auth initialization error.";
+    }
+  }
+}
+
 function showTutorialIfNeeded() {
   if (!tutorialCoach) {
+    return;
+  }
+
+  if (!isUserAuthenticated) {
     return;
   }
 
