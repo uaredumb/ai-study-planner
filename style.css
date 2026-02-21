@@ -422,6 +422,72 @@ textarea {
   accent-color: var(--accent);
 }
 
+.actions-row {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.status-text {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 20, 54, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 20;
+  padding: 1rem;
+}
+
+.modal-card {
+  width: min(460px, 92vw);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  animation: cardPopIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal-card h2 {
+  margin: 0 0 0.7rem;
+}
+
+.modal-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.modal-input {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  padding: 0.68rem 0.75rem;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.modal-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent), transparent 55%);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 .results-grid {
   margin-top: 1.3rem;
   display: grid;
@@ -433,6 +499,10 @@ textarea {
   padding: 1rem 1.2rem;
   border-radius: 26px;
   min-height: 180px;
+}
+
+.result-card.pop-in {
+  animation: cardPopIn 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .result-card h2 {
@@ -455,6 +525,21 @@ textarea {
 
 .ordered-list {
   padding-left: 1.6rem;
+}
+
+@keyframes cardPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.015) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 @media (max-width: 900px) {

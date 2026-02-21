@@ -5,11 +5,15 @@ const statusText = document.getElementById("statusText");
 const cleanNotesList = document.getElementById("cleanNotesList");
 const studyTasksList = document.getElementById("studyTasksList");
 const studyOrderList = document.getElementById("studyOrderList");
+const studyTasksCard = document.getElementById("studyTasksCard");
+const studyPlanCard = document.getElementById("studyPlanCard");
 const flashcardsList = document.getElementById("flashcardsList");
 const quizQuestionsList = document.getElementById("quizQuestionsList");
 const cleanNotesCard = document.getElementById("cleanNotesCard");
 const flashcardsCard = document.getElementById("flashcardsCard");
 const quizQuestionsCard = document.getElementById("quizQuestionsCard");
+const outputStudyTasks = document.getElementById("outputStudyTasks");
+const outputStudyPlan = document.getElementById("outputStudyPlan");
 const outputCleanNotes = document.getElementById("outputCleanNotes");
 const outputFlashcards = document.getElementById("outputFlashcards");
 const outputQuizQuestions = document.getElementById("outputQuizQuestions");
@@ -21,6 +25,10 @@ const newFileButton = document.getElementById("newFileButton");
 const saveFileButton = document.getElementById("saveFileButton");
 const renameFileButton = document.getElementById("renameFileButton");
 const deleteFileButton = document.getElementById("deleteFileButton");
+const renameModal = document.getElementById("renameModal");
+const renameForm = document.getElementById("renameForm");
+const renameInput = document.getElementById("renameInput");
+const renameCancelButton = document.getElementById("renameCancelButton");
 const articleUrlInput = document.getElementById("articleUrlInput");
 const summarizeLinkButton = document.getElementById("summarizeLinkButton");
 const articleInputWrap = document.getElementById("articleInputWrap");
@@ -46,6 +54,24 @@ newFileButton.addEventListener("click", createFile);
 saveFileButton.addEventListener("click", exportActiveFile);
 renameFileButton.addEventListener("click", renameActiveFile);
 deleteFileButton.addEventListener("click", deleteActiveFile);
+if (renameForm) {
+  renameForm.addEventListener("submit", submitRenameFile);
+}
+if (renameCancelButton) {
+  renameCancelButton.addEventListener("click", closeRenameModal);
+}
+if (renameModal) {
+  renameModal.addEventListener("click", (event) => {
+    if (event.target === renameModal) {
+      closeRenameModal();
+    }
+  });
+}
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && renameModal && !renameModal.classList.contains("hidden")) {
+    closeRenameModal();
+  }
+});
 if (summarizeLinkButton) {
   summarizeLinkButton.addEventListener("click", summarizeArticleFromLink);
 }
@@ -61,6 +87,12 @@ summaryModeInputs.forEach((input) => {
 });
 if (outputCleanNotes) {
   outputCleanNotes.addEventListener("change", updateOptionalOutputCards);
+}
+if (outputStudyTasks) {
+  outputStudyTasks.addEventListener("change", updateOptionalOutputCards);
+}
+if (outputStudyPlan) {
+  outputStudyPlan.addEventListener("change", updateOptionalOutputCards);
 }
 if (outputFlashcards) {
   outputFlashcards.addEventListener("change", updateOptionalOutputCards);
@@ -157,12 +189,6 @@ async function summarizeArticleFromLink() {
     await renderResultsWithTyping(result);
     saveActiveFileResults(result);
 
-    const generatedNotes = result.cleanNotes.map((line) => `- ${line}`).join("\n");
-    if (generatedNotes) {
-      notesInput.value = generatedNotes;
-      saveCurrentFileText();
-    }
-
     statusText.textContent = "Article converted into your study pack.";
   } catch (error) {
     statusText.textContent = error.message;
@@ -173,8 +199,8 @@ async function summarizeArticleFromLink() {
 
 function getSelectedOutputs() {
   return {
-    studyTasks: true,
-    studyPlan: true,
+    studyTasks: Boolean(outputStudyTasks?.checked),
+    studyPlan: Boolean(outputStudyPlan?.checked),
     cleanNotes: Boolean(outputCleanNotes?.checked),
     flashcards: Boolean(outputFlashcards?.checked),
     quizQuestions: Boolean(outputQuizQuestions?.checked)
@@ -187,8 +213,8 @@ async function generateStudyPack(text, selectedOutputs) {
 
   return {
     cleanNotes: selectedOutputs.cleanNotes ? base.cleanNotes : [],
-    studyTasks: base.studyTasks,
-    studyOrder: base.studyOrder,
+    studyTasks: selectedOutputs.studyTasks ? base.studyTasks : [],
+    studyOrder: selectedOutputs.studyPlan ? base.studyOrder : [],
     flashcards: selectedOutputs.flashcards ? generateFlashcards(sourceLines) : [],
     quizQuestions: selectedOutputs.quizQuestions ? generateQuizQuestions(sourceLines) : [],
     selectedOutputs
@@ -423,15 +449,52 @@ function renameActiveFile() {
     return;
   }
 
-  const updatedName = window.prompt("Rename file:", activeFile.name);
+  openRenameModal(activeFile.name);
+}
 
-  if (!updatedName || !updatedName.trim()) {
+function openRenameModal(currentName) {
+  if (!renameModal || !renameInput) {
     return;
   }
 
-  activeFile.name = updatedName.trim();
+  renameInput.value = currentName || "";
+  renameModal.classList.remove("hidden");
+  setTimeout(() => {
+    renameInput.focus();
+    renameInput.select();
+  }, 0);
+}
+
+function closeRenameModal() {
+  if (!renameModal) {
+    return;
+  }
+
+  renameModal.classList.add("hidden");
+}
+
+function submitRenameFile(event) {
+  event.preventDefault();
+
+  const activeFile = getActiveFile();
+
+  if (!activeFile || !renameInput) {
+    closeRenameModal();
+    return;
+  }
+
+  const updatedName = renameInput.value.trim();
+
+  if (!updatedName) {
+    statusText.textContent = "Please enter a file name.";
+    renameInput.focus();
+    return;
+  }
+
+  activeFile.name = updatedName;
   persistFiles();
   renderFiles();
+  closeRenameModal();
   statusText.textContent = `Renamed file to: ${activeFile.name}`;
 }
 
@@ -518,6 +581,8 @@ function renderList(listElement, items) {
 }
 
 async function renderResultsWithTyping(result) {
+  setCardVisibility(studyTasksCard, result.selectedOutputs?.studyTasks);
+  setCardVisibility(studyPlanCard, result.selectedOutputs?.studyPlan);
   setCardVisibility(cleanNotesCard, result.selectedOutputs?.cleanNotes);
   setCardVisibility(flashcardsCard, result.selectedOutputs?.flashcards);
   setCardVisibility(quizQuestionsCard, result.selectedOutputs?.quizQuestions);
@@ -583,11 +648,15 @@ function renderFileResults(file) {
   renderList(quizQuestionsList, file.quizQuestions);
 
   setCardVisibility(cleanNotesCard, file.cleanNotes.length > 0 || Boolean(outputCleanNotes?.checked));
+  setCardVisibility(studyTasksCard, file.studyTasks.length > 0 || Boolean(outputStudyTasks?.checked));
+  setCardVisibility(studyPlanCard, file.studyOrder.length > 0 || Boolean(outputStudyPlan?.checked));
   setCardVisibility(flashcardsCard, file.flashcards.length > 0 || Boolean(outputFlashcards?.checked));
   setCardVisibility(quizQuestionsCard, file.quizQuestions.length > 0 || Boolean(outputQuizQuestions?.checked));
 }
 
 function updateOptionalOutputCards() {
+  setCardVisibility(studyTasksCard, Boolean(outputStudyTasks?.checked));
+  setCardVisibility(studyPlanCard, Boolean(outputStudyPlan?.checked));
   setCardVisibility(cleanNotesCard, Boolean(outputCleanNotes?.checked));
   setCardVisibility(flashcardsCard, Boolean(outputFlashcards?.checked));
   setCardVisibility(quizQuestionsCard, Boolean(outputQuizQuestions?.checked));
@@ -598,7 +667,14 @@ function setCardVisibility(card, isVisible) {
     return;
   }
 
+  const wasHidden = card.classList.contains("hidden");
   card.classList.toggle("hidden", !isVisible);
+
+  if (isVisible && wasHidden) {
+    card.classList.remove("pop-in");
+    void card.offsetWidth;
+    card.classList.add("pop-in");
+  }
 }
 
 function generateFlashcards(sourceLines) {

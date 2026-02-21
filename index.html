@@ -64,12 +64,12 @@
         <p class="input-label">Choose outputs for your Study Pack</p>
         <div class="output-options-grid">
           <label class="output-option">
-            <input type="checkbox" checked disabled />
-            <span>Study Tasks (Required)</span>
+            <input id="outputStudyTasks" type="checkbox" checked />
+            <span>Study Tasks</span>
           </label>
           <label class="output-option">
-            <input type="checkbox" checked disabled />
-            <span>Study Plan (Required)</span>
+            <input id="outputStudyPlan" type="checkbox" checked />
+            <span>Study Plan</span>
           </label>
           <label class="output-option">
             <input id="outputCleanNotes" type="checkbox" checked />
@@ -93,14 +93,14 @@
     </section>
 
     <section id="resultsSection" class="results-grid" aria-live="polite">
-      <article class="card result-card">
+      <article id="studyTasksCard" class="card result-card">
         <h2>Study Tasks</h2>
         <ul id="studyTasksList" class="result-list">
           <li>No items generated yet.</li>
         </ul>
       </article>
 
-      <article class="card result-card">
+      <article id="studyPlanCard" class="card result-card">
         <h2>Study Plan</h2>
         <ol id="studyOrderList" class="result-list ordered-list">
           <li>No items generated yet.</li>
@@ -129,6 +129,20 @@
       </article>
     </section>
   </main>
+
+  <div id="renameModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
+    <div class="modal-card">
+      <h2 id="renameModalTitle">Rename Study File</h2>
+      <form id="renameForm" class="modal-form">
+        <label for="renameInput" class="input-label">File name</label>
+        <input id="renameInput" class="modal-input" type="text" maxlength="80" />
+        <div class="modal-actions">
+          <button id="renameCancelButton" type="button" class="secondary-btn">Cancel</button>
+          <button id="renameSaveButton" type="submit" class="primary-btn">Save Name</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="main.js?v=6"></script>
 </body>
