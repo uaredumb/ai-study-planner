@@ -68,6 +68,7 @@ const tutorialNextButton = document.getElementById("tutorialNextButton");
 const tutorialText = document.getElementById("tutorialText");
 const tutorialExample = document.getElementById("tutorialExample");
 const tutorialStepCounter = document.getElementById("tutorialStepCounter");
+const tutorialExampleWrap = document.querySelector(".tutorial-example-wrap");
 const articleUrlInput = document.getElementById("articleUrlInput");
 const summarizeLinkButton = document.getElementById("summarizeLinkButton");
 const articleInputWrap = document.getElementById("articleInputWrap");
@@ -113,8 +114,9 @@ const tutorialSteps = [
     target: "generate",
     text: "Now click Generate Study Pack once. This step auto-continues when you click it.",
     waitForAction: "generate",
-    example:
-      "Example messy notes:\nmath ch 4?? finish practice\nhistory notes incomplete\nscience quiz friday"
+    hideExample: true,
+    fillNotesText:
+      "Math test tmrw not ready need to practice fractions still dont get how to divide decimals lol. English read chapter 5 of Call of the Wild dont forget to summarize 3 lines only maybe write like gamer style. Science project omg need to finish volcano but dont have enough baking soda??? maybe ask mom for more. History quiz next week on egypt pharaohs and pyramids confusing af. Spelling words ugh too many cant remember them all. PE tomorrow run laps hope it doesnt rain. Art sketch still not done want to add more colors maybe neon?? also draw robot idea. Computer class test on coding syntax forgot loops how they work. Music need to practice piano scales last time my hand hurt so much. Lunch forgot sandwich at home had to buy chips rip."
   },
   {
     title: "Tasks Section",
@@ -1298,6 +1300,9 @@ function triggerFileOpenAnimation() {
     activeChip.classList.remove("file-open-in");
     void activeChip.offsetWidth;
     activeChip.classList.add("file-open-in");
+    setTimeout(() => {
+      activeChip.classList.remove("file-open-in");
+    }, 260);
   }
 
   [summarizeModeCard, inputCard, resultsSection].forEach((element) => {
@@ -1308,6 +1313,9 @@ function triggerFileOpenAnimation() {
     element.classList.remove("file-open-in");
     void element.offsetWidth;
     element.classList.add("file-open-in");
+    setTimeout(() => {
+      element.classList.remove("file-open-in");
+    }, 280);
   });
 }
 
@@ -1323,6 +1331,7 @@ function showTutorialIfNeeded() {
 
   tutorialStepIndex = 0;
   renderTutorialStep();
+  document.body.classList.add("tutorial-lock");
   tutorialCoach.classList.remove("hidden");
 }
 
@@ -1353,7 +1362,16 @@ function renderTutorialStep() {
     }
   }
   tutorialText.textContent = step.text;
-  tutorialExample.textContent = step.example;
+  if (tutorialExampleWrap) {
+    tutorialExampleWrap.classList.toggle("hidden", Boolean(step.hideExample));
+  }
+  if (tutorialExample) {
+    tutorialExample.textContent = step.example || "";
+  }
+  if (step.fillNotesText && notesInput) {
+    notesInput.value = step.fillNotesText;
+    saveCurrentFileText();
+  }
   tutorialBackButton.disabled = tutorialStepIndex === 0;
   tutorialNextButton.disabled = step.waitForAction === "generate";
   tutorialNextButton.textContent = tutorialStepIndex === tutorialSteps.length - 1 ? "Finish" : "Next";
@@ -1385,6 +1403,7 @@ function skipTutorial() {
 function finishTutorial() {
   localStorage.setItem(TUTORIAL_SEEN_KEY, "yes");
   clearTutorialHighlights();
+  document.body.classList.remove("tutorial-lock");
   if (tutorialCoach) {
     tutorialCoach.classList.add("hidden");
   }
