@@ -620,21 +620,32 @@ function confirmDeleteFile() {
     return;
   }
 
-  studyFiles = studyFiles.filter((file) => file.id !== activeFile.id);
+  const activeChipButton = filesList.querySelector(".file-chip.active");
+  const finalizeDelete = () => {
+    studyFiles = studyFiles.filter((file) => file.id !== activeFile.id);
 
-  if (studyFiles.length === 0) {
-    const fallback = createStudyFile("My First Notes");
-    studyFiles = [fallback];
-    activeFileId = fallback.id;
-  } else {
-    activeFileId = studyFiles[0].id;
+    if (studyFiles.length === 0) {
+      const fallback = createStudyFile("My First Notes");
+      studyFiles = [fallback];
+      activeFileId = fallback.id;
+    } else {
+      activeFileId = studyFiles[0].id;
+    }
+
+    persistFiles();
+    renderFiles();
+    loadActiveFileIntoEditor();
+    closeDeleteFileModal();
+    statusText.textContent = "File deleted.";
+  };
+
+  if (!activeChipButton) {
+    finalizeDelete();
+    return;
   }
 
-  persistFiles();
-  renderFiles();
-  loadActiveFileIntoEditor();
-  closeDeleteFileModal();
-  statusText.textContent = "File deleted.";
+  activeChipButton.classList.add("delete-out");
+  setTimeout(finalizeDelete, 220);
 }
 
 function ensureStringArray(value) {
@@ -789,9 +800,11 @@ function setCardVisibility(card, isVisible) {
   const wasHidden = card.classList.contains("hidden");
   if (isVisible) {
     card.classList.remove("hidden", "pop-out");
-    card.classList.remove("pop-in");
-    void card.offsetWidth;
-    card.classList.add("pop-in");
+    if (wasHidden) {
+      card.classList.remove("pop-in");
+      void card.offsetWidth;
+      card.classList.add("pop-in");
+    }
     return;
   }
 
@@ -878,11 +891,25 @@ function handleSummaryModeChange(mode) {
   if (inputCard) {
     const shouldShowNotesCard = !isArticle;
     const wasNotesCardHidden = inputCard.classList.contains("hidden");
-    inputCard.classList.toggle("hidden", !shouldShowNotesCard);
-    if (shouldShowNotesCard && wasNotesCardHidden) {
+    if (shouldShowNotesCard) {
+      const existingHideTimer = Number(inputCard.dataset.hideTimer || 0);
+      if (existingHideTimer) {
+        clearTimeout(existingHideTimer);
+        inputCard.dataset.hideTimer = "";
+      }
+      inputCard.classList.remove("hidden", "mode-pop-out");
       inputCard.classList.remove("mode-pop-in");
       void inputCard.offsetWidth;
       inputCard.classList.add("mode-pop-in");
+    } else if (!wasNotesCardHidden) {
+      inputCard.classList.remove("mode-pop-in");
+      inputCard.classList.add("mode-pop-out");
+      const hideTimer = setTimeout(() => {
+        inputCard.classList.add("hidden");
+        inputCard.classList.remove("mode-pop-out");
+        inputCard.dataset.hideTimer = "";
+      }, 220);
+      inputCard.dataset.hideTimer = String(hideTimer);
     }
   }
   notesInput.disabled = isArticle;

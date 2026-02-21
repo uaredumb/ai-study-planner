@@ -386,6 +386,10 @@ body.dark .mode-btn.active {
   animation: activeChipIn 0.3s ease;
 }
 
+.file-chip.delete-out {
+  animation: fileDeleteOut 220ms cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
+}
+
 .input-label {
   display: block;
   margin-bottom: 0.6rem;
@@ -435,6 +439,10 @@ textarea {
 
 .mode-pop-in {
   animation: modePopIn 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mode-pop-out {
+  animation: modePopOut 220ms cubic-bezier(0.55, 0, 0.7, 0.2);
 }
 
 .actions-row {
@@ -567,6 +575,17 @@ textarea {
   }
 }
 
+@keyframes fileDeleteOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+}
+
 @keyframes cardPopOut {
   0% {
     opacity: 1;
@@ -586,6 +605,17 @@ textarea {
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modePopOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
   }
 }
 
