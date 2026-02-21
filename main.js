@@ -1457,7 +1457,8 @@ function renderTutorialStep() {
     step.waitForAction === "generate" ||
     step.waitForAction === "create-file" ||
     (step.waitForAction === "select-output" && !hasAnyOutputSelected());
-  tutorialNextButton.textContent = tutorialStepIndex === tutorialSteps.length - 1 ? "Finish" : "Next";
+  tutorialNextButton.textContent =
+    tutorialStepIndex === getTutorialStepCount() - 1 ? "Finish" : "Next";
   tutorialPendingAction = step.waitForAction || "";
 }
 
