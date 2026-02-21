@@ -1454,7 +1454,7 @@ function handleTutorialCreateFileCompleted() {
 
   tutorialPendingAction = "";
   tutorialNextButton.disabled = false;
-  goToNextTutorialStep();
+  statusText.textContent = "Nice. File created. Click Finish in the tutorial to complete.";
 }
 
 function getTutorialTarget(targetKey) {
