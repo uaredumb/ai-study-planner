@@ -115,6 +115,7 @@ let authView = "sign-in";
 let clerkLoaded = false;
 const FALLBACK_CLERK_PUBLISHABLE_KEY = "pk_test_YXJyaXZpbmctaGVyb24tNTQuY2xlcmsuYWNjb3VudHMuZGV2JA";
 const ALLOW_GUEST_FALLBACK = false;
+const ENABLE_AUTH = false;
 
 const tutorialSteps = [
   {
@@ -354,7 +355,19 @@ if (outputQuizQuestions) {
 setSummaryMode(loadSummaryMode());
 updateOptionalOutputCards();
 bindCopyButtons();
-initializeAuthGate();
+if (ENABLE_AUTH) {
+  initializeAuthGate();
+} else {
+  if (authGate) {
+    authGate.classList.add("hidden");
+  }
+  if (clerkUserButton) {
+    clerkUserButton.classList.add("hidden");
+  }
+  isUserAuthenticated = true;
+  didRunTutorialGateCheck = true;
+  showTutorialIfNeeded();
+}
 
 if (appLogo) {
   const logoCandidates = [
