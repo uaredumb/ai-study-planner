@@ -1137,6 +1137,13 @@ function setSummaryMode(mode) {
 function handleSummaryModeChange(mode) {
   const isArticle = mode === "article";
 
+  [summarizeModeCard, articleInputWrap, inputCard, resultsSection].forEach((element) => {
+    if (!element) {
+      return;
+    }
+    element.classList.remove("file-open-in", "mode-pop-in", "mode-pop-out");
+  });
+
   if (summarizeModeCard && isArticle) {
     summarizeModeCard.classList.remove("island-pop");
     void summarizeModeCard.offsetWidth;
@@ -1153,8 +1160,9 @@ function handleSummaryModeChange(mode) {
       articleInputWrap.classList.add("mode-pop-in");
     }
   }
+  // Keep the notes island content structurally visible; the parent card handles show/hide by mode.
   if (notesInputWrap) {
-    notesInputWrap.classList.toggle("hidden", isArticle);
+    notesInputWrap.classList.remove("hidden");
   }
   if (inputCard) {
     const shouldShowNotesCard = !isArticle;
@@ -1352,7 +1360,7 @@ function triggerFileOpenAnimation() {
     playTransientAnimation(activeChip, "file-open-in");
   }
 
-  [summarizeModeCard, inputCard, resultsSection].forEach((element) => {
+  [summarizeModeCard, inputCard].forEach((element) => {
     if (!element || element.classList.contains("hidden")) {
       return;
     }
