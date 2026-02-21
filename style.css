@@ -134,6 +134,8 @@ h1 {
     filter 0.25s ease;
   will-change: transform, box-shadow;
   animation: buttonFloat 4.8s ease-in-out infinite;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .theme-btn::before,
@@ -381,6 +383,14 @@ body.dark .mode-btn.active {
   animation-play-state: paused;
 }
 
+.file-chip:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  animation: none;
+}
+
 .file-chip.active {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent), transparent 88%);
@@ -389,6 +399,10 @@ body.dark .mode-btn.active {
 
 .file-chip.delete-out {
   animation: fileDeleteOut 220ms cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
+}
+
+.file-chip.file-open-in {
+  animation: fileOpenIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .input-label {
@@ -431,6 +445,8 @@ input,
   gap: 0.5rem;
   font-weight: 500;
   color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .output-option input[type="checkbox"] {
@@ -465,6 +481,7 @@ input,
   text-align: center;
   color: var(--muted);
   font-weight: 500;
+  min-height: 1.4em;
 }
 
 .modal-backdrop {
@@ -477,6 +494,10 @@ input,
   padding: 1rem;
 }
 
+.modal-backdrop.modal-closing {
+  animation: modalBackdropOut 180ms ease forwards;
+}
+
 .modal-card {
   width: min(460px, 92vw);
   background: var(--card);
@@ -485,6 +506,10 @@ input,
   box-shadow: var(--shadow);
   padding: 1rem;
   animation: cardPopIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal-backdrop.modal-closing .modal-card {
+  animation: modalCardOut 180ms cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
 }
 
 .modal-card h2 {
@@ -529,6 +554,11 @@ input,
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.1rem;
+}
+
+.input-card.file-open-in,
+.results-grid.file-open-in {
+  animation: fileOpenIn 240ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .result-card {
@@ -603,6 +633,37 @@ input,
   100% {
     opacity: 0;
     transform: scale(0.94) translateY(8px);
+  }
+}
+
+@keyframes fileOpenIn {
+  0% {
+    opacity: 0.78;
+    transform: translateY(6px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalBackdropOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes modalCardOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
   }
 }
 

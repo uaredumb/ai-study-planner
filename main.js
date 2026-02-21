@@ -3,6 +3,7 @@ const notesInputWrap = document.getElementById("notesInputWrap");
 const inputCard = document.querySelector(".input-card");
 const cleanButton = document.getElementById("cleanButton");
 const statusText = document.getElementById("statusText");
+const resultsSection = document.getElementById("resultsSection");
 const cleanNotesList = document.getElementById("cleanNotesList");
 const studyTasksList = document.getElementById("studyTasksList");
 const studyOrderList = document.getElementById("studyOrderList");
@@ -65,6 +66,7 @@ const SUMMARY_MODE_STORAGE = "summary_mode_v1";
 
 let studyFiles = loadStudyFiles();
 let activeFileId = loadActiveFileId(studyFiles);
+let isGenerating = false;
 
 loadTheme();
 renderFiles();
@@ -391,11 +393,17 @@ function renderFiles() {
     button.type = "button";
     button.className = `file-chip${file.id === activeFileId ? " active" : ""}`;
     button.textContent = file.name;
+    button.disabled = isGenerating;
     button.addEventListener("click", () => {
+      if (isGenerating) {
+        statusText.textContent = "Please wait for generation to finish before switching files.";
+        return;
+      }
       activeFileId = file.id;
       persistFiles();
       renderFiles();
       loadActiveFileIntoEditor();
+      triggerFileOpenAnimation();
       statusText.textContent = `Opened file: ${file.name}`;
     });
     li.appendChild(button);
@@ -521,11 +529,7 @@ function openRenameModal(currentName) {
 }
 
 function closeRenameModal() {
-  if (!renameModal) {
-    return;
-  }
-
-  renameModal.classList.add("hidden");
+  closeModalWithAnimation(renameModal);
 }
 
 function submitRenameFile(event) {
@@ -567,11 +571,7 @@ function openNewFileModal() {
 }
 
 function closeNewFileModal() {
-  if (!newFileModal) {
-    return;
-  }
-
-  newFileModal.classList.add("hidden");
+  closeModalWithAnimation(newFileModal);
 }
 
 function submitCreateFile(event) {
@@ -622,11 +622,7 @@ function openDeleteFileModal(fileName) {
 }
 
 function closeDeleteFileModal() {
-  if (!deleteFileModal) {
-    return;
-  }
-
-  deleteFileModal.classList.add("hidden");
+  closeModalWithAnimation(deleteFileModal);
 }
 
 function confirmDeleteFile() {
@@ -674,9 +670,18 @@ function ensureStringArray(value) {
 }
 
 function setLoadingState(isLoading, mode = "clean") {
+  isGenerating = isLoading;
   cleanButton.disabled = isLoading;
+  newFileButton.disabled = isLoading;
+  saveFileButton.disabled = isLoading;
+  renameFileButton.disabled = isLoading;
+  deleteFileButton.disabled = isLoading;
   outputOptionInputs.forEach((input) => {
     input.disabled = isLoading;
+  });
+  const fileButtons = filesList.querySelectorAll(".file-chip");
+  fileButtons.forEach((button) => {
+    button.disabled = isLoading;
   });
   cleanButton.classList.toggle("is-loading", isLoading && mode === "clean");
   if (summarizeLinkButton) {
@@ -919,14 +924,13 @@ function handleSummaryModeChange(mode) {
       void inputCard.offsetWidth;
       inputCard.classList.add("mode-pop-in");
     } else if (!wasNotesCardHidden) {
-      inputCard.classList.remove("mode-pop-in");
-      inputCard.classList.add("mode-pop-out");
-      const hideTimer = setTimeout(() => {
-        inputCard.classList.add("hidden");
-        inputCard.classList.remove("mode-pop-out");
+      const existingHideTimer = Number(inputCard.dataset.hideTimer || 0);
+      if (existingHideTimer) {
+        clearTimeout(existingHideTimer);
         inputCard.dataset.hideTimer = "";
-      }, 220);
-      inputCard.dataset.hideTimer = String(hideTimer);
+      }
+      inputCard.classList.remove("mode-pop-in", "mode-pop-out");
+      inputCard.classList.add("hidden");
     }
   }
   notesInput.disabled = isArticle;
@@ -1049,4 +1053,39 @@ function slugifyFileName(input) {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function closeModalWithAnimation(modalElement) {
+  if (!modalElement || modalElement.classList.contains("hidden")) {
+    return;
+  }
+
+  modalElement.classList.remove("modal-closing");
+  void modalElement.offsetWidth;
+  modalElement.classList.add("modal-closing");
+
+  setTimeout(() => {
+    modalElement.classList.add("hidden");
+    modalElement.classList.remove("modal-closing");
+  }, 180);
+}
+
+function triggerFileOpenAnimation() {
+  const activeChip = filesList.querySelector(".file-chip.active");
+
+  if (activeChip) {
+    activeChip.classList.remove("file-open-in");
+    void activeChip.offsetWidth;
+    activeChip.classList.add("file-open-in");
+  }
+
+  [inputCard, resultsSection].forEach((element) => {
+    if (!element || element.classList.contains("hidden")) {
+      return;
+    }
+
+    element.classList.remove("file-open-in");
+    void element.offsetWidth;
+    element.classList.add("file-open-in");
+  });
 }
