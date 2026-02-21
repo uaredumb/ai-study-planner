@@ -16,7 +16,7 @@
   <main class="app-shell">
     <header class="top-bar">
       <div class="brand-block">
-        <img id="appLogo" class="app-logo" src="AI_Study_Buddy_Logo_Zoomed_Centered.png" alt="AI Study Buddy logo" />
+        <img id="appLogo" class="app-logo" src="Untitled design (14).png" alt="AI Study Buddy logo" />
         <h1>AI Study Buddy</h1>
         <p class="eyebrow">Smart Notes. Clear Tasks. Better Grades.</p>
       </div>
@@ -60,21 +60,39 @@
           placeholder="Example: math ch 4?? finish practice, history civil war notes incomplete, science quiz Friday maybe?"
         ></textarea>
       </div>
+      <div class="output-options-wrap">
+        <p class="input-label">Choose outputs for your Study Pack</p>
+        <div class="output-options-grid">
+          <label class="output-option">
+            <input type="checkbox" checked disabled />
+            <span>Study Tasks (Required)</span>
+          </label>
+          <label class="output-option">
+            <input type="checkbox" checked disabled />
+            <span>Study Plan (Required)</span>
+          </label>
+          <label class="output-option">
+            <input id="outputCleanNotes" type="checkbox" checked />
+            <span>Clean Notes</span>
+          </label>
+          <label class="output-option">
+            <input id="outputFlashcards" type="checkbox" />
+            <span>Flashcards</span>
+          </label>
+          <label class="output-option">
+            <input id="outputQuizQuestions" type="checkbox" />
+            <span>Quiz Questions</span>
+          </label>
+        </div>
+      </div>
       <div class="actions-row">
-        <button id="cleanButton" class="primary-btn">Summarize Notes</button>
-        <button id="summarizeLinkButton" class="primary-btn hidden">Summarize Article</button>
+        <button id="cleanButton" class="primary-btn">Generate Study Pack</button>
+        <button id="summarizeLinkButton" class="primary-btn hidden">Generate Study Pack</button>
         <p id="statusText" class="status-text">Ready</p>
       </div>
     </section>
 
     <section id="resultsSection" class="results-grid" aria-live="polite">
-      <article class="card result-card">
-        <h2>Clean Notes</h2>
-        <ul id="cleanNotesList" class="result-list">
-          <li>No items generated yet.</li>
-        </ul>
-      </article>
-
       <article class="card result-card">
         <h2>Study Tasks</h2>
         <ul id="studyTasksList" class="result-list">
@@ -83,8 +101,29 @@
       </article>
 
       <article class="card result-card">
-        <h2>Suggested Study Order</h2>
+        <h2>Study Plan</h2>
         <ol id="studyOrderList" class="result-list ordered-list">
+          <li>No items generated yet.</li>
+        </ol>
+      </article>
+
+      <article id="cleanNotesCard" class="card result-card">
+        <h2>Clean Notes</h2>
+        <ul id="cleanNotesList" class="result-list">
+          <li>No items generated yet.</li>
+        </ul>
+      </article>
+
+      <article id="flashcardsCard" class="card result-card hidden">
+        <h2>Flashcards</h2>
+        <ul id="flashcardsList" class="result-list">
+          <li>No items generated yet.</li>
+        </ul>
+      </article>
+
+      <article id="quizQuestionsCard" class="card result-card hidden">
+        <h2>Quiz Questions</h2>
+        <ol id="quizQuestionsList" class="result-list ordered-list">
           <li>No items generated yet.</li>
         </ol>
       </article>

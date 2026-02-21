@@ -5,6 +5,14 @@ const statusText = document.getElementById("statusText");
 const cleanNotesList = document.getElementById("cleanNotesList");
 const studyTasksList = document.getElementById("studyTasksList");
 const studyOrderList = document.getElementById("studyOrderList");
+const flashcardsList = document.getElementById("flashcardsList");
+const quizQuestionsList = document.getElementById("quizQuestionsList");
+const cleanNotesCard = document.getElementById("cleanNotesCard");
+const flashcardsCard = document.getElementById("flashcardsCard");
+const quizQuestionsCard = document.getElementById("quizQuestionsCard");
+const outputCleanNotes = document.getElementById("outputCleanNotes");
+const outputFlashcards = document.getElementById("outputFlashcards");
+const outputQuizQuestions = document.getElementById("outputQuizQuestions");
 const themeToggle = document.getElementById("themeToggle");
 const appLogo = document.getElementById("appLogo");
 
@@ -51,18 +59,48 @@ if (articleModeButton) {
 summaryModeInputs.forEach((input) => {
   input.addEventListener("change", () => setSummaryMode(input.value));
 });
+if (outputCleanNotes) {
+  outputCleanNotes.addEventListener("change", updateOptionalOutputCards);
+}
+if (outputFlashcards) {
+  outputFlashcards.addEventListener("change", updateOptionalOutputCards);
+}
+if (outputQuizQuestions) {
+  outputQuizQuestions.addEventListener("change", updateOptionalOutputCards);
+}
 setSummaryMode(loadSummaryMode());
+updateOptionalOutputCards();
 
 if (appLogo) {
+  const logoCandidates = [
+    appLogo.getAttribute("src"),
+    "Untitled design (14).png",
+    "logo.png",
+    "logo.jpg",
+    "logo.jpeg",
+    "logo.webp"
+  ].filter(Boolean);
+  let logoIndex = 0;
+
   const hideBrokenLogo = () => {
     appLogo.style.display = "none";
   };
 
-  appLogo.addEventListener("error", hideBrokenLogo);
+  const tryNextLogo = () => {
+    logoIndex += 1;
 
-  // If the image failed before listeners were attached, hide it on load.
+    if (logoIndex >= logoCandidates.length) {
+      hideBrokenLogo();
+      return;
+    }
+
+    appLogo.src = logoCandidates[logoIndex];
+  };
+
+  appLogo.addEventListener("error", tryNextLogo);
+
   if (appLogo.complete && appLogo.naturalWidth === 0) {
-    hideBrokenLogo();
+    tryNextLogo();
   }
 }
 
@@ -78,14 +116,13 @@ async function handleCleanNotes() {
   setLoadingState(true, "clean");
 
   try {
-    const result = await cleanNotesWithOpenRouter(rawNotes);
+    const result = await generateStudyPack(rawNotes, getSelectedOutputs());
 
-    renderList(cleanNotesList, result.cleanNotes);
-    renderList(studyTasksList, result.studyTasks);
-    renderList(studyOrderList, result.studyOrder);
+    statusText.textContent = "AI is typing your study pack...";
+    await renderResultsWithTyping(result);
     saveActiveFileResults(result);
 
-    statusText.textContent = "Done. Your study plan is ready.";
+    statusText.textContent = "Done. Your study pack is ready.";
   } catch (error) {
     statusText.textContent = error.message;
   } finally {
@@ -111,20 +148,22 @@ async function summarizeArticleFromLink() {
 
   try {
     const articleText = await fetchArticleTextFromUrl(articleUrl);
-    const result = await cleanNotesWithOpenRouter(
-      `Article URL: ${articleUrl}\n\nArticle content:\n${articleText}`
+    const result = await generateStudyPack(
+      `Article URL: ${articleUrl}\n\nArticle content:\n${articleText}`,
+      getSelectedOutputs()
     );
 
-    renderList(cleanNotesList, result.cleanNotes);
-    renderList(studyTasksList, result.studyTasks);
-    renderList(studyOrderList, result.studyOrder);
+    statusText.textContent = "AI is typing your study pack...";
+    await renderResultsWithTyping(result);
     saveActiveFileResults(result);
 
     const generatedNotes = result.cleanNotes.map((line) => `- ${line}`).join("\n");
-    notesInput.value = generatedNotes;
-    saveCurrentFileText();
+    if (generatedNotes) {
+      notesInput.value = generatedNotes;
+      saveCurrentFileText();
+    }
 
-    statusText.textContent = "Article summarized into school notes.";
+    statusText.textContent = "Article converted into your study pack.";
   } catch (error) {
     statusText.textContent = error.message;
   } finally {
@@ -132,8 +171,31 @@ async function summarizeArticleFromLink() {
   }
 }
 
+function getSelectedOutputs() {
+  return {
+    studyTasks: true,
+    studyPlan: true,
+    cleanNotes: Boolean(outputCleanNotes?.checked),
+    flashcards: Boolean(outputFlashcards?.checked),
+    quizQuestions: Boolean(outputQuizQuestions?.checked)
+  };
+}
+
+async function generateStudyPack(text, selectedOutputs) {
+  const base = await cleanNotesWithOpenRouter(text);
+  const sourceLines = base.cleanNotes.length > 0 ? base.cleanNotes : base.studyTasks;
+
+  return {
+    cleanNotes: selectedOutputs.cleanNotes ? base.cleanNotes : [],
+    studyTasks: base.studyTasks,
+    studyOrder: base.studyOrder,
+    flashcards: selectedOutputs.flashcards ? generateFlashcards(sourceLines) : [],
+    quizQuestions: selectedOutputs.quizQuestions ? generateQuizQuestions(sourceLines) : [],
+    selectedOutputs
+  };
+}
+
 async function cleanNotesWithOpenRouter(rawNotes) {
-  // Use the Cloudflare Worker backend
   const workerUrl = "https://ai-study-planner-backend.mavrick-blackburn.workers.dev/api/clean-notes";
 
   const response = await fetch(workerUrl, {
@@ -182,7 +244,9 @@ function loadStudyFiles() {
         content: typeof file.content === "string" ? file.content : "",
         cleanNotes: ensureStringArray(file.cleanNotes),
         studyTasks: ensureStringArray(file.studyTasks),
-        studyOrder: ensureStringArray(file.studyOrder)
+        studyOrder: ensureStringArray(file.studyOrder),
+        flashcards: ensureStringArray(file.flashcards),
+        quizQuestions: ensureStringArray(file.quizQuestions)
       }));
 
     if (sanitized.length === 0) {
@@ -213,7 +277,9 @@ function createStudyFile(name) {
     content: "",
     cleanNotes: [],
     studyTasks: [],
-    studyOrder: []
+    studyOrder: [],
+    flashcards: [],
+    quizQuestions: []
   };
 }
 
@@ -281,6 +347,8 @@ function saveActiveFileResults(result) {
   activeFile.cleanNotes = ensureStringArray(result.cleanNotes);
   activeFile.studyTasks = ensureStringArray(result.studyTasks);
   activeFile.studyOrder = ensureStringArray(result.studyOrder);
+  activeFile.flashcards = ensureStringArray(result.flashcards);
+  activeFile.quizQuestions = ensureStringArray(result.quizQuestions);
   persistFiles();
 }
 
@@ -317,14 +385,20 @@ function exportActiveFile() {
     "Raw Notes",
     notesInput.value.trim() || "(empty)",
     "",
-    "Clean Notes",
-    ...(activeFile.cleanNotes.length > 0 ? activeFile.cleanNotes.map((item) => `- ${item}`) : ["- (empty)" ]),
-    "",
     "Study Tasks",
-    ...(activeFile.studyTasks.length > 0 ? activeFile.studyTasks.map((item) => `- ${item}`) : ["- (empty)"] ),
+    ...(activeFile.studyTasks.length > 0 ? activeFile.studyTasks.map((item) => `- ${item}`) : ["- (empty)"]),
     "",
-    "Suggested Study Order",
-    ...(activeFile.studyOrder.length > 0 ? activeFile.studyOrder.map((item, index) => `${index + 1}. ${item}`) : ["1. (empty)"])
+    "Study Plan",
+    ...(activeFile.studyOrder.length > 0 ? activeFile.studyOrder.map((item, index) => `${index + 1}. ${item}`) : ["1. (empty)"]),
+    "",
+    "Clean Notes",
+    ...(activeFile.cleanNotes.length > 0 ? activeFile.cleanNotes.map((item) => `- ${item}`) : ["- (empty)"]),
+    "",
+    "Flashcards",
+    ...(activeFile.flashcards.length > 0 ? activeFile.flashcards.map((item) => `- ${item}`) : ["- (empty)"]),
+    "",
+    "Quiz Questions",
+    ...(activeFile.quizQuestions.length > 0 ? activeFile.quizQuestions.map((item, index) => `${index + 1}. ${item}`) : ["1. (empty)"])
   ];
 
   const content = lines.join("\n");
@@ -390,29 +464,12 @@ function deleteActiveFile() {
   statusText.textContent = "File deleted.";
 }
 
-
-
 function ensureStringArray(value) {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return value.filter((item) => typeof item === "string" && item.trim().length > 0);
-}
-
-function parseModelJson(text) {
-  try {
-    return JSON.parse(text);
-  } catch (_error) {
-    const firstBrace = text.indexOf("{");
-    const lastBrace = text.lastIndexOf("}");
-
-    if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
-      throw new Error("Model output was not valid JSON.");
-    }
-
-    return JSON.parse(text.slice(firstBrace, lastBrace + 1));
-  }
 }
 
 function setLoadingState(isLoading, mode = "clean") {
@@ -422,9 +479,9 @@ function setLoadingState(isLoading, mode = "clean") {
     summarizeLinkButton.disabled = isLoading;
     summarizeLinkButton.classList.toggle("is-loading", isLoading && mode === "article");
   }
-  cleanButton.textContent = isLoading && mode === "clean" ? "Summarizing Notes..." : "Summarize Notes";
+  cleanButton.textContent = isLoading && mode === "clean" ? "Generating Study Pack..." : "Generate Study Pack";
   if (summarizeLinkButton) {
-    summarizeLinkButton.textContent = isLoading && mode === "article" ? "Summarizing Article..." : "Summarize Article";
+    summarizeLinkButton.textContent = isLoading && mode === "article" ? "Generating Study Pack..." : "Generate Study Pack";
   }
   statusText.classList.toggle("is-processing", isLoading);
 
@@ -460,17 +517,100 @@ function renderList(listElement, items) {
   });
 }
 
-function renderFileResults(file) {
-  if (!file) {
-    renderList(cleanNotesList, []);
-    renderList(studyTasksList, []);
-    renderList(studyOrderList, []);
+async function renderResultsWithTyping(result) {
+  setCardVisibility(cleanNotesCard, result.selectedOutputs?.cleanNotes);
+  setCardVisibility(flashcardsCard, result.selectedOutputs?.flashcards);
+  setCardVisibility(quizQuestionsCard, result.selectedOutputs?.quizQuestions);
+
+  await renderListWithTyping(studyTasksList, result.studyTasks);
+  await renderListWithTyping(studyOrderList, result.studyOrder);
+  await renderListWithTyping(cleanNotesList, result.cleanNotes);
+  await renderListWithTyping(flashcardsList, result.flashcards);
+  await renderListWithTyping(quizQuestionsList, result.quizQuestions);
+}
+
+async function renderListWithTyping(listElement, items) {
+  listElement.innerHTML = "";
+
+  if (!Array.isArray(items) || items.length === 0) {
+    const fallbackItem = document.createElement("li");
+    fallbackItem.textContent = "No items generated yet.";
+    listElement.appendChild(fallbackItem);
     return;
   }
 
-  renderList(cleanNotesList, file.cleanNotes);
+  for (const item of items) {
+    const li = document.createElement("li");
+    listElement.appendChild(li);
+    await typeText(li, item, 16);
+  }
+}
+
+function typeText(element, text, delayMs = 16) {
+  return new Promise((resolve) => {
+    let index = 0;
+
+    const tick = () => {
+      element.textContent = text.slice(0, index);
+      index += 1;
+
+      if (index <= text.length) {
+        setTimeout(tick, delayMs);
+      } else {
+        resolve();
+      }
+    };
+
+    tick();
+  });
+}
+
+function renderFileResults(file) {
+  if (!file) {
+    renderList(studyTasksList, []);
+    renderList(studyOrderList, []);
+    renderList(cleanNotesList, []);
+    renderList(flashcardsList, []);
+    renderList(quizQuestionsList, []);
+    updateOptionalOutputCards();
+    return;
+  }
+
   renderList(studyTasksList, file.studyTasks);
   renderList(studyOrderList, file.studyOrder);
+  renderList(cleanNotesList, file.cleanNotes);
+  renderList(flashcardsList, file.flashcards);
+  renderList(quizQuestionsList, file.quizQuestions);
+
+  setCardVisibility(cleanNotesCard, file.cleanNotes.length > 0 || Boolean(outputCleanNotes?.checked));
+  setCardVisibility(flashcardsCard, file.flashcards.length > 0 || Boolean(outputFlashcards?.checked));
+  setCardVisibility(quizQuestionsCard, file.quizQuestions.length > 0 || Boolean(outputQuizQuestions?.checked));
+}
+
+function updateOptionalOutputCards() {
+  setCardVisibility(cleanNotesCard, Boolean(outputCleanNotes?.checked));
+  setCardVisibility(flashcardsCard, Boolean(outputFlashcards?.checked));
+  setCardVisibility(quizQuestionsCard, Boolean(outputQuizQuestions?.checked));
+}
+
+function setCardVisibility(card, isVisible) {
+  if (!card) {
+    return;
+  }
+
+  card.classList.toggle("hidden", !isVisible);
+}
+
+function generateFlashcards(sourceLines) {
+  return ensureStringArray(sourceLines)
+    .slice(0, 10)
+    .map((line, index) => `Card ${index + 1}: ${line}`);
+}
+
+function generateQuizQuestions(sourceLines) {
+  return ensureStringArray(sourceLines)
+    .slice(0, 8)
+    .map((line, index) => `Question ${index + 1}: Explain "${line}" in your own words.`);
 }
 
 function toggleTheme() {
@@ -530,9 +670,9 @@ function handleSummaryModeChange(mode) {
   });
 
   if (isArticle) {
-    statusText.textContent = "Article mode selected. Paste a link and summarize.";
+    statusText.textContent = "Article mode selected. Paste a link and generate your study pack.";
   } else {
-    statusText.textContent = "Notes mode selected. Paste notes and summarize.";
+    statusText.textContent = "Notes mode selected. Paste notes and generate your study pack.";
   }
 }
 

@@ -398,6 +398,30 @@ textarea {
   resize: vertical;
 }
 
+.output-options-wrap {
+  margin-top: 0.9rem;
+}
+
+.output-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.55rem 0.8rem;
+}
+
+.output-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.output-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
 .results-grid {
   margin-top: 1.3rem;
   display: grid;
@@ -416,11 +440,6 @@ textarea {
   font-size: clamp(1.5rem, 2.2vw, 2rem);
   line-height: 1.15;
   letter-spacing: -0.01em;
-}
-
-.result-card:nth-child(3) {
-  grid-column: 1;
-  min-height: 190px;
 }
 
 .result-list {
