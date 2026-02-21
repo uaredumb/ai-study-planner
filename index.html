@@ -65,22 +65,27 @@
         <div class="output-options-grid">
           <label class="output-option">
             <input id="outputStudyTasks" type="checkbox" checked />
+            <span class="output-icon" aria-hidden="true">✅</span>
             <span>Study Tasks</span>
           </label>
           <label class="output-option">
             <input id="outputStudyPlan" type="checkbox" checked />
+            <span class="output-icon" aria-hidden="true">🗂️</span>
             <span>Study Plan</span>
           </label>
           <label class="output-option">
             <input id="outputCleanNotes" type="checkbox" checked />
+            <span class="output-icon" aria-hidden="true">📝</span>
             <span>Clean Notes</span>
           </label>
           <label class="output-option">
             <input id="outputFlashcards" type="checkbox" />
+            <span class="output-icon" aria-hidden="true">🃏</span>
             <span>Flashcards</span>
           </label>
           <label class="output-option">
             <input id="outputQuizQuestions" type="checkbox" />
+            <span class="output-icon" aria-hidden="true">❓</span>
             <span>Quiz Questions</span>
           </label>
         </div>
@@ -190,6 +195,24 @@
       <div class="modal-actions">
         <button id="deleteFileCancelButton" type="button" class="secondary-btn">Cancel</button>
         <button id="deleteFileConfirmButton" type="button" class="secondary-btn danger-btn">Delete File</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tutorialModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
+    <div class="modal-card tutorial-card">
+      <div class="tutorial-top">
+        <h2 id="tutorialTitle">Get Started</h2>
+        <button id="tutorialCloseButton" type="button" class="secondary-btn tutorial-close-btn">Skip</button>
+      </div>
+      <p id="tutorialText" class="modal-message">Welcome! Let’s walk through AI Study Buddy in under a minute.</p>
+      <div class="tutorial-example-wrap">
+        <p class="tutorial-label">Example</p>
+        <pre id="tutorialExample" class="tutorial-example"></pre>
+      </div>
+      <div class="modal-actions tutorial-actions">
+        <button id="tutorialBackButton" type="button" class="secondary-btn">Back</button>
+        <button id="tutorialNextButton" type="button" class="primary-btn">Next</button>
       </div>
     </div>
   </div>

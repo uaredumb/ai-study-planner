@@ -59,6 +59,12 @@ const deleteFileModal = document.getElementById("deleteFileModal");
 const deleteFileMessage = document.getElementById("deleteFileMessage");
 const deleteFileCancelButton = document.getElementById("deleteFileCancelButton");
 const deleteFileConfirmButton = document.getElementById("deleteFileConfirmButton");
+const tutorialModal = document.getElementById("tutorialModal");
+const tutorialCloseButton = document.getElementById("tutorialCloseButton");
+const tutorialBackButton = document.getElementById("tutorialBackButton");
+const tutorialNextButton = document.getElementById("tutorialNextButton");
+const tutorialText = document.getElementById("tutorialText");
+const tutorialExample = document.getElementById("tutorialExample");
 const articleUrlInput = document.getElementById("articleUrlInput");
 const summarizeLinkButton = document.getElementById("summarizeLinkButton");
 const articleInputWrap = document.getElementById("articleInputWrap");
@@ -69,6 +75,7 @@ const summaryModeInputs = document.querySelectorAll('input[name="summaryMode"]')
 
 const THEME_KEY = "ai-study-planner-theme";
 const PERFORMANCE_MODE_KEY = "performance_mode_v1";
+const TUTORIAL_SEEN_KEY = "tutorial_seen_v1";
 const STUDY_FILES_STORAGE = "study_files_v1";
 const ACTIVE_FILE_ID_STORAGE = "active_study_file_id_v1";
 const SUMMARY_MODE_STORAGE = "summary_mode_v1";
@@ -77,6 +84,25 @@ let studyFiles = loadStudyFiles();
 let activeFileId = loadActiveFileId(studyFiles);
 let isGenerating = false;
 let createdFileIdForAnimation = "";
+let tutorialStepIndex = 0;
+
+const tutorialSteps = [
+  {
+    text: "Paste messy class notes once and generate a full study pack in one click.",
+    example:
+      "math ch 4?? finish practice\nhistory civil war notes incomplete\nscience quiz friday maybe"
+  },
+  {
+    text: "Pick multiple outputs with checkboxes: tasks, plan, clean notes, flashcards, and quiz questions.",
+    example:
+      "Try this combo:\n- Study Tasks\n- Study Plan\n- Flashcards\n- Quiz Questions"
+  },
+  {
+    text: "Use Summarize Article mode to turn a link into study material, then copy each section with the Copy buttons.",
+    example:
+      "https://example.com/article\n\nTip: you can save each file and switch between study sets."
+  }
+];
 
 loadTheme();
 loadPerformanceMode();
@@ -131,6 +157,22 @@ if (deleteFileModal) {
     }
   });
 }
+if (tutorialCloseButton) {
+  tutorialCloseButton.addEventListener("click", skipTutorial);
+}
+if (tutorialBackButton) {
+  tutorialBackButton.addEventListener("click", goToPreviousTutorialStep);
+}
+if (tutorialNextButton) {
+  tutorialNextButton.addEventListener("click", goToNextTutorialStep);
+}
+if (tutorialModal) {
+  tutorialModal.addEventListener("click", (event) => {
+    if (event.target === tutorialModal) {
+      skipTutorial();
+    }
+  });
+}
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && renameModal && !renameModal.classList.contains("hidden")) {
     closeRenameModal();
@@ -142,6 +184,10 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Escape" && deleteFileModal && !deleteFileModal.classList.contains("hidden")) {
     closeDeleteFileModal();
+    return;
+  }
+  if (event.key === "Escape" && tutorialModal && !tutorialModal.classList.contains("hidden")) {
+    skipTutorial();
   }
 });
 document.addEventListener("copy", (event) => {
@@ -201,6 +247,7 @@ if (outputQuizQuestions) {
 setSummaryMode(loadSummaryMode());
 updateOptionalOutputCards();
 bindCopyButtons();
+showTutorialIfNeeded();
 
 if (appLogo) {
   const logoCandidates = [
@@ -1208,4 +1255,60 @@ function triggerFileOpenAnimation() {
     void element.offsetWidth;
     element.classList.add("file-open-in");
   });
+}
+
+function showTutorialIfNeeded() {
+  if (!tutorialModal) {
+    return;
+  }
+
+  const hasSeenTutorial = localStorage.getItem(TUTORIAL_SEEN_KEY) === "yes";
+  if (hasSeenTutorial) {
+    return;
+  }
+
+  tutorialStepIndex = 0;
+  renderTutorialStep();
+  tutorialModal.classList.remove("hidden");
+}
+
+function renderTutorialStep() {
+  const step = tutorialSteps[tutorialStepIndex];
+  if (!step || !tutorialText || !tutorialExample || !tutorialBackButton || !tutorialNextButton) {
+    return;
+  }
+
+  tutorialText.textContent = step.text;
+  tutorialExample.textContent = step.example;
+  tutorialBackButton.disabled = tutorialStepIndex === 0;
+  tutorialNextButton.textContent =
+    tutorialStepIndex === tutorialSteps.length - 1 ? "Finish" : "Next";
+}
+
+function goToNextTutorialStep() {
+  if (tutorialStepIndex >= tutorialSteps.length - 1) {
+    finishTutorial();
+    return;
+  }
+
+  tutorialStepIndex += 1;
+  renderTutorialStep();
+}
+
+function goToPreviousTutorialStep() {
+  if (tutorialStepIndex <= 0) {
+    return;
+  }
+
+  tutorialStepIndex -= 1;
+  renderTutorialStep();
+}
+
+function skipTutorial() {
+  finishTutorial();
+}
+
+function finishTutorial() {
+  localStorage.setItem(TUTORIAL_SEEN_KEY, "yes");
+  closeModalWithAnimation(tutorialModal);
 }

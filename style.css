@@ -513,6 +513,13 @@ input,
   user-select: none;
 }
 
+.output-icon {
+  display: inline-flex;
+  width: 1.05rem;
+  justify-content: center;
+  line-height: 1;
+}
+
 .output-option input[type="checkbox"] {
   width: 16px;
   height: 16px;
@@ -615,6 +622,48 @@ input,
   justify-content: flex-end;
   gap: 0.6rem;
   flex-wrap: wrap;
+}
+
+.tutorial-card {
+  width: min(520px, 94vw);
+}
+
+.tutorial-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.tutorial-close-btn {
+  padding: 0.35rem 0.75rem;
+}
+
+.tutorial-example-wrap {
+  margin-top: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  background: color-mix(in srgb, var(--card), var(--bg) 28%);
+}
+
+.tutorial-label {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tutorial-example {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: inherit;
+  line-height: 1.4;
+  user-select: text;
+}
+
+.tutorial-actions {
+  margin-top: 0.85rem;
 }
 
 .results-grid {
