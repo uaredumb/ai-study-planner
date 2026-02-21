@@ -258,6 +258,18 @@ h1 {
   animation: none;
 }
 
+.theme-btn:disabled::before,
+.primary-btn:disabled::before,
+.secondary-btn:disabled::before,
+.theme-btn:disabled::after,
+.primary-btn:disabled::after,
+.secondary-btn:disabled::after {
+  animation: none;
+  transition: none;
+  opacity: 0;
+  transform: none;
+}
+
 .theme-btn:focus-visible,
 .primary-btn:focus-visible,
 .secondary-btn:focus-visible,

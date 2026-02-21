@@ -45,6 +45,7 @@ const performanceLoaderText = document.getElementById("performanceLoaderText");
 const appLogo = document.getElementById("appLogo");
 
 const filesList = document.getElementById("filesList");
+const filesCard = document.querySelector(".files-card");
 const newFileButton = document.getElementById("newFileButton");
 const saveFileButton = document.getElementById("saveFileButton");
 const renameFileButton = document.getElementById("renameFileButton");
@@ -67,7 +68,6 @@ const tutorialBackButton = document.getElementById("tutorialBackButton");
 const tutorialNextButton = document.getElementById("tutorialNextButton");
 const tutorialText = document.getElementById("tutorialText");
 const tutorialExample = document.getElementById("tutorialExample");
-const tutorialExampleLabel = document.getElementById("tutorialExampleLabel");
 const tutorialStepCounter = document.getElementById("tutorialStepCounter");
 const tutorialExampleWrap = document.querySelector(".tutorial-example-wrap");
 const articleUrlInput = document.getElementById("articleUrlInput");
@@ -94,7 +94,7 @@ let createdFileIdForAnimation = "";
 let tutorialStepIndex = 0;
 let allowNativeCopyOnce = false;
 let isPerformanceToggleBusy = false;
-let tutorialWaitingForGeneration = false;
+let tutorialPendingAction = "";
 
 const tutorialSteps = [
   {
@@ -133,8 +133,9 @@ const tutorialSteps = [
   {
     title: "Done",
     target: "files",
-    exampleLabel: "Workflow",
-    text: "Use New/Save/Rename/Delete to manage files in this section. You can switch files anytime (except during generation).",
+    exampleLabel: "Assignment",
+    text: "Use New/Save/Rename/Delete to manage files in this section. Create one new file now to finish.",
+    waitForAction: "create-file",
     example:
       "Create one file per subject for cleaner study sessions."
   }
@@ -729,6 +730,7 @@ function submitCreateFile(event) {
   triggerFileOpenAnimation();
   closeNewFileModal();
   statusText.textContent = `Created file: ${newFile.name}`;
+  handleTutorialCreateFileCompleted();
 }
 
 function deleteActiveFile() {
@@ -1108,9 +1110,6 @@ function handleSummaryModeChange(mode) {
       articleInputWrap.classList.add("mode-pop-in");
     }
   }
-  if (isArticle && articleUrlInput && !articleUrlInput.value.trim()) {
-    articleUrlInput.value = "https://www.britannica.com/biography/George-Washington";
-  }
   if (notesInputWrap) {
     notesInputWrap.classList.toggle("hidden", isArticle);
   }
@@ -1385,22 +1384,14 @@ function renderTutorialStep() {
   if (tutorialExample) {
     tutorialExample.textContent = step.example || "";
   }
-  if (tutorialExampleLabel) {
-    if (step.exampleLabel) {
-      tutorialExampleLabel.textContent = step.exampleLabel;
-    } else {
-    const looksLikeTip = typeof step.example === "string" && step.example.trim().toLowerCase().startsWith("tip:");
-    tutorialExampleLabel.textContent = looksLikeTip ? "Tip" : "Example";
-    }
-  }
   if (step.fillNotesText && notesInput) {
     notesInput.value = step.fillNotesText;
     saveCurrentFileText();
   }
   tutorialBackButton.disabled = tutorialStepIndex === 0;
-  tutorialNextButton.disabled = step.waitForAction === "generate";
+  tutorialNextButton.disabled = step.waitForAction === "generate" || step.waitForAction === "create-file";
   tutorialNextButton.textContent = tutorialStepIndex === tutorialSteps.length - 1 ? "Finish" : "Next";
-  tutorialWaitingForGeneration = false;
+  tutorialPendingAction = step.waitForAction || "";
 }
 
 function goToNextTutorialStep() {
@@ -1441,16 +1432,27 @@ function handleTutorialGenerateAction() {
     return;
   }
 
-  tutorialWaitingForGeneration = true;
+  tutorialPendingAction = "generate";
 }
 
 function handleTutorialGenerationCompleted() {
   const step = tutorialSteps[tutorialStepIndex];
-  if (!step || step.waitForAction !== "generate" || !tutorialWaitingForGeneration) {
+  if (!step || step.waitForAction !== "generate" || tutorialPendingAction !== "generate") {
     return;
   }
 
-  tutorialWaitingForGeneration = false;
+  tutorialPendingAction = "";
+  tutorialNextButton.disabled = false;
+  goToNextTutorialStep();
+}
+
+function handleTutorialCreateFileCompleted() {
+  const step = tutorialSteps[tutorialStepIndex];
+  if (!step || step.waitForAction !== "create-file" || tutorialPendingAction !== "create-file") {
+    return;
+  }
+
+  tutorialPendingAction = "";
   tutorialNextButton.disabled = false;
   goToNextTutorialStep();
 }
@@ -1469,7 +1471,7 @@ function getTutorialTarget(targetKey) {
     return studyTasksCard;
   }
   if (targetKey === "files") {
-    return filesList;
+    return filesCard || filesList;
   }
   if (targetKey === "topActions") {
     return topActions;
