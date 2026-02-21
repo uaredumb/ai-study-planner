@@ -1043,10 +1043,12 @@ async function togglePerformanceMode() {
   }
   showPerformanceLoader();
   await delay(320);
+  clearTransientAnimationClasses();
 
   const enabled = document.body.classList.toggle("performance-mode");
   localStorage.setItem(PERFORMANCE_MODE_KEY, enabled ? "on" : "off");
   updatePerformanceButtonLabel(enabled);
+  clearTransientAnimationClasses();
 
   hidePerformanceLoader();
   if (performanceToggle) {
@@ -1297,12 +1299,7 @@ function triggerFileOpenAnimation() {
   const activeChip = filesList.querySelector(".file-chip.active");
 
   if (activeChip) {
-    activeChip.classList.remove("file-open-in");
-    void activeChip.offsetWidth;
-    activeChip.classList.add("file-open-in");
-    setTimeout(() => {
-      activeChip.classList.remove("file-open-in");
-    }, 260);
+    playTransientAnimation(activeChip, "file-open-in");
   }
 
   [summarizeModeCard, inputCard, resultsSection].forEach((element) => {
@@ -1310,13 +1307,25 @@ function triggerFileOpenAnimation() {
       return;
     }
 
-    element.classList.remove("file-open-in");
-    void element.offsetWidth;
-    element.classList.add("file-open-in");
-    setTimeout(() => {
-      element.classList.remove("file-open-in");
-    }, 280);
+    playTransientAnimation(element, "file-open-in");
   });
+}
+
+function playTransientAnimation(element, className) {
+  if (!element || !className) {
+    return;
+  }
+
+  element.classList.remove(className);
+  void element.offsetWidth;
+  element.classList.add(className);
+  element.addEventListener(
+    "animationend",
+    () => {
+      element.classList.remove(className);
+    },
+    { once: true }
+  );
 }
 
 function showTutorialIfNeeded() {
@@ -1468,4 +1477,23 @@ function hidePerformanceLoader() {
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function clearTransientAnimationClasses() {
+  document.querySelectorAll(
+    ".file-open-in, .file-create-in, .mode-pop-in, .mode-pop-out, .island-pop, .pop-in, .pop-out, .check-pop, .click-burst, .modal-closing"
+  ).forEach((element) => {
+    element.classList.remove(
+      "file-open-in",
+      "file-create-in",
+      "mode-pop-in",
+      "mode-pop-out",
+      "island-pop",
+      "pop-in",
+      "pop-out",
+      "check-pop",
+      "click-burst",
+      "modal-closing"
+    );
+  });
 }
