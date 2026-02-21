@@ -532,6 +532,11 @@ input,
   object-fit: contain;
 }
 
+body.dark .btn-icon,
+body.dark .output-icon {
+  filter: brightness(0) invert(1);
+}
+
 .output-option input[type="checkbox"] {
   width: 16px;
   height: 16px;

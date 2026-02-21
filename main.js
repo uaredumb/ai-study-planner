@@ -101,6 +101,7 @@ let tutorialStepIndex = 0;
 let allowNativeCopyOnce = false;
 let isPerformanceToggleBusy = false;
 let tutorialPendingAction = "";
+let tutorialDynamicStep = null;
 
 const tutorialSteps = [
   {
@@ -109,12 +110,13 @@ const tutorialSteps = [
     exampleLabel: "Tip",
     text: "This island controls your study workflow. Use Notes/Article mode and start from here.",
     example:
-      "Tip: You can switch between Summarize Notes and Summarize Article anytime."
+      "You can switch between Summarize Notes and Summarize Article anytime."
   },
   {
     title: "Outputs + Buttons",
     target: "outputs",
     text: "Pick outputs you want in your study pack: tasks, plan, clean notes, flashcards, and quiz questions.",
+    waitForAction: "select-output",
     exampleLabel: "Try",
     example:
       "Try these outputs: Study Tasks + Study Plan + Flashcards."
@@ -122,19 +124,11 @@ const tutorialSteps = [
   {
     title: "Try Generate",
     target: "generate",
-    text: "Now click Generate Study Pack once. This step continues only after generation fully completes.",
+    text: "Click Generate Study Pack once. Continue after generation fully completes.",
     waitForAction: "generate",
     hideExample: true,
     fillNotesText:
       "Math test tmrw not ready need to practice fractions still dont get how to divide decimals lol. English read chapter 5 of Call of the Wild dont forget to summarize 3 lines only maybe write like gamer style. Science project omg need to finish volcano but dont have enough baking soda??? maybe ask mom for more. History quiz next week on egypt pharaohs and pyramids confusing af. Spelling words ugh too many cant remember them all. PE tomorrow run laps hope it doesnt rain. Art sketch still not done want to add more colors maybe neon?? also draw robot idea. Computer class test on coding syntax forgot loops how they work. Music need to practice piano scales last time my hand hurt so much. Lunch forgot sandwich at home had to buy chips rip."
-  },
-  {
-    title: "Tasks Section",
-    target: "tasks",
-    exampleLabel: "Assignment",
-    text: "This area shows Study Tasks first. Each output card has its own Copy button.",
-    example:
-      "Use tasks as your action checklist for today."
   },
   {
     title: "Done",
@@ -307,30 +301,35 @@ if (outputCleanNotes) {
   outputCleanNotes.addEventListener("change", () => {
     triggerCheckboxAnimation(outputCleanNotes);
     updateOptionalOutputCards();
+    syncTutorialStepActionState();
   });
 }
 if (outputStudyTasks) {
   outputStudyTasks.addEventListener("change", () => {
     triggerCheckboxAnimation(outputStudyTasks);
     updateOptionalOutputCards();
+    syncTutorialStepActionState();
   });
 }
 if (outputStudyPlan) {
   outputStudyPlan.addEventListener("change", () => {
     triggerCheckboxAnimation(outputStudyPlan);
     updateOptionalOutputCards();
+    syncTutorialStepActionState();
   });
 }
 if (outputFlashcards) {
   outputFlashcards.addEventListener("change", () => {
     triggerCheckboxAnimation(outputFlashcards);
     updateOptionalOutputCards();
+    syncTutorialStepActionState();
   });
 }
 if (outputQuizQuestions) {
   outputQuizQuestions.addEventListener("change", () => {
     triggerCheckboxAnimation(outputQuizQuestions);
     updateOptionalOutputCards();
+    syncTutorialStepActionState();
   });
 }
 setSummaryMode(loadSummaryMode());
@@ -1414,7 +1413,7 @@ function startTutorial() {
 }
 
 function renderTutorialStep() {
-  const step = tutorialSteps[tutorialStepIndex];
+  const step = getCurrentTutorialStep();
   if (!step || !tutorialText || !tutorialExample || !tutorialBackButton || !tutorialNextButton) {
     return;
   }
@@ -1431,7 +1430,7 @@ function renderTutorialStep() {
   }
 
   if (tutorialStepCounter) {
-    tutorialStepCounter.textContent = `Step ${tutorialStepIndex + 1} of ${tutorialSteps.length}`;
+    tutorialStepCounter.textContent = `Step ${tutorialStepIndex + 1} of ${getTutorialStepCount()}`;
   }
   if (step.title) {
     const titleNode = document.getElementById("tutorialTitle");
@@ -1444,7 +1443,7 @@ function renderTutorialStep() {
     tutorialExampleWrap.classList.toggle("hidden", Boolean(step.hideExample));
   }
   if (tutorialExampleLabel) {
-    tutorialExampleLabel.textContent = "Assignment";
+    tutorialExampleLabel.textContent = step.exampleLabel || "Assignment";
   }
   if (tutorialExample) {
     tutorialExample.textContent = step.example || "";
@@ -1454,13 +1453,26 @@ function renderTutorialStep() {
     saveCurrentFileText();
   }
   tutorialBackButton.disabled = tutorialStepIndex === 0;
-  tutorialNextButton.disabled = step.waitForAction === "generate" || step.waitForAction === "create-file";
+  tutorialNextButton.disabled =
+    step.waitForAction === "generate" ||
+    step.waitForAction === "create-file" ||
+    (step.waitForAction === "select-output" && !hasAnyOutputSelected());
   tutorialNextButton.textContent = tutorialStepIndex === tutorialSteps.length - 1 ? "Finish" : "Next";
   tutorialPendingAction = step.waitForAction || "";
 }
 
 function goToNextTutorialStep() {
-  if (tutorialStepIndex >= tutorialSteps.length - 1) {
+  const step = getCurrentTutorialStep();
+  if (step?.waitForAction === "select-output" && !hasAnyOutputSelected()) {
+    statusText.textContent = "Select at least one output to continue.";
+    return;
+  }
+
+  if (tutorialStepIndex === 2) {
+    tutorialDynamicStep = buildDynamicOutputStep();
+  }
+
+  if (tutorialStepIndex >= getTutorialStepCount() - 1) {
     finishTutorial();
     return;
   }
@@ -1494,7 +1506,7 @@ function finishTutorial() {
 }
 
 function handleTutorialGenerateAction() {
-  const step = tutorialSteps[tutorialStepIndex];
+  const step = getCurrentTutorialStep();
   if (!step || step.waitForAction !== "generate") {
     return;
   }
@@ -1503,7 +1515,7 @@ function handleTutorialGenerateAction() {
 }
 
 function handleTutorialGenerationCompleted() {
-  const step = tutorialSteps[tutorialStepIndex];
+  const step = getCurrentTutorialStep();
   if (!step || step.waitForAction !== "generate" || tutorialPendingAction !== "generate") {
     return;
   }
@@ -1514,7 +1526,7 @@ function handleTutorialGenerationCompleted() {
 }
 
 function handleTutorialCreateFileCompleted() {
-  const step = tutorialSteps[tutorialStepIndex];
+  const step = getCurrentTutorialStep();
   if (!step || step.waitForAction !== "create-file" || tutorialPendingAction !== "create-file") {
     return;
   }
@@ -1537,6 +1549,18 @@ function getTutorialTarget(targetKey) {
   if (targetKey === "tasks") {
     return studyTasksCard;
   }
+  if (targetKey === "plan") {
+    return studyPlanCard;
+  }
+  if (targetKey === "clean") {
+    return cleanNotesCard;
+  }
+  if (targetKey === "flashcards") {
+    return flashcardsCard;
+  }
+  if (targetKey === "quiz") {
+    return quizQuestionsCard;
+  }
   if (targetKey === "files") {
     return filesCard || filesList;
   }
@@ -1550,6 +1574,102 @@ function clearTutorialHighlights() {
   document.querySelectorAll(".tutorial-highlight").forEach((element) => {
     element.classList.remove("tutorial-highlight");
   });
+}
+
+function hasAnyOutputSelected() {
+  return outputOptionInputs.some((input) => Boolean(input?.checked));
+}
+
+function syncTutorialStepActionState() {
+  if (!isTutorialActive()) {
+    return;
+  }
+
+  const step = getCurrentTutorialStep();
+  if (!step || step.waitForAction !== "select-output" || !tutorialNextButton) {
+    return;
+  }
+
+  tutorialNextButton.disabled = !hasAnyOutputSelected();
+}
+
+function getCurrentTutorialStep() {
+  if (tutorialStepIndex === 3) {
+    return tutorialDynamicStep || buildDynamicOutputStep();
+  }
+  if (tutorialStepIndex >= 4) {
+    return tutorialSteps[tutorialStepIndex - 1] || null;
+  }
+  return tutorialSteps[tutorialStepIndex] || null;
+}
+
+function getTutorialStepCount() {
+  return tutorialSteps.length + 1;
+}
+
+function buildDynamicOutputStep() {
+  const firstSelectedOutput = getFirstSelectedOutputKey();
+
+  if (firstSelectedOutput === "studyPlan") {
+    return {
+      title: "Study Plan Section",
+      target: "plan",
+      exampleLabel: "Assignment",
+      text: "This section orders your study session step-by-step.",
+      example: "Follow the order from top to bottom for focused study flow."
+    };
+  }
+
+  if (firstSelectedOutput === "cleanNotes") {
+    return {
+      title: "Clean Notes Section",
+      target: "clean",
+      exampleLabel: "Assignment",
+      text: "This section rewrites messy notes into clearer study notes.",
+      example: "Use these clean notes as your main review sheet."
+    };
+  }
+
+  if (firstSelectedOutput === "flashcards") {
+    return {
+      title: "Flashcards Section",
+      target: "flashcards",
+      exampleLabel: "Assignment",
+      text: "This section creates quick flashcards for active recall.",
+      example: "Review cards in short rounds: 5 to 10 minutes each."
+    };
+  }
+
+  if (firstSelectedOutput === "quizQuestions") {
+    return {
+      title: "Quiz Questions Section",
+      target: "quiz",
+      exampleLabel: "Assignment",
+      text: "This section gives practice quiz questions from your notes.",
+      example: "Answer without looking, then check and correct."
+    };
+  }
+
+  return {
+    title: "Study Tasks Section",
+    target: "tasks",
+    exampleLabel: "Assignment",
+    text: "This section shows actionable tasks to complete first.",
+    example: "Use tasks as your checklist and mark them off as you finish."
+  };
+}
+
+function getFirstSelectedOutputKey() {
+  const outputMap = [
+    { key: "studyTasks", input: outputStudyTasks },
+    { key: "studyPlan", input: outputStudyPlan },
+    { key: "cleanNotes", input: outputCleanNotes },
+    { key: "flashcards", input: outputFlashcards },
+    { key: "quizQuestions", input: outputQuizQuestions }
+  ];
+
+  const first = outputMap.find((entry) => entry.input && entry.input.checked);
+  return first ? first.key : "studyTasks";
 }
 
 function isTutorialActive() {
