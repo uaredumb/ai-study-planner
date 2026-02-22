@@ -640,8 +640,28 @@ async function cleanNotesWithOpenRouter(rawNotes) {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to clean notes");
+    let errorPayload = null;
+    try {
+      errorPayload = await response.json();
+    } catch (_error) {
+      errorPayload = null;
+    }
+
+    if (response.status === 401) {
+      if (ENABLE_AUTH) {
+        isUserAuthenticated = false;
+        continueAsGuest();
+        promptAuthForFeature("generate study packs");
+        if (authGateText) {
+          authGateText.textContent =
+            (errorPayload && errorPayload.error) ||
+            "Your session is invalid or expired. Please sign in again.";
+        }
+      }
+      throw new Error("Your session expired. Please sign in again.");
+    }
+
+    throw new Error((errorPayload && errorPayload.error) || "Failed to clean notes");
   }
 
   const result = await response.json();
@@ -2175,13 +2195,21 @@ async function getApiAuthHeaders() {
   }
 
   try {
-    const token = await window.Clerk.session.getToken();
+    const token = await window.Clerk.session.getToken({ skipCache: true });
     if (!token) {
       return {};
     }
     return { Authorization: `Bearer ${token}` };
   } catch (_error) {
-    return {};
+    try {
+      const fallbackToken = await window.Clerk.session.getToken();
+      if (!fallbackToken) {
+        return {};
+      }
+      return { Authorization: `Bearer ${fallbackToken}` };
+    } catch (_fallbackError) {
+      return {};
+    }
   }
 }
 
