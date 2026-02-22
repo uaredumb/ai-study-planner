@@ -78,6 +78,21 @@ Notes:
 - The app is locked until login succeeds.
 - Tutorial starts only after the user is authenticated.
 
+## Cloudflare Pages Functions (Secure API Key)
+
+Frontend now calls `POST /api/chat` and never sends an API key from client code.
+
+1. In Cloudflare Pages project settings, add environment variable:
+   - `OPENROUTER_API_KEY` (required)
+2. Optional env vars:
+   - `OPENROUTER_MODEL`
+   - `OPENROUTER_SITE_URL`
+   - `OPENROUTER_APP_NAME`
+3. Deploy with the `functions/` directory included.
+
+Local Pages dev:
+- Copy `.dev.vars.example` to `.dev.vars` and set real values.
+
 ## Deploying the backend to GitHub
 
 - A `deploy` (bash) and `deploy.ps1` (PowerShell) script are included at the repository root.

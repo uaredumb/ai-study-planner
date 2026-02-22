@@ -113,9 +113,8 @@ let didRunTutorialGateCheck = false;
 let isUserAuthenticated = false;
 let authView = "sign-in";
 let clerkLoaded = false;
-const FALLBACK_CLERK_PUBLISHABLE_KEY = "pk_test_YXJyaXZpbmctaGVyb24tNTQuY2xlcmsuYWNjb3VudHMuZGV2JA";
 const ALLOW_GUEST_FALLBACK = false;
-const ENABLE_AUTH = false;
+const ENABLE_AUTH = true;
 
 const tutorialSteps = [
   {
@@ -490,7 +489,7 @@ async function generateStudyPack(text, selectedOutputs) {
 }
 
 async function cleanNotesWithOpenRouter(rawNotes) {
-  const workerUrl = "https://ai-study-planner-backend.mavrick-blackburn.workers.dev/api/clean-notes";
+  const workerUrl = "/api/chat";
 
   const response = await fetch(workerUrl, {
     method: "POST",
@@ -1404,7 +1403,6 @@ function getClerkPublishableKey() {
     window.APP_CONFIG?.CLERK_PUBLISHABLE_KEY ||
     window.CLERK_PUBLISHABLE_KEY ||
     metaKey ||
-    FALLBACK_CLERK_PUBLISHABLE_KEY ||
     "";
   return typeof key === "string" ? key.trim() : "";
 }
