@@ -182,6 +182,23 @@ body.auth-locked .app-shell {
   min-height: 380px;
 }
 
+.clerk-auth-stack {
+  position: relative;
+}
+
+.auth-pane {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.auth-pane.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#clerkSignUpMount.auth-pane.active {
+  box-shadow: inset 0 0 0 1px rgba(117, 140, 241, 0.22), 0 16px 36px rgba(17, 33, 92, 0.28);
+}
+
 .brand-block {
   display: flex;
   flex-direction: column;

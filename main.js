@@ -90,7 +90,8 @@ const authGateTitle = document.getElementById("authGateTitle");
 const authGateText = document.getElementById("authGateText");
 const authSignInTab = document.getElementById("authSignInTab");
 const authSignUpTab = document.getElementById("authSignUpTab");
-const clerkAuthMount = document.getElementById("clerkAuthMount");
+const clerkSignInMount = document.getElementById("clerkSignInMount");
+const clerkSignUpMount = document.getElementById("clerkSignUpMount");
 const clerkUserButton = document.getElementById("clerkUserButton");
 
 const THEME_KEY = "ai-study-planner-theme";
@@ -113,8 +114,94 @@ let didRunTutorialGateCheck = false;
 let isUserAuthenticated = false;
 let authView = "sign-in";
 let clerkLoaded = false;
-let authSwitchInFlight = false;
+let authFormsMounted = false;
 const ENABLE_AUTH = true;
+
+const authClerkAppearance = {
+  variables: {
+    colorPrimary: "#4c6cff",
+    colorBackground: "transparent",
+    colorText: "#e7eeff",
+    colorTextSecondary: "#afbbe8",
+    colorInputBackground: "#f2f4ff",
+    colorInputText: "#18213f",
+    colorNeutral: "#afbbe8",
+    borderRadius: "14px",
+    fontFamily: "Outfit, sans-serif"
+  },
+  layout: {
+    socialButtonsVariant: "blockButton"
+  },
+  elements: {
+    card: {
+      boxShadow: "none",
+      border: "none",
+      background: "transparent",
+      padding: "0.25rem"
+    },
+    headerTitle: {
+      color: "#d7e2ff",
+      fontSize: "1.02rem"
+    },
+    headerSubtitle: {
+      color: "#96a6df",
+      fontSize: "0.86rem"
+    },
+    socialButtonsBlockButton: {
+      background: "rgba(21, 31, 84, 0.95)",
+      border: "1px solid rgba(75, 101, 198, 0.5)",
+      color: "#e6eeff"
+    },
+    socialButtonsBlockButtonText: {
+      color: "#e6eeff"
+    },
+    dividerText: {
+      color: "#96a6df",
+      fontSize: "0.8rem"
+    },
+    dividerLine: {
+      background: "rgba(80, 106, 203, 0.5)"
+    },
+    formFieldLabel: {
+      color: "#b2bfeb"
+    },
+    formFieldInput: {
+      background: "#f2f4ff",
+      border: "1px solid #e2e7ff",
+      color: "#18213f",
+      minHeight: "2.75rem"
+    },
+    formButtonPrimary: {
+      background: "linear-gradient(180deg, #5472ff 0%, #4362f2 100%)",
+      border: "none",
+      color: "#ffffff",
+      minHeight: "2.65rem"
+    },
+    footerActionText: {
+      color: "#8e9fd7"
+    },
+    footerActionLink: {
+      color: "#6f8fff"
+    },
+    formResendCodeLink: {
+      color: "#90a7ff"
+    }
+  }
+};
+
+function getFallbackAuthAppearance() {
+  return {
+    variables: {
+      colorPrimary: "#4c6cff",
+      colorBackground: "transparent",
+      colorText: "#e7eeff",
+      colorInputBackground: "#f2f4ff",
+      colorInputText: "#18213f",
+      borderRadius: "14px",
+      fontFamily: "Outfit, sans-serif"
+    }
+  };
+}
 
 const tutorialSteps = [
   {
@@ -1439,11 +1526,10 @@ function updateAuthTabs(view) {
 }
 
 async function switchAuthView(nextView) {
-  if (!clerkLoaded || !window.Clerk || !clerkAuthMount || authSwitchInFlight) {
+  if (!clerkLoaded || !window.Clerk || !clerkSignInMount || !clerkSignUpMount) {
     return;
   }
 
-  authSwitchInFlight = true;
   authView = nextView === "sign-up" ? "sign-up" : "sign-in";
   updateAuthTabs(authView);
 
@@ -1457,115 +1543,40 @@ async function switchAuthView(nextView) {
         : "Login is required before the app and tutorial are available.";
   }
 
-  const appearance = {
-    variables: {
-      colorPrimary: "#4c6cff",
-      colorBackground: "transparent",
-      colorText: "#e7eeff",
-      colorTextSecondary: "#afbbe8",
-      colorInputBackground: "#f2f4ff",
-      colorInputText: "#18213f",
-      colorNeutral: "#afbbe8",
-      borderRadius: "14px",
-      fontFamily: "Outfit, sans-serif"
-    },
-    layout: {
-      socialButtonsVariant: "blockButton"
-    },
-    elements: {
-      card: {
-        boxShadow: "none",
-        border: "none",
-        background: "transparent",
-        padding: "0.25rem"
-      },
-      headerTitle: {
-        color: "#d7e2ff",
-        fontSize: "1.02rem"
-      },
-      headerSubtitle: {
-        color: "#96a6df",
-        fontSize: "0.86rem"
-      },
-      socialButtonsBlockButton: {
-        background: "rgba(21, 31, 84, 0.95)",
-        border: "1px solid rgba(75, 101, 198, 0.5)",
-        color: "#e6eeff"
-      },
-      socialButtonsBlockButtonText: {
-        color: "#e6eeff"
-      },
-      dividerText: {
-        color: "#96a6df",
-        fontSize: "0.8rem"
-      },
-      dividerLine: {
-        background: "rgba(80, 106, 203, 0.5)"
-      },
-      formFieldLabel: {
-        color: "#b2bfeb"
-      },
-      formFieldInput: {
-        background: "#f2f4ff",
-        border: "1px solid #e2e7ff",
-        color: "#18213f",
-        minHeight: "2.75rem"
-      },
-      formButtonPrimary: {
-        background: "linear-gradient(180deg, #5472ff 0%, #4362f2 100%)",
-        border: "none",
-        color: "#ffffff",
-        minHeight: "2.65rem"
-      },
-      footerActionText: {
-        color: "#8e9fd7"
-      },
-      footerActionLink: {
-        color: "#6f8fff"
-      },
-      formResendCodeLink: {
-        color: "#90a7ff"
-      }
-    }
-  };
+  const showSignUp = authView === "sign-up";
+  clerkSignUpMount.classList.toggle("hidden", !showSignUp);
+  clerkSignUpMount.classList.toggle("active", showSignUp);
+  clerkSignUpMount.setAttribute("aria-hidden", showSignUp ? "false" : "true");
+  clerkSignInMount.classList.toggle("hidden", showSignUp);
+  clerkSignInMount.classList.toggle("active", !showSignUp);
+  clerkSignInMount.setAttribute("aria-hidden", showSignUp ? "true" : "false");
+}
+
+async function mountAuthForms() {
+  if (authFormsMounted || !clerkLoaded || !window.Clerk || !clerkSignInMount || !clerkSignUpMount) {
+    return;
+  }
 
   try {
-    clerkAuthMount.innerHTML = "";
-
-    if (authView === "sign-up") {
-      await window.Clerk.mountSignUp(clerkAuthMount, { appearance });
-    } else {
-      await window.Clerk.mountSignIn(clerkAuthMount, { appearance });
-    }
+    clerkSignInMount.innerHTML = "";
+    clerkSignUpMount.innerHTML = "";
+    await window.Clerk.mountSignIn(clerkSignInMount, { appearance: authClerkAppearance });
+    await window.Clerk.mountSignUp(clerkSignUpMount, { appearance: authClerkAppearance });
+    authFormsMounted = true;
   } catch (error) {
-    // Fallback to minimal appearance if Clerk rejects any custom appearance keys.
-    const fallbackAppearance = {
-      variables: {
-        colorPrimary: "#4c6cff",
-        colorBackground: "transparent",
-        colorText: "#e7eeff",
-        colorInputBackground: "#f2f4ff",
-        colorInputText: "#18213f",
-        borderRadius: "14px",
-        fontFamily: "Outfit, sans-serif"
-      }
-    };
-
     try {
-      clerkAuthMount.innerHTML = "";
-      if (authView === "sign-up") {
-        await window.Clerk.mountSignUp(clerkAuthMount, { appearance: fallbackAppearance });
-      } else {
-        await window.Clerk.mountSignIn(clerkAuthMount, { appearance: fallbackAppearance });
-      }
+      const fallbackAppearance = getFallbackAuthAppearance();
+      clerkSignInMount.innerHTML = "";
+      clerkSignUpMount.innerHTML = "";
+      await window.Clerk.mountSignIn(clerkSignInMount, { appearance: fallbackAppearance });
+      await window.Clerk.mountSignUp(clerkSignUpMount, { appearance: fallbackAppearance });
+      authFormsMounted = true;
     } catch (fallbackError) {
-      console.error("Auth view mount failed", { error, fallbackError });
+      console.error("Auth forms mount failed", { error, fallbackError });
       if (authGateText) {
         authGateText.textContent = "Could not render login form. Please refresh and try again.";
       }
     }
-  } finally {
-    authSwitchInFlight = false;
   }
 }
 
@@ -1581,6 +1592,9 @@ function handleAuthSignedIn() {
 async function handleAuthSignedOut() {
   isUserAuthenticated = false;
   lockAppForAuth();
+  if (!authFormsMounted) {
+    await mountAuthForms();
+  }
   await switchAuthView(authView);
 }
 
@@ -1596,8 +1610,11 @@ async function initializeAuthGate() {
       authGateText.textContent =
         "Set a Clerk publishable key via meta tag, config.js, or window.APP_CONFIG.";
     }
-    if (clerkAuthMount) {
-      clerkAuthMount.innerHTML = "";
+    if (clerkSignInMount) {
+      clerkSignInMount.innerHTML = "";
+    }
+    if (clerkSignUpMount) {
+      clerkSignUpMount.innerHTML = "";
     }
     return;
   }
@@ -1630,6 +1647,7 @@ async function initializeAuthGate() {
       }
       handleAuthSignedIn();
     } else {
+      await mountAuthForms();
       await switchAuthView(authView);
     }
 
@@ -1637,7 +1655,9 @@ async function initializeAuthGate() {
       if (user) {
         handleAuthSignedIn();
       } else {
-        handleAuthSignedOut();
+        handleAuthSignedOut().catch((error) => {
+          console.error("Auth sign-out handler failed", error);
+        });
       }
     });
   } catch (error) {

@@ -171,7 +171,10 @@
         <button id="authSignInTab" class="secondary-btn auth-tab-btn active" type="button">Sign In</button>
         <button id="authSignUpTab" class="secondary-btn auth-tab-btn" type="button">Sign Up</button>
       </div>
-      <div id="clerkAuthMount" class="clerk-auth-mount"></div>
+      <div class="clerk-auth-stack">
+        <div id="clerkSignInMount" class="clerk-auth-mount auth-pane active" aria-hidden="false"></div>
+        <div id="clerkSignUpMount" class="clerk-auth-mount auth-pane hidden" aria-hidden="true"></div>
+      </div>
     </div>
   </section>
 
