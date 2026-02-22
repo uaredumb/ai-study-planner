@@ -1497,7 +1497,7 @@ async function handleAuthSignedOut() {
   await switchAuthView(authView);
 }
 
-function loadScript(src) {
+function loadScript(src, publishableKey) {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${src}"]`);
     if (existing) {
@@ -1514,6 +1514,9 @@ function loadScript(src) {
     script.src = src;
     script.crossOrigin = "anonymous";
     script.async = true;
+    if (publishableKey) {
+      script.setAttribute("data-clerk-publishable-key", publishableKey);
+    }
     script.addEventListener("load", () => resolve(), { once: true });
     script.addEventListener("error", () => reject(new Error(`Failed: ${src}`)), { once: true });
     document.head.appendChild(script);
@@ -1565,7 +1568,7 @@ async function ensureClerkLoaded(publishableKey) {
 
   for (const src of candidates) {
     try {
-      await loadScript(src);
+      await loadScript(src, publishableKey);
       if (window.Clerk) {
         return true;
       }
@@ -1608,9 +1611,7 @@ async function initializeAuthGate() {
   }
 
   try {
-    await window.Clerk.load({
-      publishableKey: clerkPublishableKey
-    });
+    await window.Clerk.load();
     clerkLoaded = true;
 
     if (window.Clerk.user) {
