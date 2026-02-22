@@ -715,6 +715,10 @@ function createStudyFile(name) {
 }
 
 function persistFiles() {
+  if (ENABLE_AUTH && !isUserAuthenticated) {
+    return;
+  }
+
   localStorage.setItem(STUDY_FILES_STORAGE, JSON.stringify(studyFiles));
   localStorage.setItem(ACTIVE_FILE_ID_STORAGE, activeFileId);
 }

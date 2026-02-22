@@ -240,7 +240,7 @@ body.auth-locked .app-shell {
 .clerk-auth-mount {
   border: 1px solid rgba(74, 98, 192, 0.45);
   border-radius: 20px;
-  padding: 1.2rem;
+  padding: 1.35rem 1.15rem 1.2rem;
   background: linear-gradient(180deg, rgba(21, 33, 89, 0.96), rgba(19, 29, 79, 0.96));
   min-height: 450px;
   display: grid;
@@ -275,6 +275,39 @@ body.auth-locked .app-shell {
 .clerk-auth-mount > * {
   width: min(520px, 100%);
   margin-inline: auto;
+}
+
+/* Clerk form spacing polish inside the login island */
+.clerk-auth-mount .cl-rootBox,
+.clerk-auth-mount .cl-main,
+.clerk-auth-mount .cl-cardBox,
+.clerk-auth-mount .cl-card {
+  width: 100%;
+}
+
+.clerk-auth-mount .cl-card {
+  padding: 0.35rem 0.35rem 0.25rem;
+}
+
+.clerk-auth-mount .cl-socialButtonsBlockButton {
+  margin-bottom: 0.72rem;
+}
+
+.clerk-auth-mount .cl-dividerRow {
+  margin: 1rem 0 1.05rem;
+}
+
+.clerk-auth-mount .cl-formFieldRow {
+  margin-bottom: 0.9rem;
+}
+
+.clerk-auth-mount .cl-formButtonPrimary {
+  margin-top: 0.45rem;
+}
+
+.clerk-auth-mount .cl-footer {
+  margin-top: 1rem;
+  padding-top: 0.4rem;
 }
 
 #clerkSignUpMount.auth-pane.active {
@@ -422,6 +455,13 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+}
+
+.icon-only-btn {
+  width: 2.45rem;
+  height: 2.45rem;
+  padding: 0;
+  justify-content: center;
 }
 
 .btn-icon {
@@ -1219,7 +1259,7 @@ body.dark .output-icon {
 
   .clerk-auth-mount {
     min-height: 400px;
-    padding: 0.95rem;
+    padding: 1.05rem 0.9rem 0.95rem;
   }
 
   .clerk-auth-stack {
@@ -1273,7 +1313,7 @@ body.dark .output-icon {
 
   .clerk-auth-mount {
     min-height: 360px;
-    padding: 0.8rem;
+    padding: 0.9rem 0.78rem 0.85rem;
   }
 
   .clerk-auth-stack {
