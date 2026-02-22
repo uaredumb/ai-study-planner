@@ -1629,9 +1629,24 @@ function promptAuthForFeature(featureLabel) {
 }
 
 function requireAuthenticatedForFeature(featureLabel) {
-  if (!ENABLE_AUTH || isUserAuthenticated) {
+  if (!ENABLE_AUTH) {
     return true;
   }
+
+  if (isUserAuthenticated) {
+    const firstName = window.Clerk?.user?.firstName?.trim?.() || "";
+    const lastName = window.Clerk?.user?.lastName?.trim?.() || "";
+    if (firstName && lastName) {
+      return true;
+    }
+
+    statusText.textContent = "Please add your first and last name in your account profile to continue.";
+    if (window.Clerk && typeof window.Clerk.openUserProfile === "function") {
+      window.Clerk.openUserProfile();
+    }
+    return false;
+  }
+
   promptAuthForFeature(featureLabel);
   return false;
 }
@@ -1725,7 +1740,7 @@ async function switchAuthView(nextView) {
   if (authGateText) {
     authGateText.textContent =
       authView === "sign-up"
-        ? "Create an account to use account-only features and sync your study work."
+        ? "Create an account to use account-only features and sync your study work. First and last name are required."
         : "Sign in to use account-only features, or continue as a guest.";
   }
 
