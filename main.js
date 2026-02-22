@@ -82,6 +82,7 @@ const articleInputWrap = document.getElementById("articleInputWrap");
 const summarizeModeCard = document.querySelector(".summarize-mode-card");
 const topActions = document.querySelector(".top-actions");
 const outputOptionsWrap = document.querySelector(".output-options-wrap");
+const accountLoginButton = document.getElementById("accountLoginButton");
 const notesModeButton = document.getElementById("notesModeButton");
 const articleModeButton = document.getElementById("articleModeButton");
 const summaryModeInputs = document.querySelectorAll('input[name="summaryMode"]');
@@ -269,6 +270,9 @@ cleanButton.addEventListener("click", handleCleanNotes);
 themeToggle.addEventListener("click", toggleTheme);
 if (performanceToggle) {
   performanceToggle.addEventListener("click", togglePerformanceMode);
+}
+if (accountLoginButton) {
+  accountLoginButton.addEventListener("click", openAccountLogin);
 }
 newFileButton.addEventListener("click", createFile);
 saveFileButton.addEventListener("click", exportActiveFile);
@@ -1570,6 +1574,9 @@ function unlockAppAfterAuth() {
   if (authGate) {
     authGate.classList.add("hidden");
   }
+  if (accountLoginButton) {
+    accountLoginButton.classList.add("hidden");
+  }
   if (clerkUserButton) {
     clerkUserButton.classList.remove("hidden");
   }
@@ -1578,6 +1585,12 @@ function unlockAppAfterAuth() {
 function continueAsGuest() {
   if (authGate) {
     authGate.classList.add("hidden");
+  }
+  if (accountLoginButton) {
+    accountLoginButton.classList.remove("hidden");
+  }
+  if (clerkUserButton) {
+    clerkUserButton.classList.add("hidden");
   }
   if (authGateTitle) {
     authGateTitle.textContent = "Sign in to continue";
@@ -1617,6 +1630,35 @@ function requireAuthenticatedForFeature(featureLabel) {
   }
   promptAuthForFeature(featureLabel);
   return false;
+}
+
+async function openAccountLogin() {
+  if (isUserAuthenticated) {
+    return;
+  }
+
+  promptAuthForFeature("access your account");
+  if (!ENABLE_AUTH) {
+    if (authGateText) {
+      authGateText.textContent = "Login is currently disabled in this build.";
+    }
+    return;
+  }
+
+  if (!clerkLoaded) {
+    if (authGateText) {
+      authGateText.textContent =
+        "Login is still loading. If this persists, disable blockers and refresh once.";
+    }
+    return;
+  }
+
+  await startAuthFlow("sign-in").catch((error) => {
+    console.error("Failed to open account login", error);
+    if (authGateText) {
+      authGateText.textContent = "Could not open login right now. Please refresh and try again.";
+    }
+  });
 }
 
 function updateAuthTabs(view) {
