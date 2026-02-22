@@ -109,6 +109,8 @@ body.auth-locked .app-shell {
   z-index: 60;
   display: grid;
   place-items: center;
+  justify-items: center;
+  align-items: center;
   padding: 2rem 1rem;
   background:
     radial-gradient(circle at 14% 10%, rgba(174, 190, 255, 0.35) 0%, transparent 34%),
@@ -118,8 +120,8 @@ body.auth-locked .app-shell {
 }
 
 .auth-gate-panel.card {
-  width: min(540px, 95vw);
-  padding: 1.15rem 1.15rem 1.3rem;
+  width: min(620px, 96vw);
+  padding: 1.4rem 1.4rem 1.55rem;
   border-radius: 24px;
   border: 1px solid rgba(92, 120, 220, 0.58);
   background: linear-gradient(180deg, rgba(23, 34, 89, 0.97) 0%, rgba(18, 29, 79, 0.98) 100%);
@@ -136,23 +138,23 @@ body.auth-locked .app-shell {
 }
 
 .auth-gate-panel h2 {
-  margin: 0.35rem 0 0.35rem;
+  margin: 0.4rem 0 0.45rem;
   color: #ffffff;
-  font-size: clamp(1.65rem, 3vw, 2.05rem);
+  font-size: clamp(1.75rem, 3.2vw, 2.2rem);
   letter-spacing: -0.01em;
 }
 
 .auth-gate-panel .modal-message {
-  margin: 0 0 0.9rem;
+  margin: 0 0 1.1rem;
   color: #afbbe8;
-  font-size: 1rem;
+  font-size: 1.08rem;
 }
 
 .auth-switch-row {
   display: flex;
   gap: 0.55rem;
-  margin: 0 0 0.9rem;
-  padding: 0.06rem;
+  margin: 0 0 1.15rem;
+  padding: 0.08rem;
   border-radius: 999px;
   border: 1px solid rgba(85, 109, 206, 0.45);
   background: rgba(15, 28, 75, 0.56);
@@ -160,7 +162,8 @@ body.auth-locked .app-shell {
 
 .auth-tab-btn {
   flex: 1;
-  min-height: 2.25rem;
+  min-height: 2.6rem;
+  font-size: 1.02rem;
   border-color: rgba(91, 115, 209, 0.5);
   background: transparent;
   color: #cad4ff;
@@ -176,23 +179,63 @@ body.auth-locked .app-shell {
 
 .clerk-auth-mount {
   border: 1px solid rgba(74, 98, 192, 0.45);
-  border-radius: 18px;
-  padding: 0.8rem;
+  border-radius: 20px;
+  padding: 1.05rem;
   background: linear-gradient(180deg, rgba(21, 33, 89, 0.96), rgba(19, 29, 79, 0.96));
-  min-height: 380px;
+  min-height: 450px;
+  display: grid;
+  justify-items: center;
+  align-content: start;
 }
 
 .clerk-auth-stack {
   position: relative;
+  min-height: 450px;
 }
 
 .auth-pane {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(16px) scale(0.99);
+  transition: opacity 0.26s ease, transform 0.26s ease, visibility 0s linear 0.26s;
+  will-change: opacity, transform;
+}
+
+.auth-pane.auth-pane-sign-in {
+  transform: translateX(-16px) scale(0.99);
 }
 
 .auth-pane.active {
+  position: relative;
   opacity: 1;
-  transform: translateY(0);
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(0) scale(1);
+  transition: opacity 0.28s ease, transform 0.28s ease, visibility 0s;
+}
+
+.clerk-auth-stack[data-auth-direction="forward"] .auth-pane.auth-pane-sign-up:not(.active) {
+  transform: translateX(18px) scale(0.99);
+}
+
+.clerk-auth-stack[data-auth-direction="forward"] .auth-pane.auth-pane-sign-in:not(.active) {
+  transform: translateX(-18px) scale(0.99);
+}
+
+.clerk-auth-stack[data-auth-direction="backward"] .auth-pane.auth-pane-sign-up:not(.active) {
+  transform: translateX(18px) scale(0.99);
+}
+
+.clerk-auth-stack[data-auth-direction="backward"] .auth-pane.auth-pane-sign-in:not(.active) {
+  transform: translateX(-18px) scale(0.99);
+}
+
+.clerk-auth-mount > * {
+  width: 100%;
+  margin-inline: auto;
 }
 
 #clerkSignUpMount.auth-pane.active {
@@ -1087,12 +1130,59 @@ body.dark .output-icon {
   }
 
   .auth-gate-panel {
-    padding: 0.85rem;
+    padding: 1rem;
     border-radius: 18px;
   }
 
   .clerk-auth-mount {
-    min-height: 330px;
+    min-height: 400px;
+    padding: 0.8rem;
+  }
+
+  .clerk-auth-stack {
+    min-height: 400px;
+  }
+
+  .auth-gate-panel .modal-message {
+    font-size: 1rem;
+  }
+
+  .auth-tab-btn {
+    min-height: 2.35rem;
+    font-size: 0.98rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .auth-gate {
+    padding: 0.8rem;
+  }
+
+  .auth-gate-panel.card {
+    width: 100%;
+    padding: 0.9rem 0.9rem 1rem;
+  }
+
+  .auth-gate-panel h2 {
+    font-size: clamp(1.45rem, 6vw, 1.8rem);
+  }
+
+  .auth-gate-panel .modal-message {
+    margin-bottom: 0.85rem;
+    font-size: 0.95rem;
+  }
+
+  .auth-switch-row {
+    margin-bottom: 0.85rem;
+  }
+
+  .clerk-auth-mount {
+    min-height: 360px;
+    padding: 0.65rem;
+  }
+
+  .clerk-auth-stack {
+    min-height: 360px;
   }
 }
 

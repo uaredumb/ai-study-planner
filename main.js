@@ -90,6 +90,7 @@ const authGateTitle = document.getElementById("authGateTitle");
 const authGateText = document.getElementById("authGateText");
 const authSignInTab = document.getElementById("authSignInTab");
 const authSignUpTab = document.getElementById("authSignUpTab");
+const clerkAuthStack = document.getElementById("clerkAuthStack");
 const clerkSignInMount = document.getElementById("clerkSignInMount");
 const clerkSignUpMount = document.getElementById("clerkSignUpMount");
 const clerkUserButton = document.getElementById("clerkUserButton");
@@ -1544,10 +1545,11 @@ async function switchAuthView(nextView) {
   }
 
   const showSignUp = authView === "sign-up";
-  clerkSignUpMount.classList.toggle("hidden", !showSignUp);
+  if (clerkAuthStack) {
+    clerkAuthStack.dataset.authDirection = showSignUp ? "forward" : "backward";
+  }
   clerkSignUpMount.classList.toggle("active", showSignUp);
   clerkSignUpMount.setAttribute("aria-hidden", showSignUp ? "false" : "true");
-  clerkSignInMount.classList.toggle("hidden", showSignUp);
   clerkSignInMount.classList.toggle("active", !showSignUp);
   clerkSignInMount.setAttribute("aria-hidden", showSignUp ? "true" : "false");
 }
@@ -1580,6 +1582,18 @@ async function mountAuthForms() {
   }
 }
 
+async function ensureAuthFormsMounted() {
+  await mountAuthForms();
+
+  if (authFormsMounted) {
+    return;
+  }
+
+  // Some environments load Clerk internals late; retry once shortly after first attempt.
+  await new Promise((resolve) => setTimeout(resolve, 260));
+  await mountAuthForms();
+}
+
 function handleAuthSignedIn() {
   isUserAuthenticated = true;
   unlockAppAfterAuth();
@@ -1593,7 +1607,7 @@ async function handleAuthSignedOut() {
   isUserAuthenticated = false;
   lockAppForAuth();
   if (!authFormsMounted) {
-    await mountAuthForms();
+    await ensureAuthFormsMounted();
   }
   await switchAuthView(authView);
 }
@@ -1647,7 +1661,7 @@ async function initializeAuthGate() {
       }
       handleAuthSignedIn();
     } else {
-      await mountAuthForms();
+      await ensureAuthFormsMounted();
       await switchAuthView(authView);
     }
 
