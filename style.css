@@ -117,6 +117,8 @@ body.auth-locked .app-shell {
     radial-gradient(circle at 86% 14%, rgba(128, 238, 213, 0.3) 0%, transparent 32%),
     linear-gradient(180deg, rgba(15, 26, 74, 0.7), rgba(7, 15, 49, 0.82));
   backdrop-filter: blur(8px);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .auth-gate-panel.card {
@@ -126,6 +128,14 @@ body.auth-locked .app-shell {
   border: 1px solid rgba(92, 120, 220, 0.58);
   background: linear-gradient(180deg, rgba(23, 34, 89, 0.97) 0%, rgba(18, 29, 79, 0.98) 100%);
   box-shadow: 0 22px 58px rgba(0, 0, 0, 0.46);
+}
+
+.auth-gate-panel.auth-island-animate-forward {
+  animation: authIslandSlideForward 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.auth-gate-panel.auth-island-animate-backward {
+  animation: authIslandSlideBackward 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .auth-kicker {
@@ -222,6 +232,8 @@ body.auth-locked .app-shell {
 .clerk-auth-stack {
   position: relative;
   min-height: 450px;
+  width: min(560px, 100%);
+  margin-inline: auto;
 }
 
 .auth-pane {
@@ -230,6 +242,7 @@ body.auth-locked .app-shell {
 
 .auth-pane.active {
   display: grid;
+  justify-items: center;
 }
 
 .auth-pane.auth-pane-animate-forward {
@@ -241,7 +254,7 @@ body.auth-locked .app-shell {
 }
 
 .clerk-auth-mount > * {
-  width: 100%;
+  width: min(520px, 100%);
   margin-inline: auto;
 }
 
@@ -268,6 +281,28 @@ body.auth-locked .app-shell {
   to {
     opacity: 1;
     transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes authIslandSlideForward {
+  from {
+    transform: translateX(16px) scale(0.995);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.4);
+  }
+  to {
+    transform: translateX(0) scale(1);
+    box-shadow: 0 22px 58px rgba(0, 0, 0, 0.46);
+  }
+}
+
+@keyframes authIslandSlideBackward {
+  from {
+    transform: translateX(-16px) scale(0.995);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.4);
+  }
+  to {
+    transform: translateX(0) scale(1);
+    box-shadow: 0 22px 58px rgba(0, 0, 0, 0.46);
   }
 }
 

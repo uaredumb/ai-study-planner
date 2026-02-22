@@ -86,6 +86,7 @@ const notesModeButton = document.getElementById("notesModeButton");
 const articleModeButton = document.getElementById("articleModeButton");
 const summaryModeInputs = document.querySelectorAll('input[name="summaryMode"]');
 const authGate = document.getElementById("authGate");
+const authGatePanel = document.querySelector(".auth-gate-panel");
 const authGateTitle = document.getElementById("authGateTitle");
 const authGateText = document.getElementById("authGateText");
 const authWelcomeIsland = document.getElementById("authWelcomeIsland");
@@ -139,6 +140,17 @@ const authClerkAppearance = {
     socialButtonsVariant: "blockButton"
   },
   elements: {
+    rootBox: {
+      width: "100%",
+      margin: "0 auto"
+    },
+    main: {
+      width: "100%"
+    },
+    cardBox: {
+      width: "100%",
+      margin: "0 auto"
+    },
     card: {
       boxShadow: "none",
       border: "none",
@@ -408,6 +420,15 @@ if (authWelcomeSignIn) {
 }
 if (authWelcomeSignUp) {
   authWelcomeSignUp.addEventListener("click", () => startAuthFlow("sign-up"));
+}
+if (authGate) {
+  const blockAuthCopy = (event) => {
+    event.preventDefault();
+  };
+  authGate.addEventListener("copy", blockAuthCopy);
+  authGate.addEventListener("cut", blockAuthCopy);
+  authGate.addEventListener("dragstart", blockAuthCopy);
+  authGate.addEventListener("contextmenu", blockAuthCopy);
 }
 if (cleanButton) {
   cleanButton.addEventListener("click", handleTutorialGenerateAction);
@@ -1554,11 +1575,24 @@ function setAuthFlowStarted(started) {
 }
 
 async function startAuthFlow(view) {
+  triggerAuthIslandSwitchAnimation(view === "sign-up" ? "forward" : "backward");
   if (!authFormsMounted) {
     await ensureAuthFormsMounted();
   }
   setAuthFlowStarted(true);
   await switchAuthView(view);
+}
+
+function triggerAuthIslandSwitchAnimation(direction) {
+  if (!authGatePanel) {
+    return;
+  }
+
+  authGatePanel.classList.remove("auth-island-animate-forward", "auth-island-animate-backward");
+  void authGatePanel.offsetWidth;
+  authGatePanel.classList.add(
+    direction === "forward" ? "auth-island-animate-forward" : "auth-island-animate-backward"
+  );
 }
 
 async function switchAuthView(nextView) {
@@ -1580,6 +1614,7 @@ async function switchAuthView(nextView) {
   }
 
   const showSignUp = authView === "sign-up";
+  triggerAuthIslandSwitchAnimation(showSignUp ? "forward" : "backward");
   if (clerkAuthStack) {
     clerkAuthStack.dataset.authDirection = showSignUp ? "forward" : "backward";
   }
