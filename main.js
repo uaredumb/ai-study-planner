@@ -1640,6 +1640,9 @@ function promptAuthForFeature(featureLabel) {
   if (authGate) {
     authGate.classList.remove("hidden");
   }
+  if (statusText) {
+    statusText.textContent = `Sign in required to ${featureLabel}.`;
+  }
 
   if (ENABLE_AUTH && clerkLoaded && !authFormsMounted) {
     ensureAuthFormsMounted().catch((error) => {
@@ -1672,7 +1675,8 @@ function requireAuthenticatedForFeature(featureLabel) {
 }
 
 async function openAccountLogin() {
-  if (isUserAuthenticated) {
+  if (isUserAuthenticated && window.Clerk && typeof window.Clerk.openUserProfile === "function") {
+    window.Clerk.openUserProfile();
     return;
   }
 
