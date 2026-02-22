@@ -167,13 +167,25 @@
       <p class="auth-kicker">Secure Access</p>
       <h2 id="authGateTitle">Sign in to continue</h2>
       <p id="authGateText" class="modal-message">Login is required before the app and tutorial are available.</p>
-      <div class="auth-switch-row">
-        <button id="authSignInTab" class="secondary-btn auth-tab-btn active" type="button">Sign In</button>
-        <button id="authSignUpTab" class="secondary-btn auth-tab-btn" type="button">Sign Up</button>
+
+      <div id="authWelcomeIsland" class="auth-welcome-island">
+        <h3>Welcome to AI Study Pal</h3>
+        <p>Choose how you want to continue.</p>
+        <div class="auth-welcome-actions">
+          <button id="authWelcomeSignIn" class="secondary-btn auth-tab-btn active" type="button">Sign In</button>
+          <button id="authWelcomeSignUp" class="secondary-btn auth-tab-btn" type="button">Sign Up</button>
+        </div>
       </div>
-      <div id="clerkAuthStack" class="clerk-auth-stack" data-auth-direction="none">
-        <div id="clerkSignInMount" class="clerk-auth-mount auth-pane auth-pane-sign-in active" aria-hidden="false"></div>
-        <div id="clerkSignUpMount" class="clerk-auth-mount auth-pane auth-pane-sign-up hidden" aria-hidden="true"></div>
+
+      <div id="authFormShell" class="hidden">
+        <div class="auth-switch-row">
+          <button id="authSignInTab" class="secondary-btn auth-tab-btn active" type="button">Sign In</button>
+          <button id="authSignUpTab" class="secondary-btn auth-tab-btn" type="button">Sign Up</button>
+        </div>
+        <div id="clerkAuthStack" class="clerk-auth-stack" data-auth-direction="none">
+          <div id="clerkSignInMount" class="clerk-auth-mount auth-pane auth-pane-sign-in active" aria-hidden="false"></div>
+          <div id="clerkSignUpMount" class="clerk-auth-mount auth-pane auth-pane-sign-up hidden" aria-hidden="true"></div>
+        </div>
       </div>
     </div>
   </section>

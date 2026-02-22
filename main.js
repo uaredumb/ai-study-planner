@@ -88,6 +88,10 @@ const summaryModeInputs = document.querySelectorAll('input[name="summaryMode"]')
 const authGate = document.getElementById("authGate");
 const authGateTitle = document.getElementById("authGateTitle");
 const authGateText = document.getElementById("authGateText");
+const authWelcomeIsland = document.getElementById("authWelcomeIsland");
+const authWelcomeSignIn = document.getElementById("authWelcomeSignIn");
+const authWelcomeSignUp = document.getElementById("authWelcomeSignUp");
+const authFormShell = document.getElementById("authFormShell");
 const authSignInTab = document.getElementById("authSignInTab");
 const authSignUpTab = document.getElementById("authSignUpTab");
 const clerkAuthStack = document.getElementById("clerkAuthStack");
@@ -116,6 +120,7 @@ let isUserAuthenticated = false;
 let authView = "sign-in";
 let clerkLoaded = false;
 let authFormsMounted = false;
+let authFlowStarted = false;
 const ENABLE_AUTH = true;
 
 const authClerkAppearance = {
@@ -397,6 +402,12 @@ if (authSignInTab) {
 }
 if (authSignUpTab) {
   authSignUpTab.addEventListener("click", () => switchAuthView("sign-up"));
+}
+if (authWelcomeSignIn) {
+  authWelcomeSignIn.addEventListener("click", () => startAuthFlow("sign-in"));
+}
+if (authWelcomeSignUp) {
+  authWelcomeSignUp.addEventListener("click", () => startAuthFlow("sign-up"));
 }
 if (cleanButton) {
   cleanButton.addEventListener("click", handleTutorialGenerateAction);
@@ -1524,6 +1535,30 @@ function updateAuthTabs(view) {
   if (authSignUpTab) {
     authSignUpTab.classList.toggle("active", view === "sign-up");
   }
+  if (authWelcomeSignIn) {
+    authWelcomeSignIn.classList.toggle("active", view === "sign-in");
+  }
+  if (authWelcomeSignUp) {
+    authWelcomeSignUp.classList.toggle("active", view === "sign-up");
+  }
+}
+
+function setAuthFlowStarted(started) {
+  authFlowStarted = Boolean(started);
+  if (authWelcomeIsland) {
+    authWelcomeIsland.classList.toggle("hidden", authFlowStarted);
+  }
+  if (authFormShell) {
+    authFormShell.classList.toggle("hidden", !authFlowStarted);
+  }
+}
+
+async function startAuthFlow(view) {
+  if (!authFormsMounted) {
+    await ensureAuthFormsMounted();
+  }
+  setAuthFlowStarted(true);
+  await switchAuthView(view);
 }
 
 async function switchAuthView(nextView) {
@@ -1616,10 +1651,11 @@ function handleAuthSignedIn() {
 async function handleAuthSignedOut() {
   isUserAuthenticated = false;
   lockAppForAuth();
+  setAuthFlowStarted(false);
   if (!authFormsMounted) {
     await ensureAuthFormsMounted();
   }
-  await switchAuthView(authView);
+  await switchAuthView("sign-in");
 }
 
 async function initializeAuthGate() {
@@ -1671,8 +1707,9 @@ async function initializeAuthGate() {
       }
       handleAuthSignedIn();
     } else {
+      setAuthFlowStarted(false);
       await ensureAuthFormsMounted();
-      await switchAuthView(authView);
+      await switchAuthView("sign-in");
     }
 
     window.Clerk.addListener(({ user }) => {

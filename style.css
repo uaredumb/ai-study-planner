@@ -155,6 +155,8 @@ body.auth-locked .app-shell {
   gap: 0.55rem;
   margin: 0 0 1.15rem;
   padding: 0.08rem;
+  width: min(560px, 100%);
+  margin-inline: auto;
   border-radius: 999px;
   border: 1px solid rgba(85, 109, 206, 0.45);
   background: rgba(15, 28, 75, 0.56);
@@ -175,6 +177,35 @@ body.auth-locked .app-shell {
   border-color: transparent;
   color: #ffffff;
   box-shadow: 0 10px 24px rgba(74, 104, 237, 0.34);
+}
+
+.auth-welcome-island {
+  width: min(560px, 100%);
+  margin: 0 auto 1.1rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(80, 106, 203, 0.5);
+  background: linear-gradient(180deg, rgba(25, 39, 98, 0.92), rgba(21, 33, 89, 0.92));
+  text-align: center;
+}
+
+.auth-welcome-island h3 {
+  margin: 0;
+  color: #edf2ff;
+  font-size: 1.35rem;
+}
+
+.auth-welcome-island p {
+  margin: 0.35rem 0 0.85rem;
+  color: #adbae8;
+  font-size: 0.98rem;
+}
+
+.auth-welcome-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
 }
 
 .clerk-auth-mount {
@@ -1149,6 +1180,10 @@ body.dark .output-icon {
     min-height: 2.35rem;
     font-size: 0.98rem;
   }
+
+  .auth-welcome-island {
+    padding: 0.85rem;
+  }
 }
 
 @media (max-width: 600px) {
@@ -1172,6 +1207,14 @@ body.dark .output-icon {
 
   .auth-switch-row {
     margin-bottom: 0.85rem;
+  }
+
+  .auth-welcome-island h3 {
+    font-size: 1.18rem;
+  }
+
+  .auth-welcome-island p {
+    font-size: 0.92rem;
   }
 
   .clerk-auth-mount {
