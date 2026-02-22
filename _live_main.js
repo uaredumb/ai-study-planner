@@ -1399,12 +1399,12 @@ function playTransientAnimation(element, className) {
 function getClerkPublishableKey() {
   const metaKey =
     document.querySelector('meta[name="clerk-publishable-key"]')?.getAttribute("content") || "";
-  if (typeof metaKey !== "string") {
-    return "";
-  }
-  const cleaned = metaKey.trim().replace(/^['"]|['"]$/g, "");
-  const exact = cleaned.match(/^(pk_(?:test|live)_[A-Za-z0-9_-]+)$/);
-  return exact ? exact[1] : "";
+  const key =
+    window.APP_CONFIG?.CLERK_PUBLISHABLE_KEY ||
+    window.CLERK_PUBLISHABLE_KEY ||
+    metaKey ||
+    "";
+  return typeof key === "string" ? key.trim() : "";
 }
 
 function lockAppForAuth() {
@@ -1596,10 +1596,6 @@ async function ensureClerkLoaded(publishableKey) {
 
 async function initializeAuthGate() {
   const clerkPublishableKey = getClerkPublishableKey();
-  console.info(
-    "[Auth] Clerk key detected:",
-    clerkPublishableKey ? `${clerkPublishableKey.slice(0, 8)}... (len ${clerkPublishableKey.length})` : "none"
-  );
   lockAppForAuth();
 
   if (!clerkPublishableKey) {
@@ -2026,4 +2022,5 @@ function clearTransientAnimationClasses() {
     );
   });
 }
+
 
