@@ -88,10 +88,13 @@ Frontend now calls `POST /api/chat` and never sends an API key from client code.
    - `OPENROUTER_MODEL`
    - `OPENROUTER_SITE_URL`
    - `OPENROUTER_APP_NAME`
+   - `CLERK_SECRET_KEY` (required only if `REQUIRE_CLERK_AUTH=true`)
+   - `REQUIRE_CLERK_AUTH` (`true`/`false`, default false)
 3. Deploy with the `functions/` directory included.
 
 Local Pages dev:
 - Copy `.dev.vars.example` to `.dev.vars` and set real values.
+- If you want `/api/chat` protected by Clerk session, set `REQUIRE_CLERK_AUTH=true` and provide `CLERK_SECRET_KEY`.
 
 ## Deploying the backend to GitHub
 

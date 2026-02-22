@@ -489,11 +489,13 @@ async function generateStudyPack(text, selectedOutputs) {
 
 async function cleanNotesWithOpenRouter(rawNotes) {
   const workerUrl = "/api/chat";
+  const authHeaders = await getApiAuthHeaders();
 
   const response = await fetch(workerUrl, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      ...authHeaders
     },
     body: JSON.stringify({
       notes: rawNotes
@@ -1933,6 +1935,22 @@ function buildDynamicOutputStep() {
     hideExample: true,
     example: "Use tasks as your checklist and mark them off as you finish."
   };
+}
+
+async function getApiAuthHeaders() {
+  if (!ENABLE_AUTH || !window.Clerk || !window.Clerk.session) {
+    return {};
+  }
+
+  try {
+    const token = await window.Clerk.session.getToken();
+    if (!token) {
+      return {};
+    }
+    return { Authorization: `Bearer ${token}` };
+  } catch (_error) {
+    return {};
+  }
 }
 
 function getFirstSelectedOutputKey() {

@@ -2,3 +2,5 @@ OPENROUTER_API_KEY=your_openrouter_api_key
 OPENROUTER_MODEL=openai/gpt-4o-mini
 OPENROUTER_SITE_URL=https://ai-study-planner.pages.dev
 OPENROUTER_APP_NAME=AI Study Buddy
+CLERK_SECRET_KEY=your_clerk_secret_key
+REQUIRE_CLERK_AUTH=false
