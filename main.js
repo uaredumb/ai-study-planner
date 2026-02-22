@@ -113,7 +113,6 @@ let didRunTutorialGateCheck = false;
 let isUserAuthenticated = false;
 let authView = "sign-in";
 let clerkLoaded = false;
-const ALLOW_GUEST_FALLBACK = false;
 const ENABLE_AUTH = true;
 
 const tutorialSteps = [
@@ -1427,24 +1426,6 @@ function unlockAppAfterAuth() {
   }
 }
 
-function enableGuestMode(message) {
-  if (!ALLOW_GUEST_FALLBACK) {
-    return;
-  }
-
-  isUserAuthenticated = false;
-  document.body.classList.remove("auth-locked");
-  if (authGate) {
-    authGate.classList.add("hidden");
-  }
-  if (clerkUserButton) {
-    clerkUserButton.classList.add("hidden");
-  }
-  if (statusText && message) {
-    statusText.textContent = message;
-  }
-}
-
 function updateAuthTabs(view) {
   if (authSignInTab) {
     authSignInTab.classList.toggle("active", view === "sign-in");
@@ -1596,10 +1577,6 @@ async function ensureClerkLoaded(publishableKey) {
 
 async function initializeAuthGate() {
   const clerkPublishableKey = getClerkPublishableKey();
-  console.info(
-    "[Auth] Clerk key detected:",
-    clerkPublishableKey ? `${clerkPublishableKey.slice(0, 8)}... (len ${clerkPublishableKey.length})` : "none"
-  );
   lockAppForAuth();
 
   if (!clerkPublishableKey) {
@@ -1613,7 +1590,6 @@ async function initializeAuthGate() {
     if (clerkAuthMount) {
       clerkAuthMount.innerHTML = "";
     }
-    enableGuestMode("Auth is not configured. Running in guest mode.");
     return;
   }
 
@@ -1626,7 +1602,6 @@ async function initializeAuthGate() {
       authGateText.textContent =
         "Could not load Clerk from CDN. Disable strict blockers or try another network.";
     }
-    enableGuestMode("Auth provider unavailable. Running in guest mode.");
     return;
   }
 
@@ -1666,7 +1641,6 @@ async function initializeAuthGate() {
     if (authGateText) {
       authGateText.textContent = error?.message || "Unexpected auth initialization error.";
     }
-    enableGuestMode("Auth failed to initialize. Running in guest mode.");
   }
 }
 
