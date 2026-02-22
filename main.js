@@ -92,6 +92,7 @@ const authGateText = document.getElementById("authGateText");
 const authWelcomeIsland = document.getElementById("authWelcomeIsland");
 const authWelcomeSignIn = document.getElementById("authWelcomeSignIn");
 const authWelcomeSignUp = document.getElementById("authWelcomeSignUp");
+const authSkipButton = document.getElementById("authSkipButton");
 const authFormShell = document.getElementById("authFormShell");
 const authSignInTab = document.getElementById("authSignInTab");
 const authSignUpTab = document.getElementById("authSignUpTab");
@@ -421,6 +422,9 @@ if (authWelcomeSignIn) {
 if (authWelcomeSignUp) {
   authWelcomeSignUp.addEventListener("click", () => startAuthFlow("sign-up"));
 }
+if (authSkipButton) {
+  authSkipButton.addEventListener("click", continueAsGuest);
+}
 if (authGate) {
   const blockAuthCopy = (event) => {
     event.preventDefault();
@@ -522,6 +526,10 @@ if (appLogo) {
 }
 
 async function handleCleanNotes() {
+  if (!requireAuthenticatedForFeature("generate study packs")) {
+    return;
+  }
+
   const rawNotes = notesInput.value.trim();
 
   if (!rawNotes) {
@@ -549,6 +557,10 @@ async function handleCleanNotes() {
 }
 
 async function summarizeArticleFromLink() {
+  if (!requireAuthenticatedForFeature("generate study packs")) {
+    return;
+  }
+
   const articleUrl = articleUrlInput.value.trim();
 
   if (!articleUrl) {
@@ -781,10 +793,18 @@ function saveActiveFileResults(result) {
 }
 
 function createFile() {
+  if (!requireAuthenticatedForFeature("create study files")) {
+    return;
+  }
+
   openNewFileModal();
 }
 
 function exportActiveFile() {
+  if (!requireAuthenticatedForFeature("save progress")) {
+    return;
+  }
+
   const activeFile = getActiveFile();
 
   if (!activeFile) {
@@ -832,6 +852,10 @@ function exportActiveFile() {
 }
 
 function renameActiveFile() {
+  if (!requireAuthenticatedForFeature("rename study files")) {
+    return;
+  }
+
   const activeFile = getActiveFile();
 
   if (!activeFile) {
@@ -930,6 +954,10 @@ function submitCreateFile(event) {
 }
 
 function deleteActiveFile() {
+  if (!requireAuthenticatedForFeature("delete study files")) {
+    return;
+  }
+
   const activeFile = getActiveFile();
 
   if (!activeFile) {
@@ -1530,7 +1558,6 @@ function getClerkPublishableKey() {
 }
 
 function lockAppForAuth() {
-  document.body.classList.add("auth-locked");
   if (authGate) {
     authGate.classList.remove("hidden");
   }
@@ -1540,13 +1567,56 @@ function lockAppForAuth() {
 }
 
 function unlockAppAfterAuth() {
-  document.body.classList.remove("auth-locked");
   if (authGate) {
     authGate.classList.add("hidden");
   }
   if (clerkUserButton) {
     clerkUserButton.classList.remove("hidden");
   }
+}
+
+function continueAsGuest() {
+  if (authGate) {
+    authGate.classList.add("hidden");
+  }
+  if (authGateTitle) {
+    authGateTitle.textContent = "Sign in to continue";
+  }
+  if (authGateText) {
+    authGateText.textContent =
+      "Sign in to save progress across devices, generate outputs, and access personalized tools.";
+  }
+  setAuthFlowStarted(false);
+  updateAuthTabs("sign-in");
+}
+
+function promptAuthForFeature(featureLabel) {
+  if (authGateTitle) {
+    authGateTitle.textContent = `Sign in to ${featureLabel}`;
+  }
+  if (authGateText) {
+    authGateText.textContent =
+      "You can continue as a guest, but this feature requires an account.";
+  }
+  setAuthFlowStarted(false);
+  updateAuthTabs("sign-in");
+  if (authGate) {
+    authGate.classList.remove("hidden");
+  }
+
+  if (ENABLE_AUTH && clerkLoaded && !authFormsMounted) {
+    ensureAuthFormsMounted().catch((error) => {
+      console.error("Could not pre-mount auth forms", error);
+    });
+  }
+}
+
+function requireAuthenticatedForFeature(featureLabel) {
+  if (!ENABLE_AUTH || isUserAuthenticated) {
+    return true;
+  }
+  promptAuthForFeature(featureLabel);
+  return false;
 }
 
 function updateAuthTabs(view) {
@@ -1609,8 +1679,8 @@ async function switchAuthView(nextView) {
   if (authGateText) {
     authGateText.textContent =
       authView === "sign-up"
-        ? "Create an account, then the app and tutorial will unlock."
-        : "Login is required before the app and tutorial are available.";
+        ? "Create an account to use account-only features and sync your study work."
+        : "Sign in to use account-only features, or continue as a guest.";
   }
 
   const showSignUp = authView === "sign-up";
@@ -1685,7 +1755,10 @@ function handleAuthSignedIn() {
 
 async function handleAuthSignedOut() {
   isUserAuthenticated = false;
-  lockAppForAuth();
+  if (clerkUserButton) {
+    clerkUserButton.classList.add("hidden");
+  }
+  continueAsGuest();
   setAuthFlowStarted(false);
   if (!authFormsMounted) {
     await ensureAuthFormsMounted();
@@ -1695,33 +1768,15 @@ async function handleAuthSignedOut() {
 
 async function initializeAuthGate() {
   const clerkPublishableKey = getClerkPublishableKey();
-  lockAppForAuth();
+  continueAsGuest();
 
   if (!clerkPublishableKey) {
-    if (authGateTitle) {
-      authGateTitle.textContent = "Missing Clerk key";
-    }
-    if (authGateText) {
-      authGateText.textContent =
-        "Set a Clerk publishable key via meta tag, config.js, or window.APP_CONFIG.";
-    }
-    if (clerkSignInMount) {
-      clerkSignInMount.innerHTML = "";
-    }
-    if (clerkSignUpMount) {
-      clerkSignUpMount.innerHTML = "";
-    }
+    console.warn("Missing Clerk key. Auth-required actions cannot complete sign-in.");
     return;
   }
 
   if (!window.Clerk) {
-    if (authGateTitle) {
-      authGateTitle.textContent = "Login script failed to load";
-    }
-    if (authGateText) {
-      authGateText.textContent =
-        "Could not load Clerk script. Disable strict blockers or try another network.";
-    }
+    console.warn("Could not load Clerk script. Auth-required actions may be unavailable.");
     return;
   }
 
@@ -1743,8 +1798,9 @@ async function initializeAuthGate() {
       handleAuthSignedIn();
     } else {
       setAuthFlowStarted(false);
-      await ensureAuthFormsMounted();
-      await switchAuthView("sign-in");
+      await ensureAuthFormsMounted().catch((error) => {
+        console.error("Auth forms preload failed", error);
+      });
     }
 
     window.Clerk.addListener(({ user }) => {
@@ -1757,12 +1813,7 @@ async function initializeAuthGate() {
       }
     });
   } catch (error) {
-    if (authGateTitle) {
-      authGateTitle.textContent = "Could not initialize login";
-    }
-    if (authGateText) {
-      authGateText.textContent = error?.message || "Unexpected auth initialization error.";
-    }
+    console.error("Could not initialize auth", error);
   }
 }
 
