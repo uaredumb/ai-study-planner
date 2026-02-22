@@ -1548,10 +1548,20 @@ async function switchAuthView(nextView) {
   if (clerkAuthStack) {
     clerkAuthStack.dataset.authDirection = showSignUp ? "forward" : "backward";
   }
-  clerkSignUpMount.classList.toggle("active", showSignUp);
-  clerkSignUpMount.setAttribute("aria-hidden", showSignUp ? "false" : "true");
-  clerkSignInMount.classList.toggle("active", !showSignUp);
-  clerkSignInMount.setAttribute("aria-hidden", showSignUp ? "true" : "false");
+
+  const enteringPane = showSignUp ? clerkSignUpMount : clerkSignInMount;
+  const leavingPane = showSignUp ? clerkSignInMount : clerkSignUpMount;
+  const enterAnimationClass = showSignUp ? "auth-pane-animate-forward" : "auth-pane-animate-backward";
+
+  leavingPane.classList.remove("active");
+  leavingPane.classList.add("hidden");
+  leavingPane.setAttribute("aria-hidden", "true");
+
+  enteringPane.classList.remove("hidden", "auth-pane-animate-forward", "auth-pane-animate-backward");
+  enteringPane.classList.add("active");
+  enteringPane.setAttribute("aria-hidden", "false");
+  void enteringPane.offsetWidth;
+  enteringPane.classList.add(enterAnimationClass);
 }
 
 async function mountAuthForms() {
