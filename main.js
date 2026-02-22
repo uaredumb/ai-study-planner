@@ -1497,89 +1497,6 @@ async function handleAuthSignedOut() {
   await switchAuthView(authView);
 }
 
-function loadScript(src, publishableKey) {
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector(`script[src="${src}"]`);
-    if (existing) {
-      if (window.Clerk) {
-        resolve();
-        return;
-      }
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error(`Failed: ${src}`)), { once: true });
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = src;
-    script.crossOrigin = "anonymous";
-    script.async = true;
-    if (publishableKey) {
-      script.setAttribute("data-clerk-publishable-key", publishableKey);
-    }
-    script.addEventListener("load", () => resolve(), { once: true });
-    script.addEventListener("error", () => reject(new Error(`Failed: ${src}`)), { once: true });
-    document.head.appendChild(script);
-  });
-}
-
-function decodeFrontendApiFromPublishableKey(key) {
-  if (!key || typeof key !== "string") {
-    return "";
-  }
-
-  const parts = key.split("_");
-  if (parts.length < 3) {
-    return "";
-  }
-
-  try {
-    const payload = parts.slice(2).join("_");
-    const padded = payload.padEnd(Math.ceil(payload.length / 4) * 4, "=");
-    const decoded = atob(padded);
-    return decoded.endsWith("$") ? decoded.slice(0, -1) : decoded;
-  } catch (_error) {
-    return "";
-  }
-}
-
-function getClerkScriptCandidates(publishableKey) {
-  const candidates = [];
-  const frontendApi = decodeFrontendApiFromPublishableKey(publishableKey);
-
-  if (frontendApi) {
-    candidates.push(`https://${frontendApi}/npm/@clerk/clerk-js@latest/dist/clerk.browser.js`);
-  }
-
-  candidates.push(
-    "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js",
-    "https://unpkg.com/@clerk/clerk-js@latest/dist/clerk.browser.js"
-  );
-
-  return candidates;
-}
-
-async function ensureClerkLoaded(publishableKey) {
-  if (window.Clerk) {
-    return true;
-  }
-
-  const candidates = getClerkScriptCandidates(publishableKey);
-
-  for (const src of candidates) {
-    try {
-      await loadScript(src, publishableKey);
-      if (window.Clerk) {
-        return true;
-      }
-    } catch (_error) {
-      // Try next CDN source.
-    }
-  }
-
-  return Boolean(window.Clerk);
-}
-
 async function initializeAuthGate() {
   const clerkPublishableKey = getClerkPublishableKey();
   lockAppForAuth();
@@ -1598,14 +1515,13 @@ async function initializeAuthGate() {
     return;
   }
 
-  const hasClerk = await ensureClerkLoaded(clerkPublishableKey);
-  if (!hasClerk || !window.Clerk) {
+  if (!window.Clerk) {
     if (authGateTitle) {
       authGateTitle.textContent = "Login script failed to load";
     }
     if (authGateText) {
       authGateText.textContent =
-        "Could not load Clerk from CDN. Disable strict blockers or try another network.";
+        "Could not load Clerk script. Disable strict blockers or try another network.";
     }
     return;
   }
