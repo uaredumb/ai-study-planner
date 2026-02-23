@@ -600,7 +600,7 @@ if (outputFlashcards) {
 if (flashcardsCountSelect) {
   flashcardsCountSelect.addEventListener("change", () => {
     const count = getRequestedFlashcardsCount();
-    statusText.textContent = `Flashcards count set to ${count} (max 5).`;
+    statusText.textContent = `Flashcards count set to ${count}.`;
   });
 }
 if (outputQuizQuestions) {
