@@ -11,6 +11,7 @@ const copyStudyTasksButton = document.getElementById("copyStudyTasksButton");
 const copyStudyPlanButton = document.getElementById("copyStudyPlanButton");
 const copyCleanNotesButton = document.getElementById("copyCleanNotesButton");
 const copyFlashcardsButton = document.getElementById("copyFlashcardsButton");
+const downloadFlashcardsButton = document.getElementById("downloadFlashcardsButton");
 const copyQuizButton = document.getElementById("copyQuizButton");
 const studyTasksCard = document.getElementById("studyTasksCard");
 const studyPlanCard = document.getElementById("studyPlanCard");
@@ -667,12 +668,15 @@ async function generateStudyPack(text, selectedOutputs) {
     updateStreamingStatus(chunk, fullText);
   });
   const sourceLines = base.cleanNotes.length > 0 ? base.cleanNotes : base.studyTasks;
+  const flashcards = selectedOutputs.flashcards
+    ? await generateFlashcardsWithModel(sourceLines)
+    : [];
 
   return {
     cleanNotes: selectedOutputs.cleanNotes ? base.cleanNotes : [],
     studyTasks: selectedOutputs.studyTasks ? base.studyTasks : [],
     studyOrder: selectedOutputs.studyPlan ? base.studyOrder : [],
-    flashcards: selectedOutputs.flashcards ? generateFlashcards(sourceLines) : [],
+    flashcards,
     quizQuestions: selectedOutputs.quizQuestions ? generateQuizQuestions(sourceLines) : [],
     selectedOutputs
   };
@@ -683,15 +687,57 @@ async function generateStudyPackFromPhoto(imageDataUrl, selectedOutputs) {
     updateStreamingStatus(chunk, fullText);
   });
   const sourceLines = base.cleanNotes.length > 0 ? base.cleanNotes : base.studyTasks;
+  const flashcards = selectedOutputs.flashcards
+    ? await generateFlashcardsWithModel(sourceLines)
+    : [];
 
   return {
     cleanNotes: selectedOutputs.cleanNotes ? base.cleanNotes : [],
     studyTasks: selectedOutputs.studyTasks ? base.studyTasks : [],
     studyOrder: selectedOutputs.studyPlan ? base.studyOrder : [],
-    flashcards: selectedOutputs.flashcards ? generateFlashcards(sourceLines) : [],
+    flashcards,
     quizQuestions: selectedOutputs.quizQuestions ? generateQuizQuestions(sourceLines) : [],
     selectedOutputs
   };
+}
+
+async function generateFlashcardsWithModel(sourceLines) {
+  const notes = ensureStringArray(sourceLines).join("\n");
+  if (!notes) {
+    return [];
+  }
+
+  const workerUrl = "/api/chat";
+  const authHeaders = await getApiAuthHeaders();
+  const response = await fetch(workerUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders
+    },
+    body: JSON.stringify({
+      mode: "flashcards",
+      notes,
+      stream: false
+    })
+  });
+
+  if (!response.ok) {
+    return generateFlashcards(sourceLines);
+  }
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch (_error) {
+    payload = null;
+  }
+
+  const flashcards = ensureStringArray(payload?.flashcards);
+  if (flashcards.length === 0) {
+    return generateFlashcards(sourceLines);
+  }
+  return flashcards;
 }
 
 function extractJsonObject(text) {
@@ -1662,12 +1708,9 @@ function setSummaryMode(mode) {
 }
 
 function handleSummaryModeChange(mode) {
+  const previousMode = getCurrentSummaryMode();
   const isArticle = mode === "article";
   const isPhoto = mode === "photo";
-  const wasArticle =
-    articleModeButton && notesModeButton
-      ? articleModeButton.classList.contains("active") && !notesModeButton.classList.contains("active")
-      : false;
 
   [summarizeModeCard, articleInputWrap, inputCard, resultsSection].forEach((element) => {
     if (!element) {
@@ -1676,7 +1719,7 @@ function handleSummaryModeChange(mode) {
     element.classList.remove("file-open-in", "mode-pop-in", "mode-pop-out");
   });
 
-  if (summarizeModeCard && isArticle) {
+  if (summarizeModeCard && previousMode !== mode) {
     summarizeModeCard.classList.remove("island-pop");
     void summarizeModeCard.offsetWidth;
     summarizeModeCard.classList.add("island-pop");
@@ -1699,7 +1742,7 @@ function handleSummaryModeChange(mode) {
     }
     inputCard.classList.remove("mode-pop-in", "mode-pop-out");
     inputCard.classList.remove("hidden");
-    if (!isArticle && wasArticle) {
+    if (!isArticle && previousMode !== mode) {
       void inputCard.offsetWidth;
       inputCard.classList.add("mode-pop-in");
     }
@@ -1725,7 +1768,7 @@ function handleSummaryModeChange(mode) {
   if (isArticle) {
     statusText.textContent = "Article mode selected. Paste a link and generate your study pack.";
   } else if (isPhoto) {
-    statusText.textContent = "Photo mode selected. Upload a notes image and generate your study pack.";
+    statusText.textContent = "Notes photo mode selected. Upload a notes image and generate your study pack.";
   } else {
     statusText.textContent = "Notes mode selected. Paste notes and generate your study pack.";
   }
@@ -1822,6 +1865,37 @@ function bindCopyButtons() {
   bindCopyButton(copyCleanNotesButton, "Clean Notes", cleanNotesList, false);
   bindCopyButton(copyFlashcardsButton, "Flashcards", flashcardsList, false);
   bindCopyButton(copyQuizButton, "Quiz Questions", quizQuestionsList, true);
+  bindDownloadFlashcardsButton();
+}
+
+function bindDownloadFlashcardsButton() {
+  if (!downloadFlashcardsButton || !flashcardsList) {
+    return;
+  }
+
+  downloadFlashcardsButton.addEventListener("click", () => {
+    const activeFile = getActiveFile();
+    const title = activeFile?.name ? `${activeFile.name} - Flashcards` : "Flashcards";
+    const lines = getListLines(flashcardsList, false);
+
+    if (lines.length === 0) {
+      statusText.textContent = "No flashcards to download yet.";
+      return;
+    }
+
+    const safeNameBase = slugifyFileName(activeFile?.name || "study-notes");
+    const content = `${title}\n${lines.join("\n")}`;
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${safeNameBase}-flashcards.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 0);
+
+    statusText.textContent = "Flashcards downloaded.";
+  });
 }
 
 function bindCopyButton(button, title, listElement, ordered) {
