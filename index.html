@@ -21,6 +21,11 @@
         <p class="eyebrow">One Input. Full Study Pack. Faster Learning.</p>
       </div>
       <div class="top-actions">
+        <button id="tutorialLaunchButton" class="secondary-btn" type="button">Tutorial</button>
+        <button id="helpButton" class="theme-btn" type="button" aria-label="Open help tutorial">
+          <span class="btn-glyph" aria-hidden="true">?</span>
+          <span class="btn-label">Help</span>
+        </button>
         <button id="performanceToggle" class="theme-btn" aria-label="Toggle performance mode">
           <img class="btn-icon" src="icons/performance-off.svg" alt="" aria-hidden="true" />
           <span class="btn-label">Performance Mode: Off</span>
@@ -50,6 +55,7 @@
       <div class="mode-row">
         <button id="notesModeButton" class="secondary-btn mode-btn active" type="button">Summarize Notes</button>
         <button id="articleModeButton" class="secondary-btn mode-btn" type="button">Summarize Article</button>
+        <button id="photoModeButton" class="secondary-btn mode-btn" type="button">Summarize Photo</button>
       </div>
 
       <div id="articleInputWrap" class="article-row hidden">
@@ -90,11 +96,6 @@
           </label>
         </div>
       </div>
-      <div class="actions-row">
-        <button id="cleanButton" class="primary-btn">Generate Study Pack</button>
-        <button id="summarizeLinkButton" class="primary-btn hidden">Generate Study Pack</button>
-        <p id="statusText" class="status-text">Ready</p>
-      </div>
     </section>
 
     <section class="card input-card">
@@ -104,6 +105,19 @@
           id="notesInput"
           placeholder="Example: math ch 4?? finish practice, history civil war notes incomplete, science quiz Friday maybe?"
         ></textarea>
+      </div>
+      <div id="photoInputWrap" class="photo-row hidden">
+        <label for="notesPhotoInput" class="input-label">Upload a photo of your notes</label>
+        <input id="notesPhotoInput" type="file" accept="image/*" capture="environment" />
+        <div class="photo-preview-wrap hidden" id="photoPreviewWrap">
+          <img id="notesPhotoPreview" alt="Selected notes photo preview" />
+          <button id="clearPhotoButton" class="secondary-btn" type="button">Remove Photo</button>
+        </div>
+      </div>
+      <div class="actions-row">
+        <button id="cleanButton" class="primary-btn">Generate Study Pack</button>
+        <button id="summarizeLinkButton" class="primary-btn hidden">Generate Study Pack</button>
+        <p id="statusText" class="status-text">Ready</p>
       </div>
     </section>
 
@@ -202,7 +216,7 @@
   <aside id="tutorialCoach" class="tutorial-coach hidden" aria-live="polite">
     <div class="tutorial-step" id="tutorialStepCounter">Step 1 of 5</div>
     <h2 id="tutorialTitle">Get Started</h2>
-    <p id="tutorialText" class="modal-message">Welcome! Let’s walk through AI Study Pal in under a minute.</p>
+    <p id="tutorialText" class="modal-message">Welcome! Let's walk through AI Study Pal in under a minute.</p>
     <div class="tutorial-example-wrap">
       <p id="tutorialExampleLabel" class="tutorial-label">Assignment</p>
       <pre id="tutorialExample" class="tutorial-example"></pre>
@@ -213,16 +227,6 @@
       <button id="tutorialCloseButton" type="button" class="secondary-btn tutorial-close-btn">Skip</button>
     </div>
   </aside>
-
-  <div id="welcomeModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="welcomeModalTitle">
-    <div class="modal-card">
-      <h2 id="welcomeModalTitle">Welcome to AI Study Pal</h2>
-      <p class="modal-message">We will walk you through a quick setup so your first study pack is easy.</p>
-      <div class="modal-actions">
-        <button id="welcomeStartButton" type="button" class="primary-btn">Get Started</button>
-      </div>
-    </div>
-  </div>
 
   <div id="tutorialSkipConfirmModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="tutorialSkipConfirmTitle">
     <div class="modal-card">
@@ -242,7 +246,19 @@
     </div>
   </div>
 
-  <script src="main.js?v=24"></script>
+  <div id="regenerateConfirmModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="regenerateConfirmTitle">
+    <div class="modal-card">
+      <h2 id="regenerateConfirmTitle">Replace Current Results?</h2>
+      <p class="modal-message">This file already has generated study content. Continue to erase current generated results and create a new study pack?</p>
+      <div class="modal-actions">
+        <button id="regenerateCancelButton" type="button" class="secondary-btn">Cancel</button>
+        <button id="regenerateConfirmButton" type="button" class="secondary-btn danger-btn">Yes, Replace</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="main.js?v=26"></script>
 </body>
 </html>
+
 

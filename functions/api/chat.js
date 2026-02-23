@@ -48,6 +48,19 @@ function sanitizeStringArray(value) {
     .filter((item) => item.length > 0);
 }
 
+function extractDeltaContent(sseDataLine) {
+  if (!sseDataLine || sseDataLine === "[DONE]") {
+    return "";
+  }
+
+  try {
+    const parsed = JSON.parse(sseDataLine);
+    return parsed?.choices?.[0]?.delta?.content || "";
+  } catch (_error) {
+    return "";
+  }
+}
+
 export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: CORS_HEADERS });
 }
@@ -70,12 +83,28 @@ export async function onRequestPost(context) {
     return jsonResponse({ error: "Invalid JSON body." }, 400);
   }
 
+  const requestMode = payload?.mode === "vision" ? "vision" : "text";
   const notes = typeof payload?.notes === "string" ? payload.notes.trim() : "";
-  if (!notes) {
+  const imageDataUrl = typeof payload?.imageDataUrl === "string" ? payload.imageDataUrl.trim() : "";
+  const shouldStream = Boolean(payload?.stream);
+  if (requestMode === "text" && !notes) {
     return jsonResponse({ error: "Missing 'notes' in request body." }, 400);
   }
+  if (requestMode === "vision") {
+    if (!imageDataUrl) {
+      return jsonResponse({ error: "Missing 'imageDataUrl' in request body." }, 400);
+    }
+    if (!/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(imageDataUrl)) {
+      return jsonResponse({ error: "Invalid image format. Use a base64 data URL." }, 400);
+    }
+    if (imageDataUrl.length > 12_000_000) {
+      return jsonResponse({ error: "Image payload too large. Use a smaller image." }, 413);
+    }
+  }
 
-  const model = env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
+  const textModel = env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
+  const visionModel = env.OPENROUTER_VISION_MODEL || "qwen/qwen3-vl-235b-a22b-thinking";
+  const model = requestMode === "vision" ? visionModel : textModel;
   const siteUrl = env.OPENROUTER_SITE_URL || "https://ai-study-planner.pages.dev";
   const appName = env.OPENROUTER_APP_NAME || "AI Study Pal";
 
@@ -91,6 +120,22 @@ export async function onRequestPost(context) {
     notes
   ].join("\n");
 
+  const userVisionText = [
+    "Read the uploaded image of handwritten or typed notes.",
+    "Transcribe and normalize the content, then convert it into structured study help.",
+    "If a part of the image is unreadable, skip that part instead of guessing.",
+    "Return valid JSON only in this exact shape:",
+    '{ "cleanNotes": ["..."], "studyTasks": ["..."], "studyOrder": ["..."] }'
+  ].join("\n");
+
+  const userContent =
+    requestMode === "vision"
+      ? [
+          { type: "text", text: userVisionText },
+          { type: "image_url", image_url: { url: imageDataUrl } }
+        ]
+      : userPrompt;
+
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -103,9 +148,10 @@ export async function onRequestPost(context) {
       model,
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
+        { role: "user", content: userContent }
       ],
-      temperature: 0.3
+      temperature: 0.3,
+      stream: shouldStream
     })
   });
 
@@ -115,6 +161,78 @@ export async function onRequestPost(context) {
       { error: `OpenRouter request failed (${response.status}). ${errorText.slice(0, 300)}` },
       502
     );
+  }
+
+  if (shouldStream) {
+    if (!response.body) {
+      return jsonResponse({ error: "Streaming response body unavailable." }, 502);
+    }
+
+    const readable = new ReadableStream({
+      async start(controller) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
+        let buffer = "";
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              break;
+            }
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith("data:")) {
+                continue;
+              }
+
+              const data = trimmed.slice(5).trim();
+              if (data === "[DONE]") {
+                controller.close();
+                return;
+              }
+
+              const delta = extractDeltaContent(data);
+              if (!delta) {
+                continue;
+              }
+              controller.enqueue(encoder.encode(delta));
+            }
+          }
+
+          const trailing = buffer.trim();
+          if (trailing.startsWith("data:")) {
+            const data = trailing.slice(5).trim();
+            if (data && data !== "[DONE]") {
+              const delta = extractDeltaContent(data);
+              if (delta) {
+                controller.enqueue(encoder.encode(delta));
+              }
+            }
+          }
+
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        } finally {
+          reader.releaseLock();
+        }
+      }
+    });
+
+    return new Response(readable, {
+      headers: {
+        ...CORS_HEADERS,
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store"
+      }
+    });
   }
 
   const result = await response.json();
