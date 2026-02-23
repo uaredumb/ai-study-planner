@@ -1597,6 +1597,10 @@ function generateFlashcards(sourceLines) {
           ? normalized.slice(separatorIndex + 1).trim()
           : normalized;
       return `Front: ${front} | Back: ${back || normalized}`;
+    })
+    .map((cardText, index) => {
+      const { front, back } = parseFlashcardText(cardText, index + 1);
+      return `Front: ${front} | Back: ${back}`;
     });
 }
 
@@ -2013,15 +2017,25 @@ function getRawListItems(listElement) {
 
 function parseFlashcardText(text, fallbackIndex) {
   const normalized = String(text || "").replace(/\s+/g, " ").trim();
-  const match = normalized.match(/front:\s*(.*?)\s*\|\s*back:\s*(.*)/i);
+  const match = normalized.match(/front:\s*([\s\S]*?)(?:\s*\|\s*|\s+)back:\s*([\s\S]*)/i);
   if (match) {
+    const front = String(match[1] || "").trim();
+    const back = String(match[2] || "").trim();
     return {
-      front: match[1] || `Card ${fallbackIndex}`,
-      back: match[2] || "Review your notes."
+      front: front || `Card ${fallbackIndex}`,
+      back: back || "Review your notes."
+    };
+  }
+  const frontOnlyMatch = normalized.match(/front:\s*([\s\S]*)/i);
+  if (frontOnlyMatch) {
+    const front = String(frontOnlyMatch[1] || "").trim();
+    return {
+      front: front || `Card ${fallbackIndex}`,
+      back: "Review your notes."
     };
   }
   return {
-    front: `Card ${fallbackIndex}`,
+    front: buildFlashcardFrontFromLine(normalized, fallbackIndex),
     back: normalized || "Review your notes."
   };
 }
