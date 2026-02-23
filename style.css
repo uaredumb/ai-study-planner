@@ -968,9 +968,39 @@ body.dark .output-icon {
   background: color-mix(in srgb, var(--card), #ffffff 8%);
 }
 
+.flashcards-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.flashcards-preview-toggle {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.preview-toggle-btn {
+  padding: 0.28rem 0.65rem;
+  font-size: 0.82rem;
+}
+
+.preview-toggle-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+body.dark .preview-toggle-btn.active {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: #101937;
+}
+
 #flashcardsPdfPreview {
   width: 100%;
-  min-height: 260px;
+  min-height: 180px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: #ffffff;
@@ -1174,6 +1204,7 @@ body.dark .output-icon {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.1rem;
+  align-items: start;
 }
 
 .summarize-mode-card.file-open-in,

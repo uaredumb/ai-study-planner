@@ -15,6 +15,8 @@ const downloadFlashcardsButton = document.getElementById("downloadFlashcardsButt
 const moreFlashcardsButton = document.getElementById("moreFlashcardsButton");
 const flashcardsPdfPreviewWrap = document.getElementById("flashcardsPdfPreviewWrap");
 const flashcardsPdfPreview = document.getElementById("flashcardsPdfPreview");
+const previewFrontsButton = document.getElementById("previewFrontsButton");
+const previewBacksButton = document.getElementById("previewBacksButton");
 const moreFlashcardsModal = document.getElementById("moreFlashcardsModal");
 const moreFlashcardsCloseButton = document.getElementById("moreFlashcardsCloseButton");
 const copyQuizButton = document.getElementById("copyQuizButton");
@@ -146,7 +148,8 @@ let authFlowStarted = false;
 const ENABLE_AUTH = false;
 let pendingRegenerateResolver = null;
 let uploadedNotesPhotoDataUrl = "";
-let flashcardsPdfPreviewUrl = "";
+let flashcardsFrontsPreviewUrl = "";
+let flashcardsBacksPreviewUrl = "";
 
 const authClerkAppearance = {
   variables: {
@@ -362,6 +365,30 @@ if (moreFlashcardsModal) {
   moreFlashcardsModal.addEventListener("click", (event) => {
     if (event.target === moreFlashcardsModal) {
       closeModalWithAnimation(moreFlashcardsModal);
+    }
+  });
+}
+if (previewFrontsButton) {
+  previewFrontsButton.addEventListener("click", () => {
+    if (!flashcardsFrontsPreviewUrl || !flashcardsPdfPreview) {
+      return;
+    }
+    flashcardsPdfPreview.src = flashcardsFrontsPreviewUrl;
+    previewFrontsButton.classList.add("active");
+    if (previewBacksButton) {
+      previewBacksButton.classList.remove("active");
+    }
+  });
+}
+if (previewBacksButton) {
+  previewBacksButton.addEventListener("click", () => {
+    if (!flashcardsBacksPreviewUrl || !flashcardsPdfPreview) {
+      return;
+    }
+    flashcardsPdfPreview.src = flashcardsBacksPreviewUrl;
+    previewBacksButton.classList.add("active");
+    if (previewFrontsButton) {
+      previewFrontsButton.classList.remove("active");
     }
   });
 }
@@ -1603,7 +1630,7 @@ function generateFlashcards(sourceLines) {
     })
     .map((cardText, index) => {
       const { front, back } = parseFlashcardText(cardText, index + 1);
-      return `Front: ${front} | Back: ${back}`;
+      return `${index + 1}. Front: ${front} | Back: ${back}`;
     });
 }
 
@@ -1900,18 +1927,13 @@ function bindDownloadFlashcardsButton() {
       return;
     }
 
-    const pdfBlob = buildFlashcardsPdf(rawCards);
-    showFlashcardsPdfPreview(pdfBlob);
+    const { frontsBlob, backsBlob } = buildCuttableFlashcardsPdfs(rawCards);
+    showFlashcardsPdfPreview(frontsBlob, backsBlob);
     const safeNameBase = slugifyFileName(activeFile?.name || "study-notes");
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(pdfBlob);
-    link.download = `${safeNameBase}-flashcards.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(link.href), 0);
+    downloadBlob(frontsBlob, `${safeNameBase}-flashcards-fronts.pdf`);
+    downloadBlob(backsBlob, `${safeNameBase}-flashcards-backs.pdf`);
 
-    statusText.textContent = "Flashcards PDF downloaded and previewed (5 cards / 10 sides).";
+    statusText.textContent = "Downloaded 2 cut-ready flashcard PDFs (fronts + backs).";
   });
 }
 
@@ -1929,55 +1951,119 @@ function bindMoreFlashcardsButton() {
   });
 }
 
-function buildFlashcardsPdf(rawCards) {
+function buildCuttableFlashcardsPdfs(rawCards) {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({
-    orientation: "landscape",
+  const frontsDoc = new jsPDF({
+    orientation: "portrait",
     unit: "in",
-    format: [3.5, 2]
+    format: "letter"
   });
-  const margin = 0.18;
-  const maxWidth = 3.5 - margin * 2;
+  const backsDoc = new jsPDF({
+    orientation: "portrait",
+    unit: "in",
+    format: "letter"
+  });
+
+  const pageWidth = 8.5;
+  const pageHeight = 11;
+  const cardWidth = 3.5;
+  const cardHeight = 2.0;
+  const colGap = 0.5;
+  const rowGap = 0.35;
+  const marginX = (pageWidth - (cardWidth * 2 + colGap)) / 2;
+  const marginY = 0.6;
+  const perPage = 8; // 2 cols x 4 rows
 
   rawCards.forEach((cardText, index) => {
+    const pageIndex = Math.floor(index / perPage);
+    const slot = index % perPage;
+    const row = Math.floor(slot / 2);
+    const col = slot % 2;
+    const x = marginX + col * (cardWidth + colGap);
+    const y = marginY + row * (cardHeight + rowGap);
     const { front, back } = parseFlashcardText(cardText, index + 1);
-    if (index > 0) {
-      doc.addPage([3.5, 2], "landscape");
+
+    if (index > 0 && slot === 0) {
+      frontsDoc.addPage("letter", "portrait");
+      backsDoc.addPage("letter", "portrait");
     }
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(`Card ${index + 1} - Front`, margin, 0.35);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    const frontLines = doc.splitTextToSize(front, maxWidth);
-    doc.text(frontLines, margin, 0.72);
+    drawCutCard(frontsDoc, x, y, cardWidth, cardHeight, `Card ${index + 1} Front`, front);
+    drawCutCard(backsDoc, x, y, cardWidth, cardHeight, `Card ${index + 1} Back`, back);
 
-    doc.addPage([3.5, 2], "landscape");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(`Card ${index + 1} - Back`, margin, 0.35);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    const backLines = doc.splitTextToSize(back, maxWidth);
-    doc.text(backLines, margin, 0.72);
+    // Light page labels for print workflow.
+    if (slot === 0) {
+      frontsDoc.setFont("helvetica", "bold");
+      frontsDoc.setFontSize(9);
+      frontsDoc.text(`Flashcards Fronts - Page ${pageIndex + 1}`, marginX, 0.35);
+      backsDoc.setFont("helvetica", "bold");
+      backsDoc.setFontSize(9);
+      backsDoc.text(`Flashcards Backs - Page ${pageIndex + 1}`, marginX, 0.35);
+    }
   });
 
-  return doc.output("blob");
+  return {
+    frontsBlob: frontsDoc.output("blob"),
+    backsBlob: backsDoc.output("blob")
+  };
 }
 
-function showFlashcardsPdfPreview(pdfBlob) {
-  if (!flashcardsPdfPreviewWrap || !flashcardsPdfPreview || !pdfBlob) {
+function drawCutCard(doc, x, y, width, height, title, text) {
+  doc.setDrawColor(120, 130, 170);
+  doc.setLineWidth(0.015);
+  doc.rect(x, y, width, height);
+
+  // Dotted cut guides crossing the card center.
+  doc.setLineWidth(0.01);
+  doc.setLineDashPattern([0.04, 0.04], 0);
+  doc.line(x + width / 2, y + 0.03, x + width / 2, y + height - 0.03);
+  doc.line(x + 0.03, y + height / 2, x + width - 0.03, y + height / 2);
+  doc.setLineDashPattern([], 0);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text(title, x + 0.12, y + 0.24);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  const lines = doc.splitTextToSize(text, width - 0.24);
+  doc.text(lines, x + 0.12, y + 0.48);
+}
+
+function downloadBlob(blob, fileName) {
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 0);
+}
+
+function showFlashcardsPdfPreview(frontsBlob, backsBlob) {
+  if (!flashcardsPdfPreviewWrap || !flashcardsPdfPreview || !frontsBlob || !backsBlob) {
     return;
   }
 
-  if (flashcardsPdfPreviewUrl) {
-    URL.revokeObjectURL(flashcardsPdfPreviewUrl);
-    flashcardsPdfPreviewUrl = "";
+  if (flashcardsFrontsPreviewUrl) {
+    URL.revokeObjectURL(flashcardsFrontsPreviewUrl);
+    flashcardsFrontsPreviewUrl = "";
+  }
+  if (flashcardsBacksPreviewUrl) {
+    URL.revokeObjectURL(flashcardsBacksPreviewUrl);
+    flashcardsBacksPreviewUrl = "";
   }
 
-  flashcardsPdfPreviewUrl = URL.createObjectURL(pdfBlob);
-  flashcardsPdfPreview.src = flashcardsPdfPreviewUrl;
+  flashcardsFrontsPreviewUrl = URL.createObjectURL(frontsBlob);
+  flashcardsBacksPreviewUrl = URL.createObjectURL(backsBlob);
+  flashcardsPdfPreview.src = flashcardsFrontsPreviewUrl;
+  if (previewFrontsButton) {
+    previewFrontsButton.classList.add("active");
+  }
+  if (previewBacksButton) {
+    previewBacksButton.classList.remove("active");
+  }
+
   flashcardsPdfPreviewWrap.classList.remove("hidden");
 }
 
@@ -2019,7 +2105,10 @@ function getRawListItems(listElement) {
 }
 
 function parseFlashcardText(text, fallbackIndex) {
-  const normalized = String(text || "").replace(/\s+/g, " ").trim();
+  const normalized = String(text || "")
+    .replace(/^\s*\d+\.\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
   const match = normalized.match(/front:\s*([\s\S]*?)(?:\s*\|\s*|\s+)back:\s*([\s\S]*)/i);
   if (match) {
     const front = String(match[1] || "").trim();
@@ -2052,7 +2141,14 @@ function renderFlashcardsVisuals(cards) {
   const items = ensureStringArray(cards);
   if (items.length === 0) {
     flashcardsVisualGrid.classList.add("hidden");
+    if (flashcardsList) {
+      flashcardsList.classList.remove("hidden");
+    }
     return;
+  }
+
+  if (flashcardsList) {
+    flashcardsList.classList.add("hidden");
   }
 
   items.forEach((cardText, index) => {
@@ -2893,9 +2989,13 @@ function clearTransientAnimationClasses() {
 }
 
 window.addEventListener("beforeunload", () => {
-  if (flashcardsPdfPreviewUrl) {
-    URL.revokeObjectURL(flashcardsPdfPreviewUrl);
-    flashcardsPdfPreviewUrl = "";
+  if (flashcardsFrontsPreviewUrl) {
+    URL.revokeObjectURL(flashcardsFrontsPreviewUrl);
+    flashcardsFrontsPreviewUrl = "";
+  }
+  if (flashcardsBacksPreviewUrl) {
+    URL.revokeObjectURL(flashcardsBacksPreviewUrl);
+    flashcardsBacksPreviewUrl = "";
   }
 });
 

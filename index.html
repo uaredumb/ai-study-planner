@@ -107,6 +107,7 @@
             <span class="flashcards-count-caret" aria-hidden="true">▼</span>
           </div>
           <p class="tutorial-label">Maximum: 5 cards</p>
+          <button id="moreFlashcardsButton" class="secondary-btn more-flashcards-btn" type="button">Want more flash cards?</button>
         </div>
       </div>
     </section>
@@ -181,10 +182,15 @@
         </ul>
         <div id="flashcardsVisualGrid" class="flashcards-visual-grid hidden"></div>
         <div id="flashcardsPdfPreviewWrap" class="flashcards-preview-wrap hidden">
-          <p class="tutorial-label">Flashcards PDF Preview</p>
+          <div class="flashcards-preview-head">
+            <p class="tutorial-label">Flashcards PDF Preview</p>
+            <div class="flashcards-preview-toggle">
+              <button id="previewFrontsButton" class="secondary-btn preview-toggle-btn active" type="button">Fronts</button>
+              <button id="previewBacksButton" class="secondary-btn preview-toggle-btn" type="button">Backs</button>
+            </div>
+          </div>
           <iframe id="flashcardsPdfPreview" title="Flashcards PDF preview"></iframe>
         </div>
-        <button id="moreFlashcardsButton" class="secondary-btn more-flashcards-btn" type="button">Want more flash cards?</button>
       </article>
 
       <article id="quizQuestionsCard" class="card result-card hidden">
