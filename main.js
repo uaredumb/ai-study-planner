@@ -1333,6 +1333,9 @@ function setLoadingState(isLoading, mode = "clean") {
     summarizeLinkButton.disabled = isLoading;
     summarizeLinkButton.classList.toggle("is-loading", isLoading && mode === "article");
   }
+  if (downloadFlashcardsButton) {
+    downloadFlashcardsButton.disabled = isLoading;
+  }
   cleanButton.textContent = isLoading && mode === "clean" ? "Generating Study Pack..." : "Generate Study Pack";
   if (summarizeLinkButton) {
     summarizeLinkButton.textContent = isLoading && mode === "article" ? "Generating Study Pack..." : "Generate Study Pack";
