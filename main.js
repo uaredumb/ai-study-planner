@@ -412,7 +412,7 @@ if (previewBacksButton) {
   });
 }
 if (tutorialCloseButton) {
-  tutorialCloseButton.addEventListener("click", skipTutorial);
+  tutorialCloseButton.addEventListener("click", openTutorialSkipConfirm);
 }
 if (tutorialSkipCancelButton) {
   tutorialSkipCancelButton.addEventListener("click", () => closeModalWithAnimation(tutorialSkipConfirmModal));
@@ -2723,6 +2723,7 @@ async function initializeAuthGate() {
 }
 
 function openTutorialFromTopBar() {
+  setSummaryMode("notes");
   closeModalWithAnimation(tutorialSkipConfirmModal);
   tutorialStepIndex = 0;
   tutorialDynamicStep = null;
