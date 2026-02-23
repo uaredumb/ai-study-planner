@@ -62,21 +62,9 @@ npm start
 
 7. Open: `http://localhost:3000`
 
-## Clerk Login Setup
+## Authentication
 
-1. Copy `config.example.js` to `config.js`.
-2. Set your Clerk publishable key:
-
-```js
-window.APP_CONFIG = {
-  CLERK_PUBLISHABLE_KEY: "pk_test_your_key_here"
-};
-```
-
-Notes:
-- `config.js` is gitignored so each environment can use its own key.
-- The app is locked until login succeeds.
-- Tutorial starts only after the user is authenticated.
+Clerk has been removed from this project. The app runs without login and saves data locally in the browser.
 
 ## Cloudflare Pages Functions (Secure API Key)
 
@@ -88,13 +76,10 @@ Frontend now calls `POST /api/chat` and never sends an API key from client code.
    - `OPENROUTER_MODEL`
    - `OPENROUTER_SITE_URL`
    - `OPENROUTER_APP_NAME`
-   - `CLERK_SECRET_KEY` (required only if `REQUIRE_CLERK_AUTH=true`)
-   - `REQUIRE_CLERK_AUTH` (`true`/`false`, default false)
 3. Deploy with the `functions/` directory included.
 
 Local Pages dev:
 - Copy `.dev.vars.example` to `.dev.vars` and set real values.
-- If you want `/api/chat` protected by Clerk session, set `REQUIRE_CLERK_AUTH=true` and provide `CLERK_SECRET_KEY`.
 
 ## Deploying the backend to GitHub
 

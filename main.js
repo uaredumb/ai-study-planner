@@ -124,7 +124,7 @@ let authView = "sign-in";
 let clerkLoaded = false;
 let authFormsMounted = false;
 let authFlowStarted = false;
-const ENABLE_AUTH = true;
+const ENABLE_AUTH = false;
 
 const authClerkAppearance = {
   variables: {

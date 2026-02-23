@@ -48,30 +48,6 @@ function sanitizeStringArray(value) {
     .filter((item) => item.length > 0);
 }
 
-function getBearerToken(request) {
-  const authHeader = request.headers.get("Authorization") || "";
-  const match = authHeader.match(/^Bearer\s+(.+)$/i);
-  return match ? match[1].trim() : "";
-}
-
-async function verifyClerkSessionToken(token, clerkSecretKey) {
-  const response = await fetch("https://api.clerk.com/v1/clients/verify", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${clerkSecretKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ token })
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const data = await response.json();
-  return data?.response || data || null;
-}
-
 export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: CORS_HEADERS });
 }
@@ -85,27 +61,6 @@ export async function onRequestPost(context) {
       { error: "Missing OPENROUTER_API_KEY in Cloudflare Pages environment variables." },
       500
     );
-  }
-
-  const requireClerkAuth = String(env.REQUIRE_CLERK_AUTH || "false").toLowerCase() === "true";
-  if (requireClerkAuth) {
-    const clerkSecretKey = env.CLERK_SECRET_KEY;
-    if (!clerkSecretKey) {
-      return jsonResponse(
-        { error: "Missing CLERK_SECRET_KEY in Cloudflare Pages environment variables." },
-        500
-      );
-    }
-
-    const token = getBearerToken(request);
-    if (!token) {
-      return jsonResponse({ error: "Unauthorized. Missing bearer token." }, 401);
-    }
-
-    const verified = await verifyClerkSessionToken(token, clerkSecretKey);
-    if (!verified) {
-      return jsonResponse({ error: "Unauthorized. Invalid session token." }, 401);
-    }
   }
 
   let payload;
@@ -122,7 +77,7 @@ export async function onRequestPost(context) {
 
   const model = env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
   const siteUrl = env.OPENROUTER_SITE_URL || "https://ai-study-planner.pages.dev";
-  const appName = env.OPENROUTER_APP_NAME || "AI Study Buddy";
+  const appName = env.OPENROUTER_APP_NAME || "AI Study Pal";
 
   const systemPrompt =
     "You are a study assistant. Return strict JSON only with keys cleanNotes, studyTasks, studyOrder. " +

@@ -1,3 +1,1 @@
-window.APP_CONFIG = {
-  CLERK_PUBLISHABLE_KEY: "pk_test_replace_with_your_clerk_publishable_key"
-};
+window.APP_CONFIG = {};

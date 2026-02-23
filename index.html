@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="clerk-publishable-key" content="pk_test_ZWxlZ2FudC1mZWxpbmUtNjEuY2xlcmsuYWNjb3VudHMuZGV2JA" />
   <title>AI Study Pal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,10 +21,6 @@
         <p class="eyebrow">One Input. Full Study Pack. Faster Learning.</p>
       </div>
       <div class="top-actions">
-        <button id="accountLoginButton" class="theme-btn icon-only-btn" type="button" aria-label="Account login">
-          <img class="btn-icon" src="icons/profile.svg" alt="" aria-hidden="true" />
-        </button>
-        <div id="clerkUserButton" class="clerk-user-button hidden" aria-label="Account"></div>
         <button id="performanceToggle" class="theme-btn" aria-label="Toggle performance mode">
           <img class="btn-icon" src="icons/performance-off.svg" alt="" aria-hidden="true" />
           <span class="btn-label">Performance Mode: Off</span>
@@ -165,38 +160,6 @@
     </section>
   </main>
 
-  <section id="authGate" class="auth-gate hidden" aria-live="polite">
-    <div class="auth-gate-panel card">
-      <p class="auth-kicker">Secure Access</p>
-      <h2 id="authGateTitle">Sign in to continue</h2>
-      <p id="authGateText" class="modal-message">Sign in to use account-only features, or continue as a guest.</p>
-
-      <div id="authWelcomeIsland" class="auth-welcome-island">
-        <h3>Welcome to AI Study Pal</h3>
-        <p>Choose how you want to continue.</p>
-        <div class="auth-welcome-actions">
-          <button id="authWelcomeSignIn" class="secondary-btn auth-tab-btn active" type="button">Sign In</button>
-          <button id="authWelcomeSignUp" class="secondary-btn auth-tab-btn" type="button">Sign Up</button>
-        </div>
-      </div>
-
-      <div id="authFormShell" class="hidden">
-        <div class="auth-switch-row">
-          <button id="authSignInTab" class="secondary-btn auth-tab-btn active" type="button">Sign In</button>
-          <button id="authSignUpTab" class="secondary-btn auth-tab-btn" type="button">Sign Up</button>
-        </div>
-        <div id="clerkAuthStack" class="clerk-auth-stack" data-auth-direction="none">
-          <div id="clerkSignInMount" class="clerk-auth-mount auth-pane auth-pane-sign-in active" aria-hidden="false"></div>
-          <div id="clerkSignUpMount" class="clerk-auth-mount auth-pane auth-pane-sign-up hidden" aria-hidden="true"></div>
-        </div>
-      </div>
-
-      <div class="auth-guest-actions">
-        <button id="authSkipButton" class="secondary-btn auth-skip-btn" type="button">Skip for now</button>
-      </div>
-    </div>
-  </section>
-
   <div id="renameModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
     <div class="modal-card">
       <h2 id="renameModalTitle">Rename Study File</h2>
@@ -279,12 +242,7 @@
     </div>
   </div>
 
-  <script
-    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
-    crossorigin="anonymous"
-    data-clerk-publishable-key="pk_test_ZWxlZ2FudC1mZWxpbmUtNjEuY2xlcmsuYWNjb3VudHMuZGV2JA"
-  ></script>
-  <script src="main.js?v=23"></script>
+  <script src="main.js?v=24"></script>
 </body>
 </html>
 
