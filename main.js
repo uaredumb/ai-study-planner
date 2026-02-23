@@ -21,6 +21,7 @@ const copyQuizButton = document.getElementById("copyQuizButton");
 const studyTasksCard = document.getElementById("studyTasksCard");
 const studyPlanCard = document.getElementById("studyPlanCard");
 const flashcardsList = document.getElementById("flashcardsList");
+const flashcardsVisualGrid = document.getElementById("flashcardsVisualGrid");
 const quizQuestionsList = document.getElementById("quizQuestionsList");
 const cleanNotesCard = document.getElementById("cleanNotesCard");
 const flashcardsCard = document.getElementById("flashcardsCard");
@@ -89,7 +90,10 @@ const articleUrlInput = document.getElementById("articleUrlInput");
 const summarizeLinkButton = document.getElementById("summarizeLinkButton");
 const articleInputWrap = document.getElementById("articleInputWrap");
 const photoInputWrap = document.getElementById("photoInputWrap");
-const notesPhotoInput = document.getElementById("notesPhotoInput");
+const uploadPhotoButton = document.getElementById("uploadPhotoButton");
+const takePhotoButton = document.getElementById("takePhotoButton");
+const notesPhotoUploadInput = document.getElementById("notesPhotoUploadInput");
+const notesPhotoCameraInput = document.getElementById("notesPhotoCameraInput");
 const notesPhotoPreview = document.getElementById("notesPhotoPreview");
 const photoPreviewWrap = document.getElementById("photoPreviewWrap");
 const clearPhotoButton = document.getElementById("clearPhotoButton");
@@ -470,8 +474,17 @@ if (articleModeButton) {
 if (photoModeButton) {
   photoModeButton.addEventListener("click", () => setSummaryMode("photo"));
 }
-if (notesPhotoInput) {
-  notesPhotoInput.addEventListener("change", handleNotesPhotoSelected);
+if (uploadPhotoButton && notesPhotoUploadInput) {
+  uploadPhotoButton.addEventListener("click", () => notesPhotoUploadInput.click());
+}
+if (takePhotoButton && notesPhotoCameraInput) {
+  takePhotoButton.addEventListener("click", () => notesPhotoCameraInput.click());
+}
+if (notesPhotoUploadInput) {
+  notesPhotoUploadInput.addEventListener("change", handleNotesPhotoSelected);
+}
+if (notesPhotoCameraInput) {
+  notesPhotoCameraInput.addEventListener("change", handleNotesPhotoSelected);
 }
 if (clearPhotoButton) {
   clearPhotoButton.addEventListener("click", clearSelectedNotesPhoto);
@@ -707,22 +720,6 @@ async function generateStudyPack(text, selectedOutputs) {
   };
 }
 
-async function generateStudyPackFromPhoto(imageDataUrl, selectedOutputs) {
-  const base = await cleanNotesWithVisionOpenRouter(imageDataUrl, (chunk, fullText) => {
-    updateStreamingStatus(chunk, fullText);
-  });
-  const sourceLines = base.cleanNotes.length > 0 ? base.cleanNotes : base.studyTasks;
-
-  return {
-    cleanNotes: selectedOutputs.cleanNotes ? base.cleanNotes : [],
-    studyTasks: selectedOutputs.studyTasks ? base.studyTasks : [],
-    studyOrder: selectedOutputs.studyPlan ? base.studyOrder : [],
-    flashcards: selectedOutputs.flashcards ? generateFlashcards(sourceLines) : [],
-    quizQuestions: selectedOutputs.quizQuestions ? generateQuizQuestions(sourceLines) : [],
-    selectedOutputs
-  };
-}
-
 function extractJsonObject(text) {
   if (typeof text !== "string") {
     return null;
@@ -749,7 +746,7 @@ function extractJsonObject(text) {
 
 async function summarizeFromPhoto() {
   if (!uploadedNotesPhotoDataUrl) {
-    statusText.textContent = "Upload a notes photo first.";
+    statusText.textContent = "Add a notes photo first.";
     return;
   }
 
@@ -759,11 +756,16 @@ async function summarizeFromPhoto() {
 
   triggerSummarizeClickAnimation(cleanButton);
   setLoadingState(true, "clean");
-  statusText.textContent = "AI is reading your photo";
+  statusText.textContent = "AI is reading text from your photo";
   statusText.classList.add("is-streaming");
 
   try {
-    const result = await generateStudyPackFromPhoto(uploadedNotesPhotoDataUrl, getSelectedOutputs());
+    const extractedText = await extractTextFromPhotoWithVision(uploadedNotesPhotoDataUrl);
+    if (!extractedText) {
+      throw new Error("Could not extract readable text from that photo.");
+    }
+    statusText.textContent = "Text extracted. Building your study pack...";
+    const result = await generateStudyPack(extractedText, getSelectedOutputs());
     await renderResultsWithTyping(result);
     saveActiveFileResults(result);
 
@@ -863,7 +865,7 @@ async function cleanNotesWithOpenRouter(rawNotes, onChunk) {
   };
 }
 
-async function cleanNotesWithVisionOpenRouter(imageDataUrl, onChunk) {
+async function extractTextFromPhotoWithVision(imageDataUrl) {
   const workerUrl = "/api/chat";
   const authHeaders = await getApiAuthHeaders();
 
@@ -874,9 +876,9 @@ async function cleanNotesWithVisionOpenRouter(imageDataUrl, onChunk) {
       ...authHeaders
     },
     body: JSON.stringify({
-      mode: "vision",
+      mode: "ocr",
       imageDataUrl,
-      stream: true
+      stream: false
     })
   });
 
@@ -888,43 +890,12 @@ async function cleanNotesWithVisionOpenRouter(imageDataUrl, onChunk) {
       errorPayload = null;
     }
 
-    throw new Error((errorPayload && errorPayload.error) || "Failed to summarize notes photo");
+    throw new Error((errorPayload && errorPayload.error) || "Failed to read text from notes photo");
   }
 
-  if (!response.body) {
-    throw new Error("Streaming response unavailable. Try again.");
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let fullText = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    }
-    const chunk = decoder.decode(value, { stream: true });
-    if (!chunk) {
-      continue;
-    }
-    fullText += chunk;
-    if (typeof onChunk === "function") {
-      onChunk(chunk, fullText);
-    }
-  }
-
+  const payload = await response.json();
   statusText.classList.remove("is-streaming");
-  const parsed = extractJsonObject(fullText);
-  if (!parsed) {
-    throw new Error("Model response was not valid JSON. Try again.");
-  }
-
-  return {
-    cleanNotes: ensureStringArray(parsed.cleanNotes),
-    studyTasks: ensureStringArray(parsed.studyTasks),
-    studyOrder: ensureStringArray(parsed.studyOrder)
-  };
+  return typeof payload?.text === "string" ? payload.text.trim() : "";
 }
 
 function loadStudyFiles() {
@@ -1327,8 +1298,17 @@ function setLoadingState(isLoading, mode = "clean") {
   if (articleUrlInput) {
     articleUrlInput.disabled = isLoading;
   }
-  if (notesPhotoInput) {
-    notesPhotoInput.disabled = isLoading;
+  if (notesPhotoUploadInput) {
+    notesPhotoUploadInput.disabled = isLoading;
+  }
+  if (notesPhotoCameraInput) {
+    notesPhotoCameraInput.disabled = isLoading;
+  }
+  if (uploadPhotoButton) {
+    uploadPhotoButton.disabled = isLoading;
+  }
+  if (takePhotoButton) {
+    takePhotoButton.disabled = isLoading;
   }
   if (flashcardsCountSelect) {
     flashcardsCountSelect.disabled = isLoading;
@@ -1409,6 +1389,7 @@ async function renderResultsWithTyping(result) {
   await renderListWithTyping(cleanNotesList, result.cleanNotes);
   setCopyButtonEnabledByContent(copyCleanNotesButton, cleanNotesList);
   await renderListWithTyping(flashcardsList, result.flashcards);
+  renderFlashcardsVisuals(result.flashcards);
   setCopyButtonEnabledByContent(copyFlashcardsButton, flashcardsList);
   await renderListWithTyping(quizQuestionsList, result.quizQuestions);
   setCopyButtonEnabledByContent(copyQuizButton, quizQuestionsList);
@@ -1531,6 +1512,7 @@ function renderFileResults(file) {
     renderList(studyOrderList, []);
     renderList(cleanNotesList, []);
     renderList(flashcardsList, []);
+    renderFlashcardsVisuals([]);
     renderList(quizQuestionsList, []);
     updateOptionalOutputCards();
     refreshCopyButtonsFromContent();
@@ -1541,6 +1523,7 @@ function renderFileResults(file) {
   renderList(studyOrderList, file.studyOrder);
   renderList(cleanNotesList, file.cleanNotes);
   renderList(flashcardsList, file.flashcards);
+  renderFlashcardsVisuals(file.flashcards);
   renderList(quizQuestionsList, file.quizQuestions);
 
   setCardVisibility(cleanNotesCard, file.cleanNotes.length > 0 || Boolean(outputCleanNotes?.checked));
@@ -1608,13 +1591,22 @@ function generateFlashcards(sourceLines) {
       const front =
         separatorIndex > 0
           ? normalized.slice(0, separatorIndex).trim()
-          : `Card ${index + 1}`;
+          : buildFlashcardFrontFromLine(normalized, index + 1);
       const back =
         separatorIndex > 0
           ? normalized.slice(separatorIndex + 1).trim()
           : normalized;
       return `Front: ${front} | Back: ${back || normalized}`;
     });
+}
+
+function buildFlashcardFrontFromLine(line, index) {
+  const normalized = String(line || "").replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return `Card ${index}`;
+  }
+  const words = normalized.split(" ").slice(0, 8).join(" ");
+  return `What should you remember about ${words}${words.endsWith("?") ? "" : "?"}`;
 }
 
 function getRequestedFlashcardsCount() {
@@ -1778,7 +1770,7 @@ function handleSummaryModeChange(mode) {
   if (isArticle) {
     statusText.textContent = "Article mode selected. Paste a link and generate your study pack.";
   } else if (isPhoto) {
-    statusText.textContent = "Notes photo mode selected. Upload a notes image and generate your study pack.";
+    statusText.textContent = "Notes photo mode selected. Upload or take a photo, then generate your study pack.";
   } else {
     statusText.textContent = "Notes mode selected. Paste notes and generate your study pack.";
   }
@@ -1832,8 +1824,11 @@ function handleNotesPhotoSelected(event) {
 
 function clearSelectedNotesPhoto() {
   uploadedNotesPhotoDataUrl = "";
-  if (notesPhotoInput) {
-    notesPhotoInput.value = "";
+  if (notesPhotoUploadInput) {
+    notesPhotoUploadInput.value = "";
+  }
+  if (notesPhotoCameraInput) {
+    notesPhotoCameraInput.value = "";
   }
   if (notesPhotoPreview) {
     notesPhotoPreview.removeAttribute("src");
@@ -2029,6 +2024,48 @@ function parseFlashcardText(text, fallbackIndex) {
     front: `Card ${fallbackIndex}`,
     back: normalized || "Review your notes."
   };
+}
+
+function renderFlashcardsVisuals(cards) {
+  if (!flashcardsVisualGrid) {
+    return;
+  }
+
+  flashcardsVisualGrid.innerHTML = "";
+  const items = ensureStringArray(cards);
+  if (items.length === 0) {
+    flashcardsVisualGrid.classList.add("hidden");
+    return;
+  }
+
+  items.forEach((cardText, index) => {
+    const { front, back } = parseFlashcardText(cardText, index + 1);
+    const wrapper = document.createElement("div");
+    wrapper.className = "flashcard-visual";
+
+    const frontTitle = document.createElement("p");
+    frontTitle.className = "flashcard-visual-title";
+    frontTitle.textContent = `Card ${index + 1} Front`;
+    const frontText = document.createElement("p");
+    frontText.className = "flashcard-visual-text";
+    frontText.textContent = front;
+
+    const backTitle = document.createElement("p");
+    backTitle.className = "flashcard-visual-title";
+    backTitle.style.marginTop = "0.6rem";
+    backTitle.textContent = `Card ${index + 1} Back`;
+    const backText = document.createElement("p");
+    backText.className = "flashcard-visual-text";
+    backText.textContent = back;
+
+    wrapper.appendChild(frontTitle);
+    wrapper.appendChild(frontText);
+    wrapper.appendChild(backTitle);
+    wrapper.appendChild(backText);
+    flashcardsVisualGrid.appendChild(wrapper);
+  });
+
+  flashcardsVisualGrid.classList.remove("hidden");
 }
 
 function hasCopyableItems(listElement) {

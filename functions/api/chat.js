@@ -83,14 +83,14 @@ export async function onRequestPost(context) {
     return jsonResponse({ error: "Invalid JSON body." }, 400);
   }
 
-  const requestMode = payload?.mode === "vision" ? "vision" : "text";
+  const requestMode = payload?.mode === "ocr" ? "ocr" : payload?.mode === "vision" ? "vision" : "text";
   const notes = typeof payload?.notes === "string" ? payload.notes.trim() : "";
   const imageDataUrl = typeof payload?.imageDataUrl === "string" ? payload.imageDataUrl.trim() : "";
   const shouldStream = Boolean(payload?.stream);
   if (requestMode === "text" && !notes) {
     return jsonResponse({ error: "Missing 'notes' in request body." }, 400);
   }
-  if (requestMode === "vision") {
+  if (requestMode === "vision" || requestMode === "ocr") {
     if (!imageDataUrl) {
       return jsonResponse({ error: "Missing 'imageDataUrl' in request body." }, 400);
     }
@@ -104,10 +104,10 @@ export async function onRequestPost(context) {
 
   const textModel = env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
   const visionModel = env.OPENROUTER_VISION_MODEL || "qwen/qwen3-vl-235b-a22b-thinking";
-  const model = requestMode === "vision" ? visionModel : textModel;
+  const model = requestMode === "vision" || requestMode === "ocr" ? visionModel : textModel;
   const textMaxTokens = Number(env.OPENROUTER_TEXT_MAX_TOKENS || 1200);
   const visionMaxTokens = Number(env.OPENROUTER_VISION_MAX_TOKENS || 900);
-  const maxTokens = requestMode === "vision" ? visionMaxTokens : textMaxTokens;
+  const maxTokens = requestMode === "vision" || requestMode === "ocr" ? visionMaxTokens : textMaxTokens;
   const siteUrl = env.OPENROUTER_SITE_URL || "https://ai-study-planner.pages.dev";
   const appName = env.OPENROUTER_APP_NAME || "AI Study Pal";
 
@@ -131,10 +131,16 @@ export async function onRequestPost(context) {
     '{ "cleanNotes": ["..."], "studyTasks": ["..."], "studyOrder": ["..."] }'
   ].join("\n");
 
+  const userOcrText = [
+    "Read the uploaded image and extract only the text content.",
+    "Return plain text only. Do not return JSON, markdown, or commentary.",
+    "If some text is unreadable, skip it."
+  ].join("\n");
+
   const userContent =
-    requestMode === "vision"
+    requestMode === "vision" || requestMode === "ocr"
       ? [
-          { type: "text", text: userVisionText },
+          { type: "text", text: requestMode === "ocr" ? userOcrText : userVisionText },
           { type: "image_url", image_url: { url: imageDataUrl } }
         ]
       : userPrompt;
@@ -242,6 +248,9 @@ export async function onRequestPost(context) {
 
   const result = await response.json();
   const content = result?.choices?.[0]?.message?.content || "";
+  if (requestMode === "ocr") {
+    return jsonResponse({ text: String(content || "").trim() });
+  }
   const parsed = extractJsonObject(content);
 
   if (!parsed) {

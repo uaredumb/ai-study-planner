@@ -96,13 +96,16 @@
         </div>
         <div id="flashcardsCountWrap" class="flashcards-count-wrap hidden">
           <label for="flashcardsCountSelect" class="input-label">Number of flashcards</label>
-          <select id="flashcardsCountSelect" class="flashcards-count-select">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5" selected>5</option>
-          </select>
+          <div class="flashcards-count-select-wrap">
+            <select id="flashcardsCountSelect" class="flashcards-count-select">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5" selected>5</option>
+            </select>
+            <span class="flashcards-count-caret" aria-hidden="true">▼</span>
+          </div>
           <p class="tutorial-label">Maximum: 5 cards</p>
         </div>
       </div>
@@ -117,8 +120,13 @@
         ></textarea>
       </div>
       <div id="photoInputWrap" class="photo-row hidden">
-        <label for="notesPhotoInput" class="input-label">Upload a photo of your notes</label>
-        <input id="notesPhotoInput" type="file" accept="image/*" capture="environment" />
+        <p class="input-label">Add a notes photo (optional)</p>
+        <div class="photo-source-actions">
+          <button id="uploadPhotoButton" class="secondary-btn" type="button">Upload Photo</button>
+          <button id="takePhotoButton" class="secondary-btn" type="button">Take Photo</button>
+        </div>
+        <input id="notesPhotoUploadInput" class="hidden" type="file" accept="image/*" />
+        <input id="notesPhotoCameraInput" class="hidden" type="file" accept="image/*" capture="environment" />
         <div class="photo-preview-wrap hidden" id="photoPreviewWrap">
           <img id="notesPhotoPreview" alt="Selected notes photo preview" />
           <button id="clearPhotoButton" class="secondary-btn" type="button">Remove Photo</button>
@@ -171,6 +179,7 @@
         <ul id="flashcardsList" class="result-list">
           <li>No items generated yet.</li>
         </ul>
+        <div id="flashcardsVisualGrid" class="flashcards-visual-grid hidden"></div>
         <div id="flashcardsPdfPreviewWrap" class="flashcards-preview-wrap hidden">
           <p class="tutorial-label">Flashcards PDF Preview</p>
           <iframe id="flashcardsPdfPreview" title="Flashcards PDF preview"></iframe>

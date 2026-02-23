@@ -648,13 +648,8 @@ body.dark .mode-btn.active {
   gap: 0.6rem;
 }
 
-#notesPhotoInput {
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  padding: 0.68rem 0.75rem;
-  font-family: inherit;
+.photo-source-actions .secondary-btn {
+  min-width: 128px;
 }
 
 .photo-preview-wrap {
@@ -837,14 +832,47 @@ input,
   margin-top: 0.75rem;
 }
 
+.flashcards-count-select-wrap {
+  position: relative;
+  width: max-content;
+}
+
 .flashcards-count-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   min-width: 88px;
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: transparent;
+  background: color-mix(in srgb, var(--card), #ffffff 10%);
   color: var(--text);
-  padding: 0.42rem 0.55rem;
+  padding: 0.42rem 1.7rem 0.42rem 0.55rem;
   font-family: inherit;
+  font-weight: 600;
+}
+
+.flashcards-count-select:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent), transparent 58%);
+}
+
+.flashcards-count-caret {
+  position: absolute;
+  right: 0.58rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.66rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+body.dark .flashcards-count-select {
+  background: color-mix(in srgb, var(--card), #000000 12%);
+}
+
+.photo-source-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
 }
 
 .output-option {
@@ -902,6 +930,34 @@ body.dark .output-icon {
 
 .more-flashcards-btn {
   margin-top: 0.75rem;
+}
+
+.flashcards-visual-grid {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.flashcard-visual {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.65rem;
+  background: color-mix(in srgb, var(--card), #ffffff 10%);
+}
+
+.flashcard-visual-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.flashcard-visual-text {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.4;
 }
 
 .flashcards-preview-wrap {
