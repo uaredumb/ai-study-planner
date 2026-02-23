@@ -1907,10 +1907,15 @@ function setSelectedNotesPhotoDataUrl(dataUrl) {
 
 function handleTakePhotoClick() {
   if (isLikelyMobileDevice()) {
-    notesPhotoCameraInput.click();
+    if (notesPhotoCameraInput) {
+      notesPhotoCameraInput.click();
+      return;
+    }
+    statusText.textContent = "Camera capture is unavailable on this device.";
     return;
   }
   openWebcamCaptureModal().catch((error) => {
+    closeWebcamCaptureModal();
     statusText.textContent = error?.message || "Could not open webcam.";
   });
 }
@@ -1923,13 +1928,14 @@ async function openWebcamCaptureModal() {
   if (!webcamCaptureModal || !webcamVideo || !navigator.mediaDevices?.getUserMedia) {
     throw new Error("Webcam capture is not supported here. Use Upload Photo instead.");
   }
-  webcamCaptureModal.classList.remove("hidden");
+  stopWebcamStream();
   webcamStream = await navigator.mediaDevices.getUserMedia({
     video: { facingMode: "environment" },
     audio: false
   });
   webcamVideo.srcObject = webcamStream;
   await webcamVideo.play();
+  webcamCaptureModal.classList.remove("hidden");
 }
 
 function closeWebcamCaptureModal() {
