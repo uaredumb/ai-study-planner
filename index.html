@@ -94,6 +94,17 @@
             <span>Quiz Questions</span>
           </label>
         </div>
+        <div id="flashcardsCountWrap" class="flashcards-count-wrap hidden">
+          <label for="flashcardsCountSelect" class="input-label">Number of flashcards</label>
+          <select id="flashcardsCountSelect" class="flashcards-count-select">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+          </select>
+          <p class="tutorial-label">Maximum: 5 cards</p>
+        </div>
       </div>
     </section>
 
@@ -160,6 +171,10 @@
         <ul id="flashcardsList" class="result-list">
           <li>No items generated yet.</li>
         </ul>
+        <div id="flashcardsPdfPreviewWrap" class="flashcards-preview-wrap hidden">
+          <p class="tutorial-label">Flashcards PDF Preview</p>
+          <iframe id="flashcardsPdfPreview" title="Flashcards PDF preview"></iframe>
+        </div>
         <button id="moreFlashcardsButton" class="secondary-btn more-flashcards-btn" type="button">Want more flash cards?</button>
       </article>
 
@@ -254,6 +269,16 @@
       <div class="modal-actions">
         <button id="regenerateCancelButton" type="button" class="secondary-btn">Cancel</button>
         <button id="regenerateConfirmButton" type="button" class="secondary-btn danger-btn">Yes, Replace</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="moreFlashcardsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="moreFlashcardsTitle">
+    <div class="modal-card">
+      <h2 id="moreFlashcardsTitle">More Flashcards</h2>
+      <p class="modal-message">This is a paid feature and is coming soon.</p>
+      <div class="modal-actions">
+        <button id="moreFlashcardsCloseButton" type="button" class="secondary-btn">Close</button>
       </div>
     </div>
   </div>

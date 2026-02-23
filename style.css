@@ -833,6 +833,20 @@ input,
   gap: 0.55rem 0.8rem;
 }
 
+.flashcards-count-wrap {
+  margin-top: 0.75rem;
+}
+
+.flashcards-count-select {
+  min-width: 88px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  padding: 0.42rem 0.55rem;
+  font-family: inherit;
+}
+
 .output-option {
   display: inline-flex;
   align-items: center;
@@ -888,6 +902,22 @@ body.dark .output-icon {
 
 .more-flashcards-btn {
   margin-top: 0.75rem;
+}
+
+.flashcards-preview-wrap {
+  margin-top: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem;
+  background: color-mix(in srgb, var(--card), #ffffff 8%);
+}
+
+#flashcardsPdfPreview {
+  width: 100%;
+  min-height: 260px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
 }
 
 .status-text {
