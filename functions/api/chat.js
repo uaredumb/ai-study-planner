@@ -83,12 +83,11 @@ export async function onRequestPost(context) {
     return jsonResponse({ error: "Invalid JSON body." }, 400);
   }
 
-  const requestMode =
-    payload?.mode === "vision" ? "vision" : payload?.mode === "flashcards" ? "flashcards" : "text";
+  const requestMode = payload?.mode === "vision" ? "vision" : "text";
   const notes = typeof payload?.notes === "string" ? payload.notes.trim() : "";
   const imageDataUrl = typeof payload?.imageDataUrl === "string" ? payload.imageDataUrl.trim() : "";
   const shouldStream = Boolean(payload?.stream);
-  if ((requestMode === "text" || requestMode === "flashcards") && !notes) {
+  if (requestMode === "text" && !notes) {
     return jsonResponse({ error: "Missing 'notes' in request body." }, 400);
   }
   if (requestMode === "vision") {
@@ -105,40 +104,21 @@ export async function onRequestPost(context) {
 
   const textModel = env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
   const visionModel = env.OPENROUTER_VISION_MODEL || "qwen/qwen3-vl-235b-a22b-thinking";
-  const flashcardsModel = env.OPENROUTER_FLASHCARDS_MODEL || "google/gemini-2.5-flash-image";
-  const model =
-    requestMode === "vision" ? visionModel : requestMode === "flashcards" ? flashcardsModel : textModel;
+  const model = requestMode === "vision" ? visionModel : textModel;
   const textMaxTokens = Number(env.OPENROUTER_TEXT_MAX_TOKENS || 1200);
   const visionMaxTokens = Number(env.OPENROUTER_VISION_MAX_TOKENS || 900);
-  const flashcardsMaxTokens = Number(env.OPENROUTER_FLASHCARDS_MAX_TOKENS || 700);
-  const maxTokens =
-    requestMode === "vision"
-      ? visionMaxTokens
-      : requestMode === "flashcards"
-        ? flashcardsMaxTokens
-        : textMaxTokens;
+  const maxTokens = requestMode === "vision" ? visionMaxTokens : textMaxTokens;
   const siteUrl = env.OPENROUTER_SITE_URL || "https://ai-study-planner.pages.dev";
   const appName = env.OPENROUTER_APP_NAME || "AI Study Pal";
 
   const systemPrompt =
-    requestMode === "flashcards"
-      ? "You are a study assistant. Return strict JSON only with key flashcards. The value must be an array of concise strings."
-      : "You are a study assistant. Return strict JSON only with keys cleanNotes, studyTasks, studyOrder. " +
-        "Each key must be an array of concise strings.";
+    "You are a study assistant. Return strict JSON only with keys cleanNotes, studyTasks, studyOrder. " +
+    "Each key must be an array of concise strings.";
 
   const userPrompt = [
     "Convert the notes into structured study help.",
     "Return valid JSON only in this exact shape:",
     '{ "cleanNotes": ["..."], "studyTasks": ["..."], "studyOrder": ["..."] }',
-    "Notes:",
-    notes
-  ].join("\n");
-
-  const userFlashcardsPrompt = [
-    "Create study flashcards from the notes.",
-    "Return valid JSON only in this exact shape:",
-    '{ "flashcards": ["Front: ... | Back: ..."] }',
-    "Keep each flashcard short, specific, and useful for active recall.",
     "Notes:",
     notes
   ].join("\n");
@@ -157,9 +137,7 @@ export async function onRequestPost(context) {
           { type: "text", text: userVisionText },
           { type: "image_url", image_url: { url: imageDataUrl } }
         ]
-      : requestMode === "flashcards"
-        ? userFlashcardsPrompt
-        : userPrompt;
+      : userPrompt;
 
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -271,12 +249,6 @@ export async function onRequestPost(context) {
       { error: "Model response was not valid JSON. Try again or lower model temperature." },
       502
     );
-  }
-
-  if (requestMode === "flashcards") {
-    return jsonResponse({
-      flashcards: sanitizeStringArray(parsed.flashcards)
-    });
   }
 
   return jsonResponse({

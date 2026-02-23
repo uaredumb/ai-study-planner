@@ -12,6 +12,7 @@ const copyStudyPlanButton = document.getElementById("copyStudyPlanButton");
 const copyCleanNotesButton = document.getElementById("copyCleanNotesButton");
 const copyFlashcardsButton = document.getElementById("copyFlashcardsButton");
 const downloadFlashcardsButton = document.getElementById("downloadFlashcardsButton");
+const moreFlashcardsButton = document.getElementById("moreFlashcardsButton");
 const copyQuizButton = document.getElementById("copyQuizButton");
 const studyTasksCard = document.getElementById("studyTasksCard");
 const studyPlanCard = document.getElementById("studyPlanCard");
@@ -668,15 +669,12 @@ async function generateStudyPack(text, selectedOutputs) {
     updateStreamingStatus(chunk, fullText);
   });
   const sourceLines = base.cleanNotes.length > 0 ? base.cleanNotes : base.studyTasks;
-  const flashcards = selectedOutputs.flashcards
-    ? await generateFlashcardsWithModel(sourceLines)
-    : [];
 
   return {
     cleanNotes: selectedOutputs.cleanNotes ? base.cleanNotes : [],
     studyTasks: selectedOutputs.studyTasks ? base.studyTasks : [],
     studyOrder: selectedOutputs.studyPlan ? base.studyOrder : [],
-    flashcards,
+    flashcards: selectedOutputs.flashcards ? generateFlashcards(sourceLines) : [],
     quizQuestions: selectedOutputs.quizQuestions ? generateQuizQuestions(sourceLines) : [],
     selectedOutputs
   };
@@ -687,57 +685,15 @@ async function generateStudyPackFromPhoto(imageDataUrl, selectedOutputs) {
     updateStreamingStatus(chunk, fullText);
   });
   const sourceLines = base.cleanNotes.length > 0 ? base.cleanNotes : base.studyTasks;
-  const flashcards = selectedOutputs.flashcards
-    ? await generateFlashcardsWithModel(sourceLines)
-    : [];
 
   return {
     cleanNotes: selectedOutputs.cleanNotes ? base.cleanNotes : [],
     studyTasks: selectedOutputs.studyTasks ? base.studyTasks : [],
     studyOrder: selectedOutputs.studyPlan ? base.studyOrder : [],
-    flashcards,
+    flashcards: selectedOutputs.flashcards ? generateFlashcards(sourceLines) : [],
     quizQuestions: selectedOutputs.quizQuestions ? generateQuizQuestions(sourceLines) : [],
     selectedOutputs
   };
-}
-
-async function generateFlashcardsWithModel(sourceLines) {
-  const notes = ensureStringArray(sourceLines).join("\n");
-  if (!notes) {
-    return [];
-  }
-
-  const workerUrl = "/api/chat";
-  const authHeaders = await getApiAuthHeaders();
-  const response = await fetch(workerUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders
-    },
-    body: JSON.stringify({
-      mode: "flashcards",
-      notes,
-      stream: false
-    })
-  });
-
-  if (!response.ok) {
-    return generateFlashcards(sourceLines);
-  }
-
-  let payload = null;
-  try {
-    payload = await response.json();
-  } catch (_error) {
-    payload = null;
-  }
-
-  const flashcards = ensureStringArray(payload?.flashcards);
-  if (flashcards.length === 0) {
-    return generateFlashcards(sourceLines);
-  }
-  return flashcards;
 }
 
 function extractJsonObject(text) {
@@ -1611,8 +1567,20 @@ function setCardVisibility(card, isVisible) {
 
 function generateFlashcards(sourceLines) {
   return ensureStringArray(sourceLines)
-    .slice(0, 10)
-    .map((line, index) => `Card ${index + 1}: ${line}`);
+    .slice(0, 5)
+    .map((line, index) => {
+      const normalized = String(line || "").replace(/\s+/g, " ").trim();
+      const separatorIndex = normalized.indexOf(":");
+      const front =
+        separatorIndex > 0
+          ? normalized.slice(0, separatorIndex).trim()
+          : `Card ${index + 1}`;
+      const back =
+        separatorIndex > 0
+          ? normalized.slice(separatorIndex + 1).trim()
+          : normalized;
+      return `Front: ${front} | Back: ${back || normalized}`;
+    });
 }
 
 function generateQuizQuestions(sourceLines) {
@@ -1866,6 +1834,7 @@ function bindCopyButtons() {
   bindCopyButton(copyFlashcardsButton, "Flashcards", flashcardsList, false);
   bindCopyButton(copyQuizButton, "Quiz Questions", quizQuestionsList, true);
   bindDownloadFlashcardsButton();
+  bindMoreFlashcardsButton();
 }
 
 function bindDownloadFlashcardsButton() {
@@ -1875,26 +1844,64 @@ function bindDownloadFlashcardsButton() {
 
   downloadFlashcardsButton.addEventListener("click", () => {
     const activeFile = getActiveFile();
-    const title = activeFile?.name ? `${activeFile.name} - Flashcards` : "Flashcards";
-    const lines = getListLines(flashcardsList, false);
+    const rawCards = getRawListItems(flashcardsList).slice(0, 5);
 
-    if (lines.length === 0) {
+    if (rawCards.length === 0) {
       statusText.textContent = "No flashcards to download yet.";
       return;
     }
 
-    const safeNameBase = slugifyFileName(activeFile?.name || "study-notes");
-    const content = `${title}\n${lines.join("\n")}`;
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${safeNameBase}-flashcards.txt`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(link.href), 0);
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      statusText.textContent = "PDF generator unavailable. Refresh and try again.";
+      return;
+    }
 
-    statusText.textContent = "Flashcards downloaded.";
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: "landscape",
+      unit: "in",
+      format: [3.5, 2]
+    });
+    const margin = 0.18;
+    const maxWidth = 3.5 - margin * 2;
+
+    rawCards.forEach((cardText, index) => {
+      const { front, back } = parseFlashcardText(cardText, index + 1);
+      if (index > 0) {
+        doc.addPage([3.5, 2], "landscape");
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(`Card ${index + 1} - Front`, margin, 0.35);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const frontLines = doc.splitTextToSize(front, maxWidth);
+      doc.text(frontLines, margin, 0.72);
+
+      doc.addPage([3.5, 2], "landscape");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(`Card ${index + 1} - Back`, margin, 0.35);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const backLines = doc.splitTextToSize(back, maxWidth);
+      doc.text(backLines, margin, 0.72);
+    });
+
+    const safeNameBase = slugifyFileName(activeFile?.name || "study-notes");
+    doc.save(`${safeNameBase}-flashcards.pdf`);
+    statusText.textContent = "Flashcards PDF downloaded.";
+  });
+}
+
+function bindMoreFlashcardsButton() {
+  if (!moreFlashcardsButton) {
+    return;
+  }
+
+  moreFlashcardsButton.addEventListener("click", () => {
+    statusText.textContent = "More flashcards is a paid feature coming soon.";
   });
 }
 
@@ -1920,15 +1927,34 @@ function bindCopyButton(button, title, listElement, ordered) {
 }
 
 function getListLines(listElement, ordered) {
-  const rawItems = Array.from(listElement.querySelectorAll("li"))
-    .map((li) => li.textContent.trim())
-    .filter((text) => text.length > 0 && text !== "No items generated yet.");
+  const rawItems = getRawListItems(listElement);
 
   if (!ordered) {
     return rawItems.map((item) => `- ${item}`);
   }
 
   return rawItems.map((item, index) => `${index + 1}. ${item}`);
+}
+
+function getRawListItems(listElement) {
+  return Array.from(listElement.querySelectorAll("li"))
+    .map((li) => li.textContent.trim())
+    .filter((text) => text.length > 0 && text !== "No items generated yet.");
+}
+
+function parseFlashcardText(text, fallbackIndex) {
+  const normalized = String(text || "").replace(/\s+/g, " ").trim();
+  const match = normalized.match(/front:\s*(.*?)\s*\|\s*back:\s*(.*)/i);
+  if (match) {
+    return {
+      front: match[1] || `Card ${fallbackIndex}`,
+      back: match[2] || "Review your notes."
+    };
+  }
+  return {
+    front: `Card ${fallbackIndex}`,
+    back: normalized || "Review your notes."
+  };
 }
 
 function hasCopyableItems(listElement) {

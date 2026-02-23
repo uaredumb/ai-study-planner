@@ -886,6 +886,10 @@ body.dark .output-icon {
   gap: 0.7rem;
 }
 
+.more-flashcards-btn {
+  margin-top: 0.75rem;
+}
+
 .status-text {
   margin: 0;
   text-align: center;

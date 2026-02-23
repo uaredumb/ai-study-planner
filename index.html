@@ -155,11 +155,12 @@
         <div class="result-card-head">
           <h2>Flashcards</h2>
           <button id="copyFlashcardsButton" class="secondary-btn copy-btn" type="button">Copy</button>
-          <button id="downloadFlashcardsButton" class="secondary-btn" type="button">Download</button>
+          <button id="downloadFlashcardsButton" class="secondary-btn" type="button">Download PDF</button>
         </div>
         <ul id="flashcardsList" class="result-list">
           <li>No items generated yet.</li>
         </ul>
+        <button id="moreFlashcardsButton" class="secondary-btn more-flashcards-btn" type="button">Want more flash cards?</button>
       </article>
 
       <article id="quizQuestionsCard" class="card result-card hidden">
@@ -257,6 +258,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="main.js?v=26"></script>
 </body>
 </html>
