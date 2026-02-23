@@ -121,9 +121,10 @@
         ></textarea>
       </div>
       <div id="photoInputWrap" class="photo-row hidden">
-        <p class="input-label">Add a notes photo (optional)</p>
+        <p class="input-label">Add notes photo</p>
         <div class="photo-source-actions">
           <button id="uploadPhotoButton" class="secondary-btn" type="button">Upload Photo</button>
+          <span class="photo-or-text">or</span>
           <button id="takePhotoButton" class="secondary-btn" type="button">Take Photo</button>
         </div>
         <input id="notesPhotoUploadInput" class="hidden" type="file" accept="image/*" />
@@ -294,6 +295,19 @@
       <p class="modal-message">This is a paid feature and is coming soon.</p>
       <div class="modal-actions">
         <button id="moreFlashcardsCloseButton" type="button" class="secondary-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="webcamCaptureModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="webcamCaptureTitle">
+    <div class="modal-card webcam-modal-card">
+      <h2 id="webcamCaptureTitle">Take Photo</h2>
+      <p class="modal-message">Allow camera access, frame your notes, then capture.</p>
+      <video id="webcamVideo" autoplay playsinline muted></video>
+      <canvas id="webcamCanvas" class="hidden"></canvas>
+      <div class="modal-actions">
+        <button id="webcamCancelButton" type="button" class="secondary-btn">Cancel</button>
+        <button id="webcamCaptureButton" type="button" class="primary-btn">Capture</button>
       </div>
     </div>
   </div>

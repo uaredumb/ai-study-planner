@@ -873,6 +873,13 @@ body.dark .flashcards-count-select {
   display: flex;
   gap: 0.55rem;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.photo-or-text {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.92rem;
 }
 
 .output-option {
@@ -1052,6 +1059,19 @@ body.dark .preview-toggle-btn.active {
 
 .modal-card h2 {
   margin: 0 0 0.7rem;
+}
+
+.webcam-modal-card {
+  width: min(620px, 94vw);
+}
+
+#webcamVideo {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #0f1220;
+  object-fit: cover;
 }
 
 .modal-form {

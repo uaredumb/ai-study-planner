@@ -19,6 +19,11 @@ const previewFrontsButton = document.getElementById("previewFrontsButton");
 const previewBacksButton = document.getElementById("previewBacksButton");
 const moreFlashcardsModal = document.getElementById("moreFlashcardsModal");
 const moreFlashcardsCloseButton = document.getElementById("moreFlashcardsCloseButton");
+const webcamCaptureModal = document.getElementById("webcamCaptureModal");
+const webcamVideo = document.getElementById("webcamVideo");
+const webcamCanvas = document.getElementById("webcamCanvas");
+const webcamCancelButton = document.getElementById("webcamCancelButton");
+const webcamCaptureButton = document.getElementById("webcamCaptureButton");
 const copyQuizButton = document.getElementById("copyQuizButton");
 const studyTasksCard = document.getElementById("studyTasksCard");
 const studyPlanCard = document.getElementById("studyPlanCard");
@@ -150,6 +155,7 @@ let pendingRegenerateResolver = null;
 let uploadedNotesPhotoDataUrl = "";
 let flashcardsFrontsPreviewUrl = "";
 let flashcardsBacksPreviewUrl = "";
+let webcamStream = null;
 
 const authClerkAppearance = {
   variables: {
@@ -368,6 +374,19 @@ if (moreFlashcardsModal) {
     }
   });
 }
+if (webcamCancelButton) {
+  webcamCancelButton.addEventListener("click", closeWebcamCaptureModal);
+}
+if (webcamCaptureButton) {
+  webcamCaptureButton.addEventListener("click", captureFromWebcam);
+}
+if (webcamCaptureModal) {
+  webcamCaptureModal.addEventListener("click", (event) => {
+    if (event.target === webcamCaptureModal) {
+      closeWebcamCaptureModal();
+    }
+  });
+}
 if (previewFrontsButton) {
   previewFrontsButton.addEventListener("click", () => {
     if (!flashcardsFrontsPreviewUrl || !flashcardsPdfPreview) {
@@ -433,6 +452,10 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Escape" && moreFlashcardsModal && !moreFlashcardsModal.classList.contains("hidden")) {
     closeModalWithAnimation(moreFlashcardsModal);
+    return;
+  }
+  if (event.key === "Escape" && webcamCaptureModal && !webcamCaptureModal.classList.contains("hidden")) {
+    closeWebcamCaptureModal();
     return;
   }
   if (event.key === "Escape" && tutorialCoach && !tutorialCoach.classList.contains("hidden")) {
@@ -505,7 +528,7 @@ if (uploadPhotoButton && notesPhotoUploadInput) {
   uploadPhotoButton.addEventListener("click", () => notesPhotoUploadInput.click());
 }
 if (takePhotoButton && notesPhotoCameraInput) {
-  takePhotoButton.addEventListener("click", () => notesPhotoCameraInput.click());
+  takePhotoButton.addEventListener("click", handleTakePhotoClick);
 }
 if (notesPhotoUploadInput) {
   notesPhotoUploadInput.addEventListener("change", handleNotesPhotoSelected);
@@ -1840,14 +1863,7 @@ function handleNotesPhotoSelected(event) {
 
   const reader = new FileReader();
   reader.onload = () => {
-    uploadedNotesPhotoDataUrl = String(reader.result || "");
-    if (notesPhotoPreview) {
-      notesPhotoPreview.src = uploadedNotesPhotoDataUrl;
-    }
-    if (photoPreviewWrap) {
-      photoPreviewWrap.classList.remove("hidden");
-    }
-    statusText.textContent = "Photo ready. Click Generate Study Pack.";
+    setSelectedNotesPhotoDataUrl(String(reader.result || ""));
   };
   reader.onerror = () => {
     statusText.textContent = "Could not read the selected photo.";
@@ -1870,6 +1886,83 @@ function clearSelectedNotesPhoto() {
   if (photoPreviewWrap) {
     photoPreviewWrap.classList.add("hidden");
   }
+}
+
+function setSelectedNotesPhotoDataUrl(dataUrl) {
+  uploadedNotesPhotoDataUrl = String(dataUrl || "");
+  if (notesPhotoPreview) {
+    if (uploadedNotesPhotoDataUrl) {
+      notesPhotoPreview.src = uploadedNotesPhotoDataUrl;
+    } else {
+      notesPhotoPreview.removeAttribute("src");
+    }
+  }
+  if (photoPreviewWrap) {
+    photoPreviewWrap.classList.toggle("hidden", !uploadedNotesPhotoDataUrl);
+  }
+  if (uploadedNotesPhotoDataUrl) {
+    statusText.textContent = "Photo ready. Click Generate Study Pack.";
+  }
+}
+
+function handleTakePhotoClick() {
+  if (isLikelyMobileDevice()) {
+    notesPhotoCameraInput.click();
+    return;
+  }
+  openWebcamCaptureModal().catch((error) => {
+    statusText.textContent = error?.message || "Could not open webcam.";
+  });
+}
+
+function isLikelyMobileDevice() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia("(pointer: coarse)").matches;
+}
+
+async function openWebcamCaptureModal() {
+  if (!webcamCaptureModal || !webcamVideo || !navigator.mediaDevices?.getUserMedia) {
+    throw new Error("Webcam capture is not supported here. Use Upload Photo instead.");
+  }
+  webcamCaptureModal.classList.remove("hidden");
+  webcamStream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "environment" },
+    audio: false
+  });
+  webcamVideo.srcObject = webcamStream;
+  await webcamVideo.play();
+}
+
+function closeWebcamCaptureModal() {
+  stopWebcamStream();
+  closeModalWithAnimation(webcamCaptureModal);
+}
+
+function stopWebcamStream() {
+  if (webcamStream) {
+    webcamStream.getTracks().forEach((track) => track.stop());
+    webcamStream = null;
+  }
+  if (webcamVideo) {
+    webcamVideo.srcObject = null;
+  }
+}
+
+function captureFromWebcam() {
+  if (!webcamVideo || !webcamCanvas || !webcamVideo.videoWidth || !webcamVideo.videoHeight) {
+    statusText.textContent = "Webcam is not ready yet.";
+    return;
+  }
+  webcamCanvas.width = webcamVideo.videoWidth;
+  webcamCanvas.height = webcamVideo.videoHeight;
+  const ctx = webcamCanvas.getContext("2d");
+  if (!ctx) {
+    statusText.textContent = "Could not capture from webcam.";
+    return;
+  }
+  ctx.drawImage(webcamVideo, 0, 0, webcamCanvas.width, webcamCanvas.height);
+  const dataUrl = webcamCanvas.toDataURL("image/jpeg", 0.92);
+  setSelectedNotesPhotoDataUrl(dataUrl);
+  closeWebcamCaptureModal();
 }
 
 function isValidHttpUrl(value) {
@@ -2197,6 +2290,13 @@ function setCopyButtonEnabledByContent(button, listElement) {
   setCopyButtonEnabled(button, hasCopyableItems(listElement));
 }
 
+function setDownloadFlashcardsEnabledByContent() {
+  if (!downloadFlashcardsButton || !flashcardsList) {
+    return;
+  }
+  downloadFlashcardsButton.disabled = !hasCopyableItems(flashcardsList);
+}
+
 function setAllCopyButtonsEnabled(enabled) {
   copyTargets.forEach(({ button }) => {
     setCopyButtonEnabled(button, enabled);
@@ -2207,6 +2307,7 @@ function refreshCopyButtonsFromContent() {
   copyTargets.forEach(({ button, list }) => {
     setCopyButtonEnabledByContent(button, list);
   });
+  setDownloadFlashcardsEnabledByContent();
 }
 
 async function copyTextToClipboard(text) {
@@ -2989,6 +3090,7 @@ function clearTransientAnimationClasses() {
 }
 
 window.addEventListener("beforeunload", () => {
+  stopWebcamStream();
   if (flashcardsFrontsPreviewUrl) {
     URL.revokeObjectURL(flashcardsFrontsPreviewUrl);
     flashcardsFrontsPreviewUrl = "";
