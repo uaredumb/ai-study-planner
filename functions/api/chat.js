@@ -105,6 +105,9 @@ export async function onRequestPost(context) {
   const textModel = env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
   const visionModel = env.OPENROUTER_VISION_MODEL || "qwen/qwen3-vl-235b-a22b-thinking";
   const model = requestMode === "vision" ? visionModel : textModel;
+  const textMaxTokens = Number(env.OPENROUTER_TEXT_MAX_TOKENS || 1200);
+  const visionMaxTokens = Number(env.OPENROUTER_VISION_MAX_TOKENS || 900);
+  const maxTokens = requestMode === "vision" ? visionMaxTokens : textMaxTokens;
   const siteUrl = env.OPENROUTER_SITE_URL || "https://ai-study-planner.pages.dev";
   const appName = env.OPENROUTER_APP_NAME || "AI Study Pal";
 
@@ -151,15 +154,17 @@ export async function onRequestPost(context) {
         { role: "user", content: userContent }
       ],
       temperature: 0.3,
+      max_tokens: maxTokens,
       stream: shouldStream
     })
   });
 
   if (!response.ok) {
     const errorText = await response.text();
+    const passthroughStatus = response.status >= 400 && response.status < 500 ? response.status : 502;
     return jsonResponse(
       { error: `OpenRouter request failed (${response.status}). ${errorText.slice(0, 300)}` },
-      502
+      passthroughStatus
     );
   }
 

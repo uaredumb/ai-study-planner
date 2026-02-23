@@ -1358,7 +1358,6 @@ body.dark .output-icon {
     gap: 0.4rem;
   }
 
-  .top-actions #helpButton,
   .top-actions #performanceToggle,
   .top-actions #themeToggle {
     width: 2.45rem;
@@ -1369,7 +1368,6 @@ body.dark .output-icon {
     gap: 0;
   }
 
-  .top-actions #helpButton .btn-label,
   .top-actions #performanceToggle .btn-label,
   .top-actions #themeToggle .btn-label {
     display: none;
@@ -1377,7 +1375,7 @@ body.dark .output-icon {
 
   .top-actions #performanceToggle .btn-icon,
   .top-actions #themeToggle .btn-icon,
-  .top-actions #helpButton .btn-glyph {
+  .top-actions #tutorialLaunchButton .btn-glyph {
     width: 1.08rem;
     height: 1.08rem;
   }

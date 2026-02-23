@@ -89,7 +89,6 @@ const summarizeModeCard = document.querySelector(".summarize-mode-card");
 const topActions = document.querySelector(".top-actions");
 const outputOptionsWrap = document.querySelector(".output-options-wrap");
 const tutorialLaunchButton = document.getElementById("tutorialLaunchButton");
-const helpButton = document.getElementById("helpButton");
 const accountLoginButton = document.getElementById("accountLoginButton");
 const notesModeButton = document.getElementById("notesModeButton");
 const articleModeButton = document.getElementById("articleModeButton");
@@ -286,9 +285,6 @@ if (accountLoginButton) {
 }
 if (tutorialLaunchButton) {
   tutorialLaunchButton.addEventListener("click", openTutorialFromTopBar);
-}
-if (helpButton) {
-  helpButton.addEventListener("click", openTutorialFromTopBar);
 }
 newFileButton.addEventListener("click", createFile);
 saveFileButton.addEventListener("click", exportActiveFile);
