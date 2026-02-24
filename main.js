@@ -115,6 +115,7 @@ const moreNotesCharsButton = document.getElementById("moreNotesCharsButton");
 const summarizeModeCard = document.querySelector(".summarize-mode-card");
 const topActions = document.querySelector(".top-actions");
 const outputOptionsWrap = document.querySelector(".output-options-wrap");
+const articleGenerateRow = document.querySelector(".article-generate-row");
 const notesLimitHint = document.getElementById("notesLimitHint");
 const tutorialLaunchButton = document.getElementById("tutorialLaunchButton");
 const accountLoginButton = document.getElementById("accountLoginButton");
@@ -2293,7 +2294,7 @@ function handleSummaryModeChange(mode) {
       inputCard.dataset.hideTimer = "";
     }
     inputCard.classList.remove("mode-pop-in", "mode-pop-out");
-    inputCard.classList.remove("hidden");
+    inputCard.classList.toggle("hidden", isArticle);
     if (!isArticle && previousMode !== mode) {
       void inputCard.offsetWidth;
       inputCard.classList.add("mode-pop-in");
@@ -2302,6 +2303,9 @@ function handleSummaryModeChange(mode) {
   notesInput.disabled = isArticle || isPhoto;
   if (summarizeLinkButton) {
     summarizeLinkButton.classList.toggle("hidden", !isArticle);
+  }
+  if (articleGenerateRow) {
+    articleGenerateRow.classList.toggle("hidden", !isArticle);
   }
   cleanButton.classList.toggle("hidden", isArticle);
   if (notesModeButton) {

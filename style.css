@@ -855,7 +855,11 @@ input,
 .article-generate-row {
   margin-top: 0.8rem;
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
+}
+
+.article-generate-row .primary-btn {
+  min-width: 220px;
 }
 
 .output-options-grid {
