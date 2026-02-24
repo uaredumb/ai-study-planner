@@ -143,13 +143,16 @@ const TUTORIAL_SEEN_KEY = "tutorial_seen_v1";
 const STUDY_FILES_STORAGE = "study_files_v1";
 const ACTIVE_FILE_ID_STORAGE = "active_study_file_id_v1";
 const SUMMARY_MODE_STORAGE = "summary_mode_v1";
-const NOTES_CHAR_LIMIT = 6000;
+const FREE_NOTES_CHAR_LIMIT = 3000;
+const PRO_NOTES_CHAR_LIMIT = 8000;
 const PRO_MODE_STORAGE = "pro_mode_unlocked_v1";
 const FREE_FILE_LIMIT = 1;
 const PRO_FILE_LIMIT = 5;
 const FREE_FLASHCARDS_LIMIT = 5;
 const PRO_FLASHCARDS_LIMIT = 10;
 const PRO_CODE_HASH = "95af3544082a6e31dabdcf5bb9e1a6a17cdf90dae0e05a64f0c076250707dc76";
+const NON_NOTES_MESSAGE =
+  "I can only generate from real study notes or learning material. Please add notes, class content, or an educational article.";
 
 let studyFiles = loadStudyFiles();
 let activeFileId = loadActiveFileId(studyFiles);
@@ -566,8 +569,9 @@ if (summarizeLinkButton) {
   summarizeLinkButton.addEventListener("click", summarizeArticleFromLink);
 }
 notesInput.addEventListener("input", () => {
-  if (notesInput.value.length > NOTES_CHAR_LIMIT) {
-    notesInput.value = notesInput.value.slice(0, NOTES_CHAR_LIMIT);
+  const limit = getNotesCharLimit();
+  if (notesInput.value.length > limit) {
+    notesInput.value = notesInput.value.slice(0, limit);
   }
   updateNotesLimitHint();
   saveCurrentFileText();
@@ -738,8 +742,14 @@ async function handleCleanNotes() {
     return;
   }
 
-  if (rawNotes.length > NOTES_CHAR_LIMIT) {
-    statusText.textContent = `Please keep notes under ${NOTES_CHAR_LIMIT} characters.`;
+  const limit = getNotesCharLimit();
+  if (rawNotes.length > limit) {
+    statusText.textContent = `Please keep notes under ${limit} characters.`;
+    return;
+  }
+
+  if (!isLikelyStudyMaterial(rawNotes)) {
+    statusText.textContent = NON_NOTES_MESSAGE;
     return;
   }
 
@@ -794,6 +804,9 @@ async function summarizeArticleFromLink() {
 
   try {
     const articleText = await fetchArticleTextFromUrl(articleUrl);
+    if (!isLikelyStudyMaterial(articleText)) {
+      throw new Error(NON_NOTES_MESSAGE);
+    }
     const result = await generateStudyPack(
       `Article URL: ${articleUrl}\n\nArticle content:\n${articleText}`,
       getSelectedOutputs()
@@ -910,6 +923,9 @@ async function summarizeFromPhoto() {
     if (!extractedText) {
       throw new Error("Could not extract readable text from that photo.");
     }
+    if (!isLikelyStudyMaterial(extractedText)) {
+      throw new Error(NON_NOTES_MESSAGE);
+    }
     statusText.textContent = "Text extracted. Building your study pack...";
     const result = await generateStudyPack(extractedText, getSelectedOutputs());
     await renderResultsWithTyping(result);
@@ -932,6 +948,39 @@ function updateStreamingStatus(_chunk, fullText) {
     return;
   }
   statusText.textContent = `AI is typing: ${preview.slice(-90)}`;
+}
+
+function isLikelyStudyMaterial(text) {
+  const normalized = String(text || "").trim().toLowerCase();
+  if (normalized.length < 28) {
+    return false;
+  }
+
+  const studyKeywords = [
+    "chapter", "lesson", "quiz", "exam", "test", "review", "study", "homework",
+    "assignment", "class", "lecture", "teacher", "professor", "unit", "topic",
+    "formula", "definition", "theorem", "vocab", "flashcard", "notes", "summary",
+    "biology", "chemistry", "physics", "math", "history", "english", "science",
+    "geography", "economics", "algebra", "calculus"
+  ];
+  const keywordHits = studyKeywords.reduce((count, keyword) => {
+    return count + (normalized.includes(keyword) ? 1 : 0);
+  }, 0);
+
+  const hasStructure = /(^|\n)\s*(?:[-*•]|\d+[.)])\s+\S+/.test(normalized) || normalized.includes(":");
+  const hasAcademicPattern = /\b(ch\s*\d+|chapter\s+\d+|week\s+\d+|unit\s+\d+|lesson\s+\d+)\b/.test(normalized);
+  const sentenceLikeCount = normalized.split(/[.!?]\s+/).filter((s) => s.trim().length > 18).length;
+  const wordCount = normalized.split(/\s+/).filter(Boolean).length;
+
+  let score = 0;
+  if (keywordHits >= 1) score += 2;
+  if (keywordHits >= 3) score += 1;
+  if (hasStructure) score += 1;
+  if (hasAcademicPattern) score += 1;
+  if (wordCount >= 35) score += 1;
+  if (sentenceLikeCount >= 2) score += 1;
+
+  return score >= 2;
 }
 
 async function cleanNotesWithOpenRouter(rawNotes, onChunk) {
@@ -1168,8 +1217,9 @@ function loadActiveFileIntoEditor() {
 
   activeFile.selectedOutputs = normalizeSelectedOutputs(activeFile.selectedOutputs);
   notesInput.value = activeFile.content || "";
-  if (notesInput.value.length > NOTES_CHAR_LIMIT) {
-    notesInput.value = notesInput.value.slice(0, NOTES_CHAR_LIMIT);
+  const limit = getNotesCharLimit();
+  if (notesInput.value.length > limit) {
+    notesInput.value = notesInput.value.slice(0, limit);
     activeFile.content = notesInput.value;
     persistFiles();
   }
@@ -1183,7 +1233,7 @@ function updateNotesLimitHint() {
   if (!notesLimitHint || !notesInput) {
     return;
   }
-  notesLimitHint.textContent = `${notesInput.value.length} / ${NOTES_CHAR_LIMIT} characters`;
+  notesLimitHint.textContent = `${notesInput.value.length} / ${getNotesCharLimit()} characters`;
 }
 
 function saveCurrentFileText() {
@@ -1234,13 +1284,17 @@ function getMaxFlashcardsAllowed() {
   return isProMode ? PRO_FLASHCARDS_LIMIT : FREE_FLASHCARDS_LIMIT;
 }
 
+function getNotesCharLimit() {
+  return isProMode ? PRO_NOTES_CHAR_LIMIT : FREE_NOTES_CHAR_LIMIT;
+}
+
 function updateProModeButtonLabel() {
   if (!proModeButton) {
     return;
   }
   proModeButton.innerHTML = isProMode
-    ? '<span class="btn-glyph" aria-hidden="true">P</span><span class="btn-label">Pro Mode: On</span>'
-    : '<span class="btn-glyph" aria-hidden="true">P</span><span class="btn-label">Pro Mode: Off</span>';
+    ? '<span class="btn-glyph pro-badge-icon" aria-hidden="true">♛</span><span class="btn-label">Mode: On</span>'
+    : '<span class="btn-glyph pro-badge-icon" aria-hidden="true">♛</span><span class="btn-label">Mode: Off</span>';
 }
 
 function updateFlashcardsLimitUi() {
@@ -1268,6 +1322,12 @@ function updateFlashcardsLimitUi() {
 function applyProModeUi() {
   updateProModeButtonLabel();
   updateFlashcardsLimitUi();
+  const limit = getNotesCharLimit();
+  if (notesInput && notesInput.value.length > limit) {
+    notesInput.value = notesInput.value.slice(0, limit);
+    saveCurrentFileText();
+  }
+  updateNotesLimitHint();
 }
 
 function openProModeModal() {
@@ -2645,11 +2705,11 @@ function triggerFileOpenAnimation() {
     playTransientAnimation(activeChip, "file-open-in");
   }
 
-  [summarizeModeCard, inputCard].forEach((element) => {
+  [summarizeModeCard, inputCard, resultsSection].forEach((element) => {
     if (!element || element.classList.contains("hidden")) {
       return;
     }
-
+    element.classList.remove("mode-pop-in", "mode-pop-out", "island-pop");
     playTransientAnimation(element, "file-open-in");
   });
 }
@@ -2659,16 +2719,37 @@ function playTransientAnimation(element, className) {
     return;
   }
 
+  const timerKey = `${className}Timer`;
+  const existingTimer = Number(element.dataset[timerKey] || 0);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    element.dataset[timerKey] = "";
+  }
+
   element.classList.remove(className);
   void element.offsetWidth;
   element.classList.add(className);
+
+  const clearClass = () => {
+    element.classList.remove(className);
+    const timerId = Number(element.dataset[timerKey] || 0);
+    if (timerId) {
+      clearTimeout(timerId);
+      element.dataset[timerKey] = "";
+    }
+  };
+
   element.addEventListener(
     "animationend",
     () => {
-      element.classList.remove(className);
+      clearClass();
     },
     { once: true }
   );
+
+  // Fallback for iOS/Safari cases where animationend may be missed.
+  const fallbackTimer = window.setTimeout(clearClass, 420);
+  element.dataset[timerKey] = String(fallbackTimer);
 }
 
 function getClerkPublishableKey() {
