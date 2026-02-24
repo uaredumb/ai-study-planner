@@ -1299,6 +1299,9 @@ function persistFiles() {
 }
 
 function renderFiles() {
+  if (isGenerating && !statusText.classList.contains("is-processing")) {
+    isGenerating = false;
+  }
   filesList.innerHTML = "";
 
   studyFiles.forEach((file) => {
@@ -1309,6 +1312,10 @@ function renderFiles() {
     button.textContent = file.name;
     button.disabled = isGenerating;
     button.addEventListener("click", () => {
+      if (isGenerating && !statusText.classList.contains("is-processing")) {
+        isGenerating = false;
+        renderFiles();
+      }
       if (isGenerating) {
         statusText.textContent = "Please wait for generation to finish before switching files.";
         return;
@@ -1709,7 +1716,15 @@ function openNewFileModal() {
   }, 0);
 }
 
-function closeNewFileModal() {
+function closeNewFileModal(forceImmediate = false) {
+  if (!newFileModal) {
+    return;
+  }
+  if (forceImmediate) {
+    newFileModal.classList.add("hidden");
+    newFileModal.classList.remove("modal-closing");
+    return;
+  }
   closeModalWithAnimation(newFileModal);
 }
 
@@ -1745,7 +1760,7 @@ function submitCreateFile(event) {
   renderFiles();
   loadActiveFileIntoEditor();
   triggerFileOpenAnimation();
-  closeNewFileModal();
+  closeNewFileModal(true);
   statusText.textContent = `Created file: ${newFile.name}`;
   handleTutorialCreateFileCompleted();
 }
