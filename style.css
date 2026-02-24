@@ -1059,6 +1059,33 @@ body.dark .preview-toggle-btn.active {
   animation: typingDots 1s steps(4, end) infinite;
 }
 
+.status-toast-stack {
+  position: fixed;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 45;
+  display: grid;
+  gap: 0.5rem;
+  width: min(340px, calc(100vw - 1.2rem));
+  pointer-events: none;
+}
+
+.status-toast {
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card), #ffffff 8%);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  border-radius: 12px;
+  padding: 0.58rem 0.72rem;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  animation: toastIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.status-toast.is-hiding {
+  animation: toastOut 220ms cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1491,6 +1518,28 @@ body.dark .preview-toggle-btn.active {
   100% {
     transform: scale(1) translateY(0);
     box-shadow: var(--shadow);
+  }
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
   }
 }
 

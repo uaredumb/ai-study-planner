@@ -146,11 +146,21 @@ const SUMMARY_MODE_STORAGE = "summary_mode_v1";
 const FREE_NOTES_CHAR_LIMIT = 3000;
 const PRO_NOTES_CHAR_LIMIT = 8000;
 const PRO_MODE_STORAGE = "pro_mode_unlocked_v1";
+const USED_PRO_CODE_HASHES_STORAGE = "used_pro_code_hashes_v1";
 const FREE_FILE_LIMIT = 1;
 const PRO_FILE_LIMIT = 5;
 const FREE_FLASHCARDS_LIMIT = 5;
 const PRO_FLASHCARDS_LIMIT = 10;
-const PRO_CODE_HASH = "95af3544082a6e31dabdcf5bb9e1a6a17cdf90dae0e05a64f0c076250707dc76";
+const PRO_CODE_HASHES = [
+  "ea978dc49d8765817c29a92ea3e8512299ebd8c2606053505740a10311bfcdae",
+  "b0d40f314074c7e22b0feda853c5cae72ef87916d353939a1c0ec6005f6007f1",
+  "fd833754f31e65d3512ee3c871f40309c22c7e6c48beb03623491b81abb74df6",
+  "b271b453005e2ccd95e29abfa0c236ed907ea49d53788f9f993425d2ae1a9f55",
+  "cdf68a59a4191dcabd4f1c1de75a2635d90018ecec0bb82aab37e8afd19b5ba6",
+  "55ef3a07198bea753d0f78fcdd231e51822708d1c60ed160513f4a8366e8df3d",
+  "8acf9dfb2c36cd048e4240f0f3820d5c2f1359291376787e7fe9de8e164d0944",
+  "61d8ade8642a4799972136efdaffaa8f65d6620ded7fc3e1fa6d76baa9acf29b"
+];
 const NON_NOTES_MESSAGE =
   "I can only generate from real study notes or learning material. Please add notes, class content, or an educational article.";
 
@@ -175,6 +185,8 @@ let uploadedNotesPhotoDataUrl = "";
 let flashcardsFrontsPreviewUrl = "";
 let flashcardsBacksPreviewUrl = "";
 let webcamStream = null;
+let statusToastStack = null;
+let statusRouterSuppress = false;
 
 function applyIosAnimationProfile() {
   const ua = navigator.userAgent || "";
@@ -327,6 +339,7 @@ applyProModeUi();
 loadPerformanceMode();
 renderFiles();
 loadActiveFileIntoEditor();
+initStatusNotificationRouter();
 
 cleanButton.addEventListener("click", handleCleanNotes);
 themeToggle.addEventListener("click", toggleTheme);
@@ -950,6 +963,93 @@ function updateStreamingStatus(_chunk, fullText) {
   statusText.textContent = `AI is typing: ${preview.slice(-90)}`;
 }
 
+function initStatusNotificationRouter() {
+  if (!statusText) {
+    return;
+  }
+  statusText.textContent = "";
+  const observer = new MutationObserver(() => {
+    routeStatusToToastIfNeeded();
+  });
+  observer.observe(statusText, { childList: true, characterData: true, subtree: true });
+}
+
+function routeStatusToToastIfNeeded() {
+  if (!statusText || statusRouterSuppress) {
+    return;
+  }
+  const message = String(statusText.textContent || "").trim();
+  if (!message) {
+    return;
+  }
+  if (statusText.classList.contains("is-streaming") || message.startsWith("AI is typing")) {
+    return;
+  }
+  if (message === "Ready") {
+    statusRouterSuppress = true;
+    statusText.textContent = "";
+    statusRouterSuppress = false;
+    return;
+  }
+  showCornerToast(message);
+  statusRouterSuppress = true;
+  statusText.textContent = "";
+  statusRouterSuppress = false;
+}
+
+function getStatusToastStack() {
+  if (statusToastStack) {
+    return statusToastStack;
+  }
+  const stack = document.createElement("div");
+  stack.className = "status-toast-stack";
+  stack.setAttribute("aria-live", "polite");
+  document.body.appendChild(stack);
+  statusToastStack = stack;
+  return statusToastStack;
+}
+
+function showCornerToast(message) {
+  const stack = getStatusToastStack();
+  const existing = Array.from(stack.children).find(
+    (child) => child instanceof HTMLElement && child.dataset.toastMessage === message
+  );
+  if (existing instanceof HTMLElement) {
+    existing.classList.remove("is-hiding");
+    scheduleToastRemoval(existing, stack);
+    return;
+  }
+
+  const toast = document.createElement("div");
+  toast.className = "status-toast";
+  toast.textContent = message;
+  toast.dataset.toastMessage = message;
+  stack.appendChild(toast);
+
+  while (stack.children.length > 4) {
+    stack.removeChild(stack.firstElementChild);
+  }
+
+  scheduleToastRemoval(toast, stack);
+}
+
+function scheduleToastRemoval(toast, stack) {
+  const existingTimer = Number(toast.dataset.toastTimer || 0);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    toast.dataset.toastTimer = "";
+  }
+  const timerId = window.setTimeout(() => {
+    toast.classList.add("is-hiding");
+    window.setTimeout(() => {
+      if (toast.parentNode === stack) {
+        stack.removeChild(toast);
+      }
+    }, 220);
+  }, 2600);
+  toast.dataset.toastTimer = String(timerId);
+}
+
 function isLikelyStudyMaterial(text) {
   const normalized = String(text || "").trim().toLowerCase();
   if (normalized.length < 28) {
@@ -1276,6 +1376,31 @@ function loadProModeState() {
   return localStorage.getItem(PRO_MODE_STORAGE) === "on";
 }
 
+function loadUsedProCodeHashes() {
+  try {
+    const raw = localStorage.getItem(USED_PRO_CODE_HASHES_STORAGE);
+    if (!raw) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.filter((item) => typeof item === "string");
+  } catch (_error) {
+    return [];
+  }
+}
+
+function markProCodeHashAsUsed(codeHash) {
+  const used = loadUsedProCodeHashes();
+  if (used.includes(codeHash)) {
+    return;
+  }
+  used.push(codeHash);
+  localStorage.setItem(USED_PRO_CODE_HASHES_STORAGE, JSON.stringify(used));
+}
+
 function getMaxFilesAllowed() {
   return isProMode ? PRO_FILE_LIMIT : FREE_FILE_LIMIT;
 }
@@ -1293,8 +1418,8 @@ function updateProModeButtonLabel() {
     return;
   }
   proModeButton.innerHTML = isProMode
-    ? '<span class="btn-glyph pro-badge-icon" aria-hidden="true">♛</span><span class="btn-label">Mode: On</span>'
-    : '<span class="btn-glyph pro-badge-icon" aria-hidden="true">♛</span><span class="btn-label">Mode: Off</span>';
+    ? '<span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span><span class="btn-label">Mode: On</span>'
+    : '<span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span><span class="btn-label">Mode: Off</span>';
 }
 
 function updateFlashcardsLimitUi() {
@@ -1397,10 +1522,15 @@ async function submitProCode(event) {
     showProCodeError("Pro unlock is unavailable in this context. Use the hosted app.");
     return;
   }
-  if (codeHash !== PRO_CODE_HASH) {
+  if (!PRO_CODE_HASHES.includes(codeHash)) {
     showProCodeError("Invalid Pro code.");
     return;
   }
+  if (loadUsedProCodeHashes().includes(codeHash)) {
+    showProCodeError("This Pro code was already used. Enter a new code.");
+    return;
+  }
+  markProCodeHashAsUsed(codeHash);
   isProMode = true;
   localStorage.setItem(PRO_MODE_STORAGE, "on");
   applyProModeUi();
@@ -2342,7 +2472,7 @@ function bindDownloadFlashcardsButton() {
 
   downloadFlashcardsButton.addEventListener("click", () => {
     const activeFile = getActiveFile();
-    const rawCards = getRawListItems(flashcardsList).slice(0, 5);
+    const rawCards = getRawListItems(flashcardsList).slice(0, getMaxFlashcardsAllowed());
 
     if (rawCards.length === 0) {
       statusText.textContent = "No flashcards to download yet.";
@@ -2354,13 +2484,16 @@ function bindDownloadFlashcardsButton() {
       return;
     }
 
-    const { frontsBlob, backsBlob } = buildCuttableFlashcardsPdfs(rawCards);
+    const { frontsBlob, backsBlob, combinedBlob } = buildCuttableFlashcardsPdfs(rawCards);
     showFlashcardsPdfPreview(frontsBlob, backsBlob);
     const safeNameBase = slugifyFileName(activeFile?.name || "study-notes");
-    downloadBlob(frontsBlob, `${safeNameBase}-flashcards-fronts.pdf`);
-    downloadBlob(backsBlob, `${safeNameBase}-flashcards-backs.pdf`);
+    downloadBlob(combinedBlob, `${safeNameBase}-flashcards-fronts-and-backs.pdf`);
+    setTimeout(() => {
+      downloadBlob(frontsBlob, `${safeNameBase}-flashcards-fronts.pdf`);
+      downloadBlob(backsBlob, `${safeNameBase}-flashcards-backs.pdf`);
+    }, 120);
 
-    statusText.textContent = "Downloaded 2 cut-ready flashcard PDFs (fronts + backs).";
+    statusText.textContent = "Downloaded flashcard PDFs with fronts + backs.";
   });
 }
 
@@ -2436,7 +2569,8 @@ function buildCuttableFlashcardsPdfs(rawCards) {
 
   return {
     frontsBlob: frontsDoc.output("blob"),
-    backsBlob: backsDoc.output("blob")
+    backsBlob: backsDoc.output("blob"),
+    combinedBlob: buildCombinedFlashcardsPdf(rawCards)
   };
 }
 
@@ -2445,11 +2579,10 @@ function drawCutCard(doc, x, y, width, height, title, text) {
   doc.setLineWidth(0.015);
   doc.rect(x, y, width, height);
 
-  // Dotted cut guides crossing the card center.
+  // Dotted trim guide on the card border.
   doc.setLineWidth(0.01);
   doc.setLineDashPattern([0.04, 0.04], 0);
-  doc.line(x + width / 2, y + 0.03, x + width / 2, y + height - 0.03);
-  doc.line(x + 0.03, y + height / 2, x + width - 0.03, y + height / 2);
+  doc.rect(x + 0.02, y + 0.02, width - 0.04, height - 0.04);
   doc.setLineDashPattern([], 0);
 
   doc.setFont("helvetica", "bold");
@@ -2460,6 +2593,63 @@ function drawCutCard(doc, x, y, width, height, title, text) {
   doc.setFontSize(9);
   const lines = doc.splitTextToSize(text, width - 0.24);
   doc.text(lines, x + 0.12, y + 0.48);
+}
+
+function buildCombinedFlashcardsPdf(rawCards) {
+  const { jsPDF } = window.jspdf;
+  const combined = new jsPDF({
+    orientation: "portrait",
+    unit: "in",
+    format: "letter"
+  });
+  const pageWidth = 8.5;
+  const pageHeight = 11;
+  const cardWidth = 3.5;
+  const cardHeight = 2.0;
+  const colGap = 0.5;
+  const rowGap = 0.35;
+  const marginX = (pageWidth - (cardWidth * 2 + colGap)) / 2;
+  const marginY = 0.6;
+  const perPage = 8;
+
+  const drawSide = (isBack) => {
+    rawCards.forEach((cardText, index) => {
+      const pageIndex = Math.floor(index / perPage);
+      const slot = index % perPage;
+      const row = Math.floor(slot / 2);
+      const col = slot % 2;
+      const x = marginX + col * (cardWidth + colGap);
+      const y = marginY + row * (cardHeight + rowGap);
+      const { front, back } = parseFlashcardText(cardText, index + 1);
+
+      if (index > 0 && slot === 0) {
+        combined.addPage("letter", "portrait");
+      }
+
+      drawCutCard(
+        combined,
+        x,
+        y,
+        cardWidth,
+        cardHeight,
+        `Card ${index + 1} ${isBack ? "Back" : "Front"}`,
+        isBack ? back : front
+      );
+
+      if (slot === 0) {
+        combined.setFont("helvetica", "bold");
+        combined.setFontSize(9);
+        combined.text(`Flashcards ${isBack ? "Backs" : "Fronts"} - Page ${pageIndex + 1}`, marginX, 0.35);
+      }
+    });
+  };
+
+  drawSide(false);
+  if (rawCards.length > 0) {
+    combined.addPage("letter", "portrait");
+  }
+  drawSide(true);
+  return combined.output("blob");
 }
 
 function downloadBlob(blob, fileName) {
@@ -2699,18 +2889,23 @@ function closeModalWithAnimation(modalElement) {
 }
 
 function triggerFileOpenAnimation() {
-  const activeChip = filesList.querySelector(".file-chip.active");
-
-  if (activeChip) {
-    playTransientAnimation(activeChip, "file-open-in");
+  if (document.body.classList.contains("performance-mode")) {
+    return;
   }
 
-  [summarizeModeCard, inputCard, resultsSection].forEach((element) => {
-    if (!element || element.classList.contains("hidden")) {
-      return;
+  requestAnimationFrame(() => {
+    const activeChip = filesList.querySelector(".file-chip.active");
+    if (activeChip) {
+      playTransientAnimation(activeChip, "file-open-in");
     }
-    element.classList.remove("mode-pop-in", "mode-pop-out", "island-pop");
-    playTransientAnimation(element, "file-open-in");
+
+    [summarizeModeCard, inputCard, resultsSection].forEach((element) => {
+      if (!element || element.classList.contains("hidden")) {
+        return;
+      }
+      element.classList.remove("mode-pop-in", "mode-pop-out", "island-pop", "pop-in", "pop-out");
+      playTransientAnimation(element, "file-open-in");
+    });
   });
 }
 
