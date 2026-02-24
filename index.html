@@ -25,6 +25,10 @@
           <span class="btn-glyph" aria-hidden="true">?</span>
           <span class="btn-label">Help</span>
         </button>
+        <button id="proModeButton" class="theme-btn" type="button" aria-label="Unlock Pro mode">
+          <span class="btn-glyph" aria-hidden="true">P</span>
+          <span class="btn-label">Pro Mode: Off</span>
+        </button>
         <button id="performanceToggle" class="theme-btn" aria-label="Toggle performance mode">
           <img class="btn-icon" src="icons/performance-off.svg" alt="" aria-hidden="true" />
           <span class="btn-label">Performance Mode: Off</span>
@@ -106,19 +110,20 @@
             </select>
             <span class="flashcards-count-caret" aria-hidden="true">▼</span>
           </div>
-          <p class="tutorial-label">Maximum: 5 cards</p>
-          <button id="moreFlashcardsButton" class="secondary-btn more-flashcards-btn" type="button">Want more flash cards?</button>
+          <p id="flashcardsLimitHint" class="tutorial-label">Maximum: 5 cards (free)</p>
+          <button id="moreFlashcardsButton" class="secondary-btn more-flashcards-btn" type="button">Unlock more flash cards</button>
         </div>
       </div>
     </section>
 
     <section class="card input-card">
       <div id="notesInputWrap">
-        <label for="notesInput" class="input-label">Paste your messy notes</label>
+        <label for="notesInput" class="input-label">Summrize note</label>
         <textarea
           id="notesInput"
           placeholder="Example: math ch 4?? finish practice, history civil war notes incomplete, science quiz Friday maybe?"
         ></textarea>
+        <p id="notesLimitHint" class="tutorial-label">0 / 6000 characters</p>
       </div>
       <div id="photoInputWrap" class="photo-row hidden">
         <p class="input-label">Add notes photo</p>
@@ -292,10 +297,24 @@
   <div id="moreFlashcardsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="moreFlashcardsTitle">
     <div class="modal-card">
       <h2 id="moreFlashcardsTitle">More Flashcards</h2>
-      <p class="modal-message">This is a paid feature and is coming soon.</p>
+      <p class="modal-message">Pro mode is active. Use the flashcards count selector to choose up to 10 cards.</p>
       <div class="modal-actions">
         <button id="moreFlashcardsCloseButton" type="button" class="secondary-btn">Close</button>
       </div>
+    </div>
+  </div>
+
+  <div id="proModeModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="proModeTitle">
+    <div class="modal-card">
+      <h2 id="proModeTitle">Unlock Pro Mode</h2>
+      <form id="proModeForm" class="modal-form">
+        <label for="proCodeInput" class="input-label">Enter Pro Code</label>
+        <input id="proCodeInput" class="modal-input" type="password" maxlength="80" autocomplete="off" />
+        <div class="modal-actions">
+          <button id="proModeCancelButton" type="button" class="secondary-btn">Cancel</button>
+          <button id="proModeUnlockButton" type="submit" class="primary-btn">Unlock</button>
+        </div>
+      </form>
     </div>
   </div>
 

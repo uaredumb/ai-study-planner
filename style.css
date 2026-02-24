@@ -1499,6 +1499,7 @@ body.dark .preview-toggle-btn.active {
     gap: 0.4rem;
   }
 
+  .top-actions #proModeButton,
   .top-actions #performanceToggle,
   .top-actions #themeToggle {
     width: 2.45rem;
@@ -1509,11 +1510,13 @@ body.dark .preview-toggle-btn.active {
     gap: 0;
   }
 
+  .top-actions #proModeButton .btn-label,
   .top-actions #performanceToggle .btn-label,
   .top-actions #themeToggle .btn-label {
     display: none;
   }
 
+  .top-actions #proModeButton .btn-glyph,
   .top-actions #performanceToggle .btn-icon,
   .top-actions #themeToggle .btn-icon,
   .top-actions #tutorialLaunchButton .btn-glyph {
@@ -1616,4 +1619,88 @@ body.performance-mode *::after {
 
 body.performance-mode .performance-spinner {
   animation: loaderSpin 0.85s linear infinite !important;
+}
+
+/* iOS Safari can stutter on scale/blur-heavy animations; use lighter motion profile */
+body.ios-optimized .primary-btn,
+body.ios-optimized .secondary-btn,
+body.ios-optimized .file-chip,
+body.ios-optimized .result-card,
+body.ios-optimized .input-card,
+body.ios-optimized .summarize-mode-card,
+body.ios-optimized .results-grid {
+  transition-duration: 0.18s;
+}
+
+body.ios-optimized .primary-btn.click-burst,
+body.ios-optimized .secondary-btn.click-burst {
+  animation: none;
+}
+
+body.ios-optimized .output-option input[type="checkbox"].check-pop {
+  animation: iosCheckFade 180ms ease-out;
+}
+
+body.ios-optimized .result-card.pop-in {
+  animation: iosCardSlideIn 220ms ease-out;
+}
+
+body.ios-optimized .result-card.pop-out {
+  animation: iosCardFadeOut 160ms ease-in forwards;
+}
+
+body.ios-optimized .file-chip.file-open-in,
+body.ios-optimized .file-chip.file-create-in,
+body.ios-optimized .summarize-mode-card.file-open-in,
+body.ios-optimized .input-card.file-open-in,
+body.ios-optimized .results-grid.file-open-in {
+  animation: iosFileFadeIn 200ms ease-out;
+}
+
+body.ios-optimized .summarize-mode-card.island-pop,
+body.ios-optimized .mode-pop-in,
+body.ios-optimized .mode-pop-out {
+  animation: iosFileFadeIn 180ms ease-out;
+}
+
+@keyframes iosCheckFade {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes iosCardSlideIn {
+  from {
+    opacity: 0.75;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iosCardFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes iosFileFadeIn {
+  from {
+    opacity: 0.78;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

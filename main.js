@@ -19,6 +19,10 @@ const previewFrontsButton = document.getElementById("previewFrontsButton");
 const previewBacksButton = document.getElementById("previewBacksButton");
 const moreFlashcardsModal = document.getElementById("moreFlashcardsModal");
 const moreFlashcardsCloseButton = document.getElementById("moreFlashcardsCloseButton");
+const proModeModal = document.getElementById("proModeModal");
+const proModeForm = document.getElementById("proModeForm");
+const proCodeInput = document.getElementById("proCodeInput");
+const proModeCancelButton = document.getElementById("proModeCancelButton");
 const webcamCaptureModal = document.getElementById("webcamCaptureModal");
 const webcamVideo = document.getElementById("webcamVideo");
 const webcamCanvas = document.getElementById("webcamCanvas");
@@ -40,6 +44,7 @@ const outputFlashcards = document.getElementById("outputFlashcards");
 const outputQuizQuestions = document.getElementById("outputQuizQuestions");
 const flashcardsCountWrap = document.getElementById("flashcardsCountWrap");
 const flashcardsCountSelect = document.getElementById("flashcardsCountSelect");
+const flashcardsLimitHint = document.getElementById("flashcardsLimitHint");
 const outputOptionInputs = [
   outputStudyTasks,
   outputStudyPlan,
@@ -55,6 +60,7 @@ const copyTargets = [
   { button: copyQuizButton, list: quizQuestionsList }
 ];
 const themeToggle = document.getElementById("themeToggle");
+const proModeButton = document.getElementById("proModeButton");
 const performanceToggle = document.getElementById("performanceToggle");
 const performanceLoader = document.getElementById("performanceLoader");
 const performanceLoaderText = document.getElementById("performanceLoaderText");
@@ -107,6 +113,7 @@ const clearPhotoButton = document.getElementById("clearPhotoButton");
 const summarizeModeCard = document.querySelector(".summarize-mode-card");
 const topActions = document.querySelector(".top-actions");
 const outputOptionsWrap = document.querySelector(".output-options-wrap");
+const notesLimitHint = document.getElementById("notesLimitHint");
 const tutorialLaunchButton = document.getElementById("tutorialLaunchButton");
 const accountLoginButton = document.getElementById("accountLoginButton");
 const notesModeButton = document.getElementById("notesModeButton");
@@ -135,9 +142,17 @@ const TUTORIAL_SEEN_KEY = "tutorial_seen_v1";
 const STUDY_FILES_STORAGE = "study_files_v1";
 const ACTIVE_FILE_ID_STORAGE = "active_study_file_id_v1";
 const SUMMARY_MODE_STORAGE = "summary_mode_v1";
+const NOTES_CHAR_LIMIT = 6000;
+const PRO_MODE_STORAGE = "pro_mode_unlocked_v1";
+const FREE_FILE_LIMIT = 1;
+const PRO_FILE_LIMIT = 5;
+const FREE_FLASHCARDS_LIMIT = 5;
+const PRO_FLASHCARDS_LIMIT = 10;
+const PRO_CODE_HASH = "95af3544082a6e31dabdcf5bb9e1a6a17cdf90dae0e05a64f0c076250707dc76";
 
 let studyFiles = loadStudyFiles();
 let activeFileId = loadActiveFileId(studyFiles);
+let isProMode = loadProModeState();
 let isGenerating = false;
 let createdFileIdForAnimation = "";
 let tutorialStepIndex = 0;
@@ -156,6 +171,16 @@ let uploadedNotesPhotoDataUrl = "";
 let flashcardsFrontsPreviewUrl = "";
 let flashcardsBacksPreviewUrl = "";
 let webcamStream = null;
+
+function applyIosAnimationProfile() {
+  const ua = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  const isTouchMac = platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  const isIosDevice = /iPhone|iPad|iPod/i.test(ua) || isTouchMac;
+  if (isIosDevice) {
+    document.body.classList.add("ios-optimized");
+  }
+}
 
 const authClerkAppearance = {
   variables: {
@@ -261,7 +286,7 @@ const tutorialSteps = [
     exampleLabel: "Tip",
     text: "This island controls your study workflow. Use Notes/Article mode and start from here.",
     example:
-      "You can switch between Summarize Notes and Summarize Article anytime."
+      "You can switch between Summarize Notes, Summrize Notes Photo, and Summarize Article anytime."
   },
   {
     title: "Outputs + Buttons",
@@ -292,13 +317,18 @@ const tutorialSteps = [
   }
 ];
 
+applyIosAnimationProfile();
 loadTheme();
+applyProModeUi();
 loadPerformanceMode();
 renderFiles();
 loadActiveFileIntoEditor();
 
 cleanButton.addEventListener("click", handleCleanNotes);
 themeToggle.addEventListener("click", toggleTheme);
+if (proModeButton) {
+  proModeButton.addEventListener("click", openProModeModal);
+}
 if (performanceToggle) {
   performanceToggle.addEventListener("click", togglePerformanceMode);
 }
@@ -371,6 +401,19 @@ if (moreFlashcardsModal) {
   moreFlashcardsModal.addEventListener("click", (event) => {
     if (event.target === moreFlashcardsModal) {
       closeModalWithAnimation(moreFlashcardsModal);
+    }
+  });
+}
+if (proModeForm) {
+  proModeForm.addEventListener("submit", submitProCode);
+}
+if (proModeCancelButton) {
+  proModeCancelButton.addEventListener("click", closeProModeModal);
+}
+if (proModeModal) {
+  proModeModal.addEventListener("click", (event) => {
+    if (event.target === proModeModal) {
+      closeProModeModal();
     }
   });
 }
@@ -454,6 +497,10 @@ document.addEventListener("keydown", (event) => {
     closeModalWithAnimation(moreFlashcardsModal);
     return;
   }
+  if (event.key === "Escape" && proModeModal && !proModeModal.classList.contains("hidden")) {
+    closeProModeModal();
+    return;
+  }
   if (event.key === "Escape" && webcamCaptureModal && !webcamCaptureModal.classList.contains("hidden")) {
     closeWebcamCaptureModal();
     return;
@@ -514,7 +561,13 @@ document.addEventListener("contextmenu", (event) => {
 if (summarizeLinkButton) {
   summarizeLinkButton.addEventListener("click", summarizeArticleFromLink);
 }
-notesInput.addEventListener("input", saveCurrentFileText);
+notesInput.addEventListener("input", () => {
+  if (notesInput.value.length > NOTES_CHAR_LIMIT) {
+    notesInput.value = notesInput.value.slice(0, NOTES_CHAR_LIMIT);
+  }
+  updateNotesLimitHint();
+  saveCurrentFileText();
+});
 if (notesModeButton) {
   notesModeButton.addEventListener("click", () => setSummaryMode("notes"));
 }
@@ -572,6 +625,7 @@ summaryModeInputs.forEach((input) => {
 if (outputCleanNotes) {
   outputCleanNotes.addEventListener("change", () => {
     triggerCheckboxAnimation(outputCleanNotes);
+    saveCurrentFileOutputSelection();
     updateOptionalOutputCards();
     syncTutorialStepActionState();
   });
@@ -579,6 +633,7 @@ if (outputCleanNotes) {
 if (outputStudyTasks) {
   outputStudyTasks.addEventListener("change", () => {
     triggerCheckboxAnimation(outputStudyTasks);
+    saveCurrentFileOutputSelection();
     updateOptionalOutputCards();
     syncTutorialStepActionState();
   });
@@ -586,6 +641,7 @@ if (outputStudyTasks) {
 if (outputStudyPlan) {
   outputStudyPlan.addEventListener("change", () => {
     triggerCheckboxAnimation(outputStudyPlan);
+    saveCurrentFileOutputSelection();
     updateOptionalOutputCards();
     syncTutorialStepActionState();
   });
@@ -593,6 +649,7 @@ if (outputStudyPlan) {
 if (outputFlashcards) {
   outputFlashcards.addEventListener("change", () => {
     triggerCheckboxAnimation(outputFlashcards);
+    saveCurrentFileOutputSelection();
     updateOptionalOutputCards();
     syncTutorialStepActionState();
   });
@@ -606,6 +663,7 @@ if (flashcardsCountSelect) {
 if (outputQuizQuestions) {
   outputQuizQuestions.addEventListener("change", () => {
     triggerCheckboxAnimation(outputQuizQuestions);
+    saveCurrentFileOutputSelection();
     updateOptionalOutputCards();
     syncTutorialStepActionState();
   });
@@ -673,6 +731,11 @@ async function handleCleanNotes() {
 
   if (!rawNotes) {
     statusText.textContent = "Please paste notes first.";
+    return;
+  }
+
+  if (rawNotes.length > NOTES_CHAR_LIMIT) {
+    statusText.textContent = `Please keep notes under ${NOTES_CHAR_LIMIT} characters.`;
     return;
   }
 
@@ -752,6 +815,35 @@ function getSelectedOutputs() {
     flashcards: Boolean(outputFlashcards?.checked),
     quizQuestions: Boolean(outputQuizQuestions?.checked)
   };
+}
+
+function normalizeSelectedOutputs(selectedOutputs) {
+  return {
+    studyTasks: Boolean(selectedOutputs?.studyTasks),
+    studyPlan: Boolean(selectedOutputs?.studyPlan),
+    cleanNotes: Boolean(selectedOutputs?.cleanNotes),
+    flashcards: Boolean(selectedOutputs?.flashcards),
+    quizQuestions: Boolean(selectedOutputs?.quizQuestions)
+  };
+}
+
+function applySelectedOutputs(selectedOutputs) {
+  const normalized = normalizeSelectedOutputs(selectedOutputs);
+  if (outputStudyTasks) {
+    outputStudyTasks.checked = normalized.studyTasks;
+  }
+  if (outputStudyPlan) {
+    outputStudyPlan.checked = normalized.studyPlan;
+  }
+  if (outputCleanNotes) {
+    outputCleanNotes.checked = normalized.cleanNotes;
+  }
+  if (outputFlashcards) {
+    outputFlashcards.checked = normalized.flashcards;
+  }
+  if (outputQuizQuestions) {
+    outputQuizQuestions.checked = normalized.quizQuestions;
+  }
 }
 
 async function generateStudyPack(text, selectedOutputs) {
@@ -972,7 +1064,8 @@ function loadStudyFiles() {
         studyTasks: ensureStringArray(file.studyTasks),
         studyOrder: ensureStringArray(file.studyOrder),
         flashcards: ensureStringArray(file.flashcards),
-        quizQuestions: ensureStringArray(file.quizQuestions)
+        quizQuestions: ensureStringArray(file.quizQuestions),
+        selectedOutputs: normalizeSelectedOutputs(file.selectedOutputs)
       }));
 
     if (sanitized.length === 0) {
@@ -1005,7 +1098,8 @@ function createStudyFile(name) {
     studyTasks: [],
     studyOrder: [],
     flashcards: [],
-    quizQuestions: []
+    quizQuestions: [],
+    selectedOutputs: normalizeSelectedOutputs(null)
   };
 }
 
@@ -1061,12 +1155,31 @@ function loadActiveFileIntoEditor() {
 
   if (!activeFile) {
     notesInput.value = "";
+    updateNotesLimitHint();
+    applySelectedOutputs(null);
+    updateOptionalOutputCards();
     renderFileResults(null);
     return;
   }
 
+  activeFile.selectedOutputs = normalizeSelectedOutputs(activeFile.selectedOutputs);
   notesInput.value = activeFile.content || "";
+  if (notesInput.value.length > NOTES_CHAR_LIMIT) {
+    notesInput.value = notesInput.value.slice(0, NOTES_CHAR_LIMIT);
+    activeFile.content = notesInput.value;
+    persistFiles();
+  }
+  updateNotesLimitHint();
+  applySelectedOutputs(activeFile.selectedOutputs);
+  updateOptionalOutputCards();
   renderFileResults(activeFile);
+}
+
+function updateNotesLimitHint() {
+  if (!notesLimitHint || !notesInput) {
+    return;
+  }
+  notesLimitHint.textContent = `${notesInput.value.length} / ${NOTES_CHAR_LIMIT} characters`;
 }
 
 function saveCurrentFileText() {
@@ -1092,11 +1205,128 @@ function saveActiveFileResults(result) {
   activeFile.studyOrder = ensureStringArray(result.studyOrder);
   activeFile.flashcards = ensureStringArray(result.flashcards);
   activeFile.quizQuestions = ensureStringArray(result.quizQuestions);
+  activeFile.selectedOutputs = normalizeSelectedOutputs(result.selectedOutputs || getSelectedOutputs());
   persistFiles();
+}
+
+function saveCurrentFileOutputSelection() {
+  const activeFile = getActiveFile();
+  if (!activeFile) {
+    return;
+  }
+  activeFile.selectedOutputs = normalizeSelectedOutputs(getSelectedOutputs());
+  persistFiles();
+}
+
+function loadProModeState() {
+  return localStorage.getItem(PRO_MODE_STORAGE) === "on";
+}
+
+function getMaxFilesAllowed() {
+  return isProMode ? PRO_FILE_LIMIT : FREE_FILE_LIMIT;
+}
+
+function getMaxFlashcardsAllowed() {
+  return isProMode ? PRO_FLASHCARDS_LIMIT : FREE_FLASHCARDS_LIMIT;
+}
+
+function updateProModeButtonLabel() {
+  if (!proModeButton) {
+    return;
+  }
+  proModeButton.innerHTML = isProMode
+    ? '<span class="btn-glyph" aria-hidden="true">P</span><span class="btn-label">Pro Mode: On</span>'
+    : '<span class="btn-glyph" aria-hidden="true">P</span><span class="btn-label">Pro Mode: Off</span>';
+}
+
+function updateFlashcardsLimitUi() {
+  if (!flashcardsCountSelect) {
+    return;
+  }
+  const max = getMaxFlashcardsAllowed();
+  const previousValue = Number(flashcardsCountSelect.value || 1);
+  flashcardsCountSelect.innerHTML = "";
+  for (let i = 1; i <= max; i += 1) {
+    const option = document.createElement("option");
+    option.value = String(i);
+    option.textContent = String(i);
+    flashcardsCountSelect.appendChild(option);
+  }
+  flashcardsCountSelect.value = String(Math.max(1, Math.min(max, previousValue)));
+  if (flashcardsLimitHint) {
+    flashcardsLimitHint.textContent = isProMode ? "Maximum: 10 cards (Pro)" : "Maximum: 5 cards (free)";
+  }
+}
+
+function applyProModeUi() {
+  updateProModeButtonLabel();
+  updateFlashcardsLimitUi();
+}
+
+function openProModeModal() {
+  if (isProMode) {
+    statusText.textContent = "Pro Mode is already unlocked.";
+    return;
+  }
+  if (!proModeModal) {
+    return;
+  }
+  proModeModal.classList.remove("hidden");
+  if (proCodeInput) {
+    proCodeInput.value = "";
+    setTimeout(() => proCodeInput.focus(), 0);
+  }
+}
+
+function closeProModeModal() {
+  closeModalWithAnimation(proModeModal);
+}
+
+async function hashTextSha256(text) {
+  if (!window.crypto || !window.crypto.subtle) {
+    throw new Error("Secure crypto not available in this browser context.");
+  }
+  const encoded = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest("SHA-256", encoded);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function submitProCode(event) {
+  event.preventDefault();
+  const inputCode = proCodeInput?.value?.trim() || "";
+  if (!inputCode) {
+    statusText.textContent = "Enter a Pro code first.";
+    return;
+  }
+  let codeHash = "";
+  try {
+    codeHash = await hashTextSha256(inputCode);
+  } catch (_error) {
+    statusText.textContent = "Pro unlock is unavailable in this context. Use the hosted app.";
+    return;
+  }
+  if (codeHash !== PRO_CODE_HASH) {
+    statusText.textContent = "Invalid Pro code.";
+    return;
+  }
+  isProMode = true;
+  localStorage.setItem(PRO_MODE_STORAGE, "on");
+  applyProModeUi();
+  closeProModeModal();
+  statusText.textContent = "Pro Mode unlocked.";
 }
 
 function createFile() {
   if (!requireAuthenticatedForFeature("create study files")) {
+    return;
+  }
+
+  if (studyFiles.length >= getMaxFilesAllowed()) {
+    statusText.textContent = isProMode
+      ? "You reached the Pro limit of 5 files."
+      : "Free mode allows 1 file. Unlock Pro Mode for up to 5 files.";
     return;
   }
 
@@ -1239,6 +1469,14 @@ function submitCreateFile(event) {
   if (!name) {
     statusText.textContent = "Please enter a file name.";
     newFileInput.focus();
+    return;
+  }
+
+  if (studyFiles.length >= getMaxFilesAllowed()) {
+    statusText.textContent = isProMode
+      ? "You reached the Pro limit of 5 files."
+      : "Free mode allows 1 file. Unlock Pro Mode for up to 5 files.";
+    closeNewFileModal();
     return;
   }
 
@@ -1667,11 +1905,11 @@ function buildFlashcardFrontFromLine(line, index) {
 }
 
 function getRequestedFlashcardsCount() {
-  const raw = Number(flashcardsCountSelect?.value || 5);
+  const raw = Number(flashcardsCountSelect?.value || 1);
   if (!Number.isFinite(raw)) {
-    return 5;
+    return 1;
   }
-  return Math.max(1, Math.min(5, Math.floor(raw)));
+  return Math.max(1, Math.min(getMaxFlashcardsAllowed(), Math.floor(raw)));
 }
 
 function generateQuizQuestions(sourceLines) {
@@ -2042,11 +2280,16 @@ function bindMoreFlashcardsButton() {
   }
 
   moreFlashcardsButton.addEventListener("click", () => {
+    if (!isProMode) {
+      openProModeModal();
+      statusText.textContent = "Unlock Pro Mode to use up to 10 flashcards.";
+      return;
+    }
     if (moreFlashcardsModal) {
       moreFlashcardsModal.classList.remove("hidden");
       return;
     }
-    statusText.textContent = "More flashcards is a paid feature coming soon.";
+    statusText.textContent = "Pro Mode unlocked: up to 10 flashcards available.";
   });
 }
 
