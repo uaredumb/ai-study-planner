@@ -1101,6 +1101,18 @@ body.dark .preview-toggle-btn.active {
   outline: 2px solid color-mix(in srgb, var(--accent), transparent 55%);
 }
 
+.modal-input.input-error {
+  border-color: #d23b3b;
+  background: color-mix(in srgb, #d23b3b, transparent 92%);
+}
+
+.modal-error {
+  margin: -0.2rem 0 0;
+  color: #b52828;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;

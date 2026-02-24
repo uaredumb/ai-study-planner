@@ -22,6 +22,7 @@ const moreFlashcardsCloseButton = document.getElementById("moreFlashcardsCloseBu
 const proModeModal = document.getElementById("proModeModal");
 const proModeForm = document.getElementById("proModeForm");
 const proCodeInput = document.getElementById("proCodeInput");
+const proCodeError = document.getElementById("proCodeError");
 const proModeCancelButton = document.getElementById("proModeCancelButton");
 const webcamCaptureModal = document.getElementById("webcamCaptureModal");
 const webcamVideo = document.getElementById("webcamVideo");
@@ -406,6 +407,9 @@ if (moreFlashcardsModal) {
 }
 if (proModeForm) {
   proModeForm.addEventListener("submit", submitProCode);
+}
+if (proCodeInput) {
+  proCodeInput.addEventListener("input", clearProCodeError);
 }
 if (proModeCancelButton) {
   proModeCancelButton.addEventListener("click", closeProModeModal);
@@ -1256,6 +1260,9 @@ function updateFlashcardsLimitUi() {
   if (flashcardsLimitHint) {
     flashcardsLimitHint.textContent = isProMode ? "Maximum: 10 cards (Pro)" : "Maximum: 5 cards (free)";
   }
+  if (moreFlashcardsButton) {
+    moreFlashcardsButton.classList.toggle("hidden", isProMode);
+  }
 }
 
 function applyProModeUi() {
@@ -1274,12 +1281,34 @@ function openProModeModal() {
   proModeModal.classList.remove("hidden");
   if (proCodeInput) {
     proCodeInput.value = "";
+    proCodeInput.classList.remove("input-error");
     setTimeout(() => proCodeInput.focus(), 0);
   }
+  clearProCodeError();
 }
 
 function closeProModeModal() {
   closeModalWithAnimation(proModeModal);
+}
+
+function showProCodeError(message) {
+  if (proCodeError) {
+    proCodeError.textContent = message;
+    proCodeError.classList.remove("hidden");
+  }
+  if (proCodeInput) {
+    proCodeInput.classList.add("input-error");
+  }
+}
+
+function clearProCodeError() {
+  if (proCodeError) {
+    proCodeError.textContent = "";
+    proCodeError.classList.add("hidden");
+  }
+  if (proCodeInput) {
+    proCodeInput.classList.remove("input-error");
+  }
 }
 
 async function hashTextSha256(text) {
@@ -1295,20 +1324,21 @@ async function hashTextSha256(text) {
 
 async function submitProCode(event) {
   event.preventDefault();
+  clearProCodeError();
   const inputCode = proCodeInput?.value?.trim() || "";
   if (!inputCode) {
-    statusText.textContent = "Enter a Pro code first.";
+    showProCodeError("Enter a Pro code first.");
     return;
   }
   let codeHash = "";
   try {
     codeHash = await hashTextSha256(inputCode);
   } catch (_error) {
-    statusText.textContent = "Pro unlock is unavailable in this context. Use the hosted app.";
+    showProCodeError("Pro unlock is unavailable in this context. Use the hosted app.");
     return;
   }
   if (codeHash !== PRO_CODE_HASH) {
-    statusText.textContent = "Invalid Pro code.";
+    showProCodeError("Invalid Pro code.");
     return;
   }
   isProMode = true;
