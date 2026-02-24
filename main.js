@@ -1950,11 +1950,22 @@ async function renderResultsWithTyping(result) {
   setCopyButtonEnabledByContent(copyStudyPlanButton, studyOrderList);
   await renderListWithTyping(cleanNotesList, result.cleanNotes);
   setCopyButtonEnabledByContent(copyCleanNotesButton, cleanNotesList);
-  await renderListWithTyping(flashcardsList, result.flashcards);
-  renderFlashcardsVisuals(result.flashcards);
+  await renderFlashcardsWithTyping(result.flashcards);
   setCopyButtonEnabledByContent(copyFlashcardsButton, flashcardsList);
   await renderListWithTyping(quizQuestionsList, result.quizQuestions);
   setCopyButtonEnabledByContent(copyQuizButton, quizQuestionsList);
+}
+
+async function renderFlashcardsWithTyping(cards) {
+  if (flashcardsVisualGrid) {
+    flashcardsVisualGrid.classList.add("hidden");
+  }
+  if (flashcardsList) {
+    flashcardsList.classList.remove("hidden");
+  }
+  await renderListWithTyping(flashcardsList, cards, 10);
+  await delay(120);
+  renderFlashcardsVisuals(cards);
 }
 
 function activeFileHasGeneratedContent() {
@@ -2032,7 +2043,7 @@ function triggerCheckboxAnimation(checkbox) {
   checkbox.classList.add("check-pop");
 }
 
-async function renderListWithTyping(listElement, items) {
+async function renderListWithTyping(listElement, items, typingDelayMs = 16) {
   listElement.innerHTML = "";
 
   if (!Array.isArray(items) || items.length === 0) {
@@ -2045,7 +2056,7 @@ async function renderListWithTyping(listElement, items) {
   for (const item of items) {
     const li = document.createElement("li");
     listElement.appendChild(li);
-    await typeText(li, item, 16);
+    await typeText(li, item, typingDelayMs);
   }
 }
 
@@ -2827,6 +2838,7 @@ function renderFlashcardsVisuals(cards) {
     flashcardsList.classList.add("hidden");
   }
 
+  const fragment = document.createDocumentFragment();
   items.forEach((cardText, index) => {
     const { front, back } = parseFlashcardText(cardText, index + 1);
     const wrapper = document.createElement("div");
@@ -2851,8 +2863,9 @@ function renderFlashcardsVisuals(cards) {
     wrapper.appendChild(frontText);
     wrapper.appendChild(backTitle);
     wrapper.appendChild(backText);
-    flashcardsVisualGrid.appendChild(wrapper);
+    fragment.appendChild(wrapper);
   });
+  flashcardsVisualGrid.appendChild(fragment);
 
   flashcardsVisualGrid.classList.remove("hidden");
 }
@@ -2968,7 +2981,8 @@ function playTransientAnimation(element, className) {
     return;
   }
 
-  const timerKey = `${className}Timer`;
+  const safeClassToken = className.replace(/[^a-zA-Z0-9]+(.)/g, (_match, chr) => String(chr || "").toUpperCase());
+  const timerKey = `${safeClassToken}Timer`;
   const existingTimer = Number(element.dataset[timerKey] || 0);
   if (existingTimer) {
     clearTimeout(existingTimer);

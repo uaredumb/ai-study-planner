@@ -1300,10 +1300,10 @@ body.dark .preview-toggle-btn.active {
 
 .results-grid {
   margin-top: 1.3rem;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1.1rem;
-  align-items: start;
+  align-items: flex-start;
 }
 
 .summarize-mode-card.file-open-in,
@@ -1313,6 +1313,8 @@ body.dark .preview-toggle-btn.active {
 }
 
 .result-card {
+  flex: 1 1 calc(50% - 0.55rem);
+  min-width: min(430px, 100%);
   padding: 1rem 1.2rem;
   border-radius: 26px;
   min-height: 180px;
@@ -1560,11 +1562,13 @@ body.dark .preview-toggle-btn.active {
   }
 
   .results-grid {
+    display: grid;
     grid-template-columns: 1fr;
   }
 
-  .result-card:nth-child(3) {
-    grid-column: auto;
+  .result-card {
+    flex: initial;
+    min-width: 0;
   }
 
   .auth-gate-panel {
