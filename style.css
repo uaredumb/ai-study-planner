@@ -852,6 +852,12 @@ input,
   margin-top: 0.9rem;
 }
 
+.article-generate-row {
+  margin-top: 0.8rem;
+  display: flex;
+  justify-content: flex-start;
+}
+
 .output-options-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));

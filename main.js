@@ -111,6 +111,7 @@ const notesPhotoCameraInput = document.getElementById("notesPhotoCameraInput");
 const notesPhotoPreview = document.getElementById("notesPhotoPreview");
 const photoPreviewWrap = document.getElementById("photoPreviewWrap");
 const clearPhotoButton = document.getElementById("clearPhotoButton");
+const moreNotesCharsButton = document.getElementById("moreNotesCharsButton");
 const summarizeModeCard = document.querySelector(".summarize-mode-card");
 const topActions = document.querySelector(".top-actions");
 const outputOptionsWrap = document.querySelector(".output-options-wrap");
@@ -159,7 +160,28 @@ const PRO_CODE_HASHES = [
   "cdf68a59a4191dcabd4f1c1de75a2635d90018ecec0bb82aab37e8afd19b5ba6",
   "55ef3a07198bea753d0f78fcdd231e51822708d1c60ed160513f4a8366e8df3d",
   "8acf9dfb2c36cd048e4240f0f3820d5c2f1359291376787e7fe9de8e164d0944",
-  "61d8ade8642a4799972136efdaffaa8f65d6620ded7fc3e1fa6d76baa9acf29b"
+  "61d8ade8642a4799972136efdaffaa8f65d6620ded7fc3e1fa6d76baa9acf29b",
+  "1904c62185d5aaa14ecd4151732e9e4d1292da16375be7a3ef0a9562a40aabe3",
+  "cfb9febb2e8203d431b7c11b3518166223377abf5e0cfdd640c324e483beb13b",
+  "c93103bd95a5c6f11a58fafbb47e1a4c187a4903044bce22db5ca5fa551f3dcb",
+  "e914e834999c91d9fdb8c50341074d226ebfa2aaf1e97d75db7a5c46fb0f39cc",
+  "9ecdf25d0252c93077886c44dff7a41f1f8b4a065e5f83edf0f65a97da14dc2c",
+  "2cf43d0cb6301253b1760186355430549a8ffa992acdf4238f4c10f468ac14a0",
+  "de64ae7c62fe25bb0b95767e4bab4805244909eec38ce1cf23ed64a21036f120",
+  "b1023958e822625cfa19f3cc3f000a44cc15e574e415a502e51330cdb0a4cafd",
+  "ce2a7b19b67dfc2f22ea57f8e933e0dd8bb551e671647e4aa47a1b65af62df9f",
+  "168a331b752ab122adaa734f5462a73fb199ba4bacd74c2294e87d41a75948d4",
+  "c0ab67b8a8fa9511e3056c61e7a596a357f97be8b88384f20040f2483bb72929",
+  "1c55bdd9b3a2d38f17c23d9ba19ae94db66ba2c388a3079ed311d038045f9023",
+  "473c487a4139834542f2d71f57e3ea376e5760fcf3addd854fcf631b8ab6bece",
+  "9ed73988aaf6fd978cfb2182803f4168e8209ac44753cf971a9702a14b4792c3",
+  "79df72ec8f22ed871d11dd687df45ec733bd454c4b62bfcd454c51ec9de447c0",
+  "f76b83cea9f9a9fd6244722d35a61f222b54f6e3af74301c4f22904419cf2a02",
+  "ceab09beda29b3e7cf28de00b0c0ce456661f35b35a5a8e04d21c95550ca1ab6",
+  "ac10e4ac583a3458c623b25e374636b1f41f2e90313940dcf264e89c7b033e4c",
+  "975dd98d7fa5aeeba33209ab09162a04cb7253a909245a5c163124d9311cfdb1",
+  "1b2f0f3bb4bcc59c6e3bca6330987c6b162af44941aa75c29d8a460841c3dd52",
+  "491d52f03896238e96b10fdae8e8788f89e74028c69b2651012ae14f05b93073"
 ];
 const NON_NOTES_MESSAGE =
   "I can only generate from real study notes or learning material. Please add notes, class content, or an educational article.";
@@ -597,6 +619,16 @@ if (articleModeButton) {
 }
 if (photoModeButton) {
   photoModeButton.addEventListener("click", () => setSummaryMode("photo"));
+}
+if (moreNotesCharsButton) {
+  moreNotesCharsButton.addEventListener("click", () => {
+    if (!isProMode) {
+      openProModeModal();
+      statusText.textContent = "Unlock Pro Mode to use up to 8000 characters.";
+      return;
+    }
+    statusText.textContent = "Pro Mode unlocked: up to 8000 characters available.";
+  });
 }
 if (uploadPhotoButton && notesPhotoUploadInput) {
   uploadPhotoButton.addEventListener("click", () => notesPhotoUploadInput.click());
@@ -1447,6 +1479,9 @@ function updateFlashcardsLimitUi() {
 function applyProModeUi() {
   updateProModeButtonLabel();
   updateFlashcardsLimitUi();
+  if (moreNotesCharsButton) {
+    moreNotesCharsButton.classList.toggle("hidden", isProMode);
+  }
   const limit = getNotesCharLimit();
   if (notesInput && notesInput.value.length > limit) {
     notesInput.value = notesInput.value.slice(0, limit);
