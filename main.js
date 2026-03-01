@@ -2966,13 +2966,15 @@ function triggerFileOpenAnimation() {
       playTransientAnimation(activeChip, "file-open-in");
     }
 
-    [summarizeModeCard, inputCard, resultsSection].forEach((element) => {
-      if (!element || element.classList.contains("hidden")) {
-        return;
-      }
-      element.classList.remove("mode-pop-in", "mode-pop-out", "island-pop", "pop-in", "pop-out");
-      playTransientAnimation(element, "file-open-in");
-    });
+    if (summarizeModeCard && !summarizeModeCard.classList.contains("hidden")) {
+      playTransientAnimation(summarizeModeCard, "island-pop");
+    }
+    if (inputCard && !inputCard.classList.contains("hidden")) {
+      playTransientAnimation(inputCard, "file-open-in");
+    }
+    if (resultsSection && !resultsSection.classList.contains("hidden")) {
+      playTransientAnimation(resultsSection, "file-open-in");
+    }
   });
 }
 
