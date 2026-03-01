@@ -12,6 +12,9 @@ const copyStudyPlanButton = document.getElementById("copyStudyPlanButton");
 const copyCleanNotesButton = document.getElementById("copyCleanNotesButton");
 const copyFlashcardsButton = document.getElementById("copyFlashcardsButton");
 const downloadFlashcardsButton = document.getElementById("downloadFlashcardsButton");
+const downloadStudyTasksButton = document.getElementById("downloadStudyTasksButton");
+const downloadStudyPlanButton = document.getElementById("downloadStudyPlanButton");
+const downloadCleanNotesButton = document.getElementById("downloadCleanNotesButton");
 const moreFlashcardsButton = document.getElementById("moreFlashcardsButton");
 const flashcardsPdfPreviewWrap = document.getElementById("flashcardsPdfPreviewWrap");
 const flashcardsPdfPreview = document.getElementById("flashcardsPdfPreview");
@@ -30,6 +33,7 @@ const webcamCanvas = document.getElementById("webcamCanvas");
 const webcamCancelButton = document.getElementById("webcamCancelButton");
 const webcamCaptureButton = document.getElementById("webcamCaptureButton");
 const copyQuizButton = document.getElementById("copyQuizButton");
+const downloadQuizButton = document.getElementById("downloadQuizButton");
 const studyTasksCard = document.getElementById("studyTasksCard");
 const studyPlanCard = document.getElementById("studyPlanCard");
 const flashcardsList = document.getElementById("flashcardsList");
@@ -59,6 +63,13 @@ const copyTargets = [
   { button: copyCleanNotesButton, list: cleanNotesList },
   { button: copyFlashcardsButton, list: flashcardsList },
   { button: copyQuizButton, list: quizQuestionsList }
+];
+const downloadTargets = [
+  { button: downloadStudyTasksButton, list: studyTasksList },
+  { button: downloadStudyPlanButton, list: studyOrderList },
+  { button: downloadCleanNotesButton, list: cleanNotesList },
+  { button: downloadFlashcardsButton, list: flashcardsList },
+  { button: downloadQuizButton, list: quizQuestionsList }
 ];
 const themeToggle = document.getElementById("themeToggle");
 const proModeButton = document.getElementById("proModeButton");
@@ -1884,6 +1895,7 @@ function setLoadingState(isLoading, mode = "clean") {
   });
   if (isLoading) {
     setAllCopyButtonsEnabled(false);
+    setAllDownloadButtonsEnabled(false);
   } else {
     refreshCopyButtonsFromContent();
   }
@@ -1891,9 +1903,6 @@ function setLoadingState(isLoading, mode = "clean") {
   if (summarizeLinkButton) {
     summarizeLinkButton.disabled = isLoading;
     summarizeLinkButton.classList.toggle("is-loading", isLoading && mode === "article");
-  }
-  if (downloadFlashcardsButton) {
-    downloadFlashcardsButton.disabled = isLoading;
   }
   cleanButton.textContent = isLoading && mode === "clean" ? "Generating Study Pack..." : "Generate Study Pack";
   if (summarizeLinkButton) {
@@ -1938,6 +1947,7 @@ function renderList(listElement, items) {
 
 async function renderResultsWithTyping(result) {
   setAllCopyButtonsEnabled(false);
+  setAllDownloadButtonsEnabled(false);
   setCardVisibility(studyTasksCard, result.selectedOutputs?.studyTasks);
   setCardVisibility(studyPlanCard, result.selectedOutputs?.studyPlan);
   setCardVisibility(cleanNotesCard, result.selectedOutputs?.cleanNotes);
@@ -1946,14 +1956,20 @@ async function renderResultsWithTyping(result) {
 
   await renderListWithTyping(studyTasksList, result.studyTasks);
   setCopyButtonEnabledByContent(copyStudyTasksButton, studyTasksList);
+  setDownloadButtonEnabledByContent(downloadStudyTasksButton, studyTasksList);
   await renderListWithTyping(studyOrderList, result.studyOrder);
   setCopyButtonEnabledByContent(copyStudyPlanButton, studyOrderList);
+  setDownloadButtonEnabledByContent(downloadStudyPlanButton, studyOrderList);
   await renderListWithTyping(cleanNotesList, result.cleanNotes);
   setCopyButtonEnabledByContent(copyCleanNotesButton, cleanNotesList);
+  setDownloadButtonEnabledByContent(downloadCleanNotesButton, cleanNotesList);
   await renderFlashcardsWithTyping(result.flashcards);
   setCopyButtonEnabledByContent(copyFlashcardsButton, flashcardsList);
+  setDownloadButtonEnabledByContent(downloadFlashcardsButton, flashcardsList);
   await renderListWithTyping(quizQuestionsList, result.quizQuestions);
   setCopyButtonEnabledByContent(copyQuizButton, quizQuestionsList);
+  setDownloadButtonEnabledByContent(downloadQuizButton, quizQuestionsList);
+  applyHighlightsToResults();
 }
 
 async function renderFlashcardsWithTyping(cards) {
@@ -2086,9 +2102,11 @@ function renderFileResults(file) {
     renderList(cleanNotesList, []);
     renderList(flashcardsList, []);
     renderFlashcardsVisuals([]);
+    hideFlashcardsPdfPreview();
     renderList(quizQuestionsList, []);
     updateOptionalOutputCards();
     refreshCopyButtonsFromContent();
+    applyHighlightsToResults();
     return;
   }
 
@@ -2097,6 +2115,9 @@ function renderFileResults(file) {
   renderList(cleanNotesList, file.cleanNotes);
   renderList(flashcardsList, file.flashcards);
   renderFlashcardsVisuals(file.flashcards);
+  if (ensureStringArray(file.flashcards).length === 0) {
+    hideFlashcardsPdfPreview();
+  }
   renderList(quizQuestionsList, file.quizQuestions);
 
   setCardVisibility(cleanNotesCard, file.cleanNotes.length > 0 || Boolean(outputCleanNotes?.checked));
@@ -2105,6 +2126,7 @@ function renderFileResults(file) {
   setCardVisibility(flashcardsCard, file.flashcards.length > 0 || Boolean(outputFlashcards?.checked));
   setCardVisibility(quizQuestionsCard, file.quizQuestions.length > 0 || Boolean(outputQuizQuestions?.checked));
   refreshCopyButtonsFromContent();
+  applyHighlightsToResults();
 }
 
 function updateOptionalOutputCards() {
@@ -2526,6 +2548,10 @@ function bindCopyButtons() {
   bindCopyButton(copyCleanNotesButton, "Clean Notes", cleanNotesList, false);
   bindCopyButton(copyFlashcardsButton, "Flashcards", flashcardsList, false);
   bindCopyButton(copyQuizButton, "Quiz Questions", quizQuestionsList, true);
+  bindDownloadListPdfButton(downloadStudyTasksButton, "Study Tasks", studyTasksList, false, "study-tasks");
+  bindDownloadListPdfButton(downloadStudyPlanButton, "Study Plan", studyOrderList, true, "study-plan");
+  bindDownloadListPdfButton(downloadCleanNotesButton, "Clean Notes", cleanNotesList, false, "clean-notes");
+  bindDownloadListPdfButton(downloadQuizButton, "Quiz Questions", quizQuestionsList, true, "quiz-questions");
   bindDownloadFlashcardsButton();
   bindMoreFlashcardsButton();
 }
@@ -2560,6 +2586,68 @@ function bindDownloadFlashcardsButton() {
 
     statusText.textContent = "Downloaded flashcard PDFs with fronts + backs.";
   });
+}
+
+function bindDownloadListPdfButton(button, title, listElement, ordered, fileSuffix) {
+  if (!button || !listElement) {
+    return;
+  }
+
+  button.addEventListener("click", () => {
+    const rawItems = getRawListItems(listElement);
+    if (rawItems.length === 0) {
+      statusText.textContent = `No ${title.toLowerCase()} to download yet.`;
+      return;
+    }
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      statusText.textContent = "PDF generator unavailable. Refresh and try again.";
+      return;
+    }
+
+    const activeFile = getActiveFile();
+    const pdfBlob = buildSimpleListPdfBlob(title, rawItems, ordered);
+    const safeNameBase = slugifyFileName(activeFile?.name || "study-notes");
+    downloadBlob(pdfBlob, `${safeNameBase}-${fileSuffix}.pdf`);
+    statusText.textContent = `Downloaded ${title.toLowerCase()} PDF.`;
+  });
+}
+
+function buildSimpleListPdfBlob(title, rawItems, ordered) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "pt",
+    format: "letter"
+  });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 48;
+  const marginTop = 56;
+  const marginBottom = 56;
+  const maxTextWidth = pageWidth - marginX * 2;
+  const lineHeight = 16;
+  let y = marginTop;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text(title, marginX, y);
+  y += 28;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  rawItems.forEach((item, index) => {
+    const prefix = ordered ? `${index + 1}. ` : "- ";
+    const wrapped = doc.splitTextToSize(`${prefix}${item}`, maxTextWidth);
+    if (y + wrapped.length * lineHeight > pageHeight - marginBottom) {
+      doc.addPage("letter", "portrait");
+      y = marginTop;
+    }
+    drawHighlightedPdfLines(doc, wrapped, marginX, y, maxTextWidth, lineHeight, detectHighlightType(item));
+    doc.text(wrapped, marginX, y);
+    y += wrapped.length * lineHeight + 6;
+  });
+
+  return doc.output("blob");
 }
 
 function bindMoreFlashcardsButton() {
@@ -2640,6 +2728,12 @@ function buildCuttableFlashcardsPdfs(rawCards) {
 }
 
 function drawCutCard(doc, x, y, width, height, title, text) {
+  const fillRgb = getPdfHighlightFill(detectHighlightType(text));
+  if (fillRgb) {
+    doc.setFillColor(fillRgb[0], fillRgb[1], fillRgb[2]);
+    doc.rect(x + 0.02, y + 0.02, width - 0.04, height - 0.04, "F");
+  }
+
   doc.setDrawColor(120, 130, 170);
   doc.setLineWidth(0.015);
   doc.rect(x, y, width, height);
@@ -2752,6 +2846,21 @@ function showFlashcardsPdfPreview(frontsBlob, backsBlob) {
   }
 
   flashcardsPdfPreviewWrap.classList.remove("hidden");
+}
+
+function hideFlashcardsPdfPreview() {
+  if (flashcardsPdfPreviewWrap) {
+    flashcardsPdfPreviewWrap.classList.add("hidden");
+  }
+  if (flashcardsPdfPreview) {
+    flashcardsPdfPreview.removeAttribute("src");
+  }
+  if (previewFrontsButton) {
+    previewFrontsButton.classList.add("active");
+  }
+  if (previewBacksButton) {
+    previewBacksButton.classList.remove("active");
+  }
 }
 
 function bindCopyButton(button, title, listElement, ordered) {
@@ -2886,11 +2995,20 @@ function setCopyButtonEnabledByContent(button, listElement) {
   setCopyButtonEnabled(button, hasCopyableItems(listElement));
 }
 
-function setDownloadFlashcardsEnabledByContent() {
-  if (!downloadFlashcardsButton || !flashcardsList) {
+function setDownloadButtonEnabledByContent(button, listElement) {
+  if (!button || !listElement) {
     return;
   }
-  downloadFlashcardsButton.disabled = !hasCopyableItems(flashcardsList);
+  button.disabled = !hasCopyableItems(listElement);
+}
+
+function setAllDownloadButtonsEnabled(enabled) {
+  downloadTargets.forEach(({ button }) => {
+    if (!button) {
+      return;
+    }
+    button.disabled = !enabled;
+  });
 }
 
 function setAllCopyButtonsEnabled(enabled) {
@@ -2903,7 +3021,213 @@ function refreshCopyButtonsFromContent() {
   copyTargets.forEach(({ button, list }) => {
     setCopyButtonEnabledByContent(button, list);
   });
-  setDownloadFlashcardsEnabledByContent();
+  downloadTargets.forEach(({ button, list }) => {
+    setDownloadButtonEnabledByContent(button, list);
+  });
+}
+
+function applyHighlightsToResults() {
+  if (!resultsSection) {
+    return;
+  }
+  applyAutoHighlights(resultsSection);
+}
+
+function applyAutoHighlights(container) {
+  if (!container) {
+    return;
+  }
+
+  container.querySelectorAll("span.auto-highlight").forEach((el) => {
+    const text = document.createTextNode(el.textContent || "");
+    el.replaceWith(text);
+  });
+
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const text = String(node.nodeValue || "");
+      if (!text.trim()) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      const parent = node.parentElement;
+      if (!parent) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      if (parent.closest("script, style, code, pre, textarea")) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      if (parent.closest(".auto-highlight")) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+
+  const textNodes = [];
+  let current = walker.nextNode();
+  while (current) {
+    textNodes.push(current);
+    current = walker.nextNode();
+  }
+
+  textNodes.forEach((node) => {
+    highlightTextNodeBySentence(node);
+  });
+}
+
+function highlightTextNodeBySentence(textNode) {
+  const raw = String(textNode.nodeValue || "");
+  const sentenceRegex = /[^.!?]+[.!?]?/g;
+  const sentenceParts = raw.match(sentenceRegex);
+  if (!sentenceParts || sentenceParts.length === 0) {
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  let didHighlight = false;
+  sentenceParts.forEach((sentence) => {
+    const highlightClass = getHighlightClassForSentence(sentence, textNode.parentElement);
+    if (!highlightClass) {
+      fragment.appendChild(document.createTextNode(sentence));
+      return;
+    }
+    const span = document.createElement("span");
+    span.className = `auto-highlight ${highlightClass}`;
+    span.textContent = sentence;
+    fragment.appendChild(span);
+    didHighlight = true;
+  });
+
+  if (didHighlight) {
+    textNode.replaceWith(fragment);
+  }
+}
+
+function getHighlightClassForSentence(sentence, parentElement) {
+  const text = String(sentence || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  const looksBold = Boolean(parentElement && parentElement.closest("strong, b, h1, h2, h3, h4"));
+  const type = detectHighlightType(text);
+  if (type === "definition") {
+    return "highlight-definition";
+  }
+  if (looksBold || type === "concept") {
+    return "highlight-concept";
+  }
+  if (type === "complex") {
+    return "highlight-complex";
+  }
+  if (type === "fact") {
+    return "highlight-fact";
+  }
+
+  return "";
+}
+
+function detectHighlightType(text) {
+  const normalized = String(text || "").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  const wordCount = normalized.split(/\s+/).filter(Boolean).length;
+  const definitionPattern =
+    /\b(is defined as|defined as|means|refers to|is called|is known as|can be defined as|vocabulary|definition)\b/i;
+  const keyConceptPattern =
+    /\b(key concept|core idea|main idea|principle|theorem|formula|topic|concept)\b/i;
+  const importantFactPattern =
+    /\b(important|remember|must|always|never|critical|key fact|exam|on the test)\b/i;
+  const factSignalPattern = /\b\d{1,4}\b|%|\b(first|second|third)\b/i;
+
+  if (definitionPattern.test(normalized)) {
+    return "definition";
+  }
+  if (keyConceptPattern.test(normalized)) {
+    return "concept";
+  }
+  if (wordCount >= 30 || normalized.length >= 180) {
+    return "complex";
+  }
+  if (importantFactPattern.test(normalized) || factSignalPattern.test(normalized)) {
+    return "fact";
+  }
+  return "";
+}
+
+function getPdfHighlightFill(highlightType) {
+  if (highlightType === "concept") {
+    return [255, 246, 196];
+  }
+  if (highlightType === "fact") {
+    return [224, 245, 220];
+  }
+  if (highlightType === "complex") {
+    return [255, 228, 228];
+  }
+  if (highlightType === "definition") {
+    return [225, 238, 255];
+  }
+  return null;
+}
+
+function drawHighlightedPdfLines(doc, lines, x, y, maxWidth, lineHeight, highlightType) {
+  const fill = getPdfHighlightFill(highlightType);
+  if (!fill || !Array.isArray(lines) || lines.length === 0) {
+    return;
+  }
+
+  doc.setFillColor(fill[0], fill[1], fill[2]);
+  lines.forEach((line, lineIndex) => {
+    const lineY = y + lineIndex * lineHeight;
+    const width = Math.min(maxWidth + 4, doc.getTextWidth(String(line || "")) + 6);
+    doc.rect(x - 2, lineY - 10, width, 14, "F");
+  });
+}
+
+// Use this helper if you need to safely render HTML output and auto-highlight it.
+function renderHighlightedOutputSafe(container, unsafeHtml) {
+  if (!container) {
+    return;
+  }
+  container.innerHTML = sanitizeHtmlAllowlist(unsafeHtml);
+  applyAutoHighlights(container);
+}
+
+function sanitizeHtmlAllowlist(unsafeHtml) {
+  const allowedTags = new Set(["P", "BR", "UL", "OL", "LI", "STRONG", "EM", "B", "I", "CODE", "PRE"]);
+  const template = document.createElement("template");
+  template.innerHTML = String(unsafeHtml || "");
+
+  const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_ELEMENT, null);
+  const toUnwrap = [];
+  let node = walker.nextNode();
+  while (node) {
+    if (!allowedTags.has(node.tagName)) {
+      toUnwrap.push(node);
+      node = walker.nextNode();
+      continue;
+    }
+    Array.from(node.attributes).forEach((attr) => {
+      node.removeAttribute(attr.name);
+    });
+    node = walker.nextNode();
+  }
+
+  toUnwrap.forEach((el) => {
+    const parent = el.parentNode;
+    if (!parent) {
+      return;
+    }
+    while (el.firstChild) {
+      parent.insertBefore(el.firstChild, el);
+    }
+    parent.removeChild(el);
+  });
+
+  return template.innerHTML;
 }
 
 async function copyTextToClipboard(text) {

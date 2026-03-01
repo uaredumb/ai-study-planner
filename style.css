@@ -1008,11 +1008,15 @@ body.dark .output-icon {
 }
 
 .flashcards-preview-wrap {
-  margin-top: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.6rem;
-  background: color-mix(in srgb, var(--card), #ffffff 8%);
+  margin-top: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--border), var(--accent) 16%);
+  border-radius: 14px;
+  padding: 0.65rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card), #ffffff 10%) 0%,
+    color-mix(in srgb, var(--card), var(--bg) 10%) 100%
+  );
 }
 
 .flashcards-preview-head {
@@ -1046,11 +1050,13 @@ body.dark .preview-toggle-btn.active {
 }
 
 #flashcardsPdfPreview {
+  display: block;
   width: 100%;
-  min-height: 180px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: #ffffff;
+  height: clamp(260px, 42vh, 420px);
+  border: 1px solid color-mix(in srgb, var(--border), #9eb1ff 22%);
+  border-radius: 12px;
+  background: #f4f6fc;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .status-text {
@@ -1342,6 +1348,14 @@ body.dark .preview-toggle-btn.active {
   gap: 0.6rem;
 }
 
+.result-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .copy-btn {
   padding: 0.4rem 0.85rem;
   font-size: 0.9rem;
@@ -1361,6 +1375,57 @@ body.dark .preview-toggle-btn.active {
 
 .ordered-list {
   padding-left: 1.6rem;
+}
+
+.auto-highlight {
+  border-radius: 0.35rem;
+  padding: 0.04rem 0.2rem;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  animation: highlightFadeIn 240ms ease-out;
+}
+
+.highlight-concept {
+  background: rgba(245, 214, 107, 0.42);
+}
+
+.highlight-fact {
+  background: rgba(144, 204, 144, 0.38);
+}
+
+.highlight-complex {
+  background: rgba(236, 146, 146, 0.3);
+}
+
+.highlight-definition {
+  background: rgba(138, 184, 236, 0.34);
+}
+
+body.dark .highlight-concept {
+  background: rgba(245, 214, 107, 0.25);
+}
+
+body.dark .highlight-fact {
+  background: rgba(127, 205, 127, 0.24);
+}
+
+body.dark .highlight-complex {
+  background: rgba(240, 128, 128, 0.22);
+}
+
+body.dark .highlight-definition {
+  background: rgba(120, 166, 232, 0.24);
+}
+
+@keyframes highlightFadeIn {
+  from {
+    opacity: 0;
+    filter: saturate(0.85);
+  }
+  to {
+    opacity: 1;
+    filter: saturate(1);
+  }
 }
 
 @keyframes cardPopIn {
