@@ -1969,7 +1969,6 @@ async function renderResultsWithTyping(result) {
   await renderListWithTyping(quizQuestionsList, result.quizQuestions);
   setCopyButtonEnabledByContent(copyQuizButton, quizQuestionsList);
   setDownloadButtonEnabledByContent(downloadQuizButton, quizQuestionsList);
-  applyHighlightsToResults();
 }
 
 async function renderFlashcardsWithTyping(cards) {
@@ -2106,7 +2105,6 @@ function renderFileResults(file) {
     renderList(quizQuestionsList, []);
     updateOptionalOutputCards();
     refreshCopyButtonsFromContent();
-    applyHighlightsToResults();
     return;
   }
 
@@ -2126,7 +2124,6 @@ function renderFileResults(file) {
   setCardVisibility(flashcardsCard, file.flashcards.length > 0 || Boolean(outputFlashcards?.checked));
   setCardVisibility(quizQuestionsCard, file.quizQuestions.length > 0 || Boolean(outputQuizQuestions?.checked));
   refreshCopyButtonsFromContent();
-  applyHighlightsToResults();
 }
 
 function updateOptionalOutputCards() {
@@ -2642,7 +2639,7 @@ function buildSimpleListPdfBlob(title, rawItems, ordered) {
       doc.addPage("letter", "portrait");
       y = marginTop;
     }
-    drawHighlightedPdfLines(doc, wrapped, marginX, y, maxTextWidth, lineHeight, detectHighlightType(item));
+    drawHighlightedPdfBlock(doc, wrapped, marginX, y, maxTextWidth, lineHeight, detectHighlightType(item));
     doc.text(wrapped, marginX, y);
     y += wrapped.length * lineHeight + 6;
   });
@@ -2731,7 +2728,7 @@ function drawCutCard(doc, x, y, width, height, title, text) {
   const fillRgb = getPdfHighlightFill(detectHighlightType(text));
   if (fillRgb) {
     doc.setFillColor(fillRgb[0], fillRgb[1], fillRgb[2]);
-    doc.rect(x + 0.02, y + 0.02, width - 0.04, height - 0.04, "F");
+    doc.rect(x + 0.08, y + 0.34, width - 0.16, height - 0.42, "F");
   }
 
   doc.setDrawColor(120, 130, 170);
@@ -3026,132 +3023,34 @@ function refreshCopyButtonsFromContent() {
   });
 }
 
-function applyHighlightsToResults() {
-  if (!resultsSection) {
-    return;
-  }
-  applyAutoHighlights(resultsSection);
-}
-
-function applyAutoHighlights(container) {
-  if (!container) {
-    return;
-  }
-
-  container.querySelectorAll("span.auto-highlight").forEach((el) => {
-    const text = document.createTextNode(el.textContent || "");
-    el.replaceWith(text);
-  });
-
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
-    acceptNode(node) {
-      const text = String(node.nodeValue || "");
-      if (!text.trim()) {
-        return NodeFilter.FILTER_REJECT;
-      }
-      const parent = node.parentElement;
-      if (!parent) {
-        return NodeFilter.FILTER_REJECT;
-      }
-      if (parent.closest("script, style, code, pre, textarea")) {
-        return NodeFilter.FILTER_REJECT;
-      }
-      if (parent.closest(".auto-highlight")) {
-        return NodeFilter.FILTER_REJECT;
-      }
-      return NodeFilter.FILTER_ACCEPT;
-    }
-  });
-
-  const textNodes = [];
-  let current = walker.nextNode();
-  while (current) {
-    textNodes.push(current);
-    current = walker.nextNode();
-  }
-
-  textNodes.forEach((node) => {
-    highlightTextNodeBySentence(node);
-  });
-}
-
-function highlightTextNodeBySentence(textNode) {
-  const raw = String(textNode.nodeValue || "");
-  const sentenceRegex = /[^.!?]+[.!?]?/g;
-  const sentenceParts = raw.match(sentenceRegex);
-  if (!sentenceParts || sentenceParts.length === 0) {
-    return;
-  }
-
-  const fragment = document.createDocumentFragment();
-  let didHighlight = false;
-  sentenceParts.forEach((sentence) => {
-    const highlightClass = getHighlightClassForSentence(sentence, textNode.parentElement);
-    if (!highlightClass) {
-      fragment.appendChild(document.createTextNode(sentence));
-      return;
-    }
-    const span = document.createElement("span");
-    span.className = `auto-highlight ${highlightClass}`;
-    span.textContent = sentence;
-    fragment.appendChild(span);
-    didHighlight = true;
-  });
-
-  if (didHighlight) {
-    textNode.replaceWith(fragment);
-  }
-}
-
-function getHighlightClassForSentence(sentence, parentElement) {
-  const text = String(sentence || "").trim();
-  if (!text) {
+function detectHighlightType(text) {
+  if (!isProMode) {
     return "";
   }
 
-  const looksBold = Boolean(parentElement && parentElement.closest("strong, b, h1, h2, h3, h4"));
-  const type = detectHighlightType(text);
-  if (type === "definition") {
-    return "highlight-definition";
-  }
-  if (looksBold || type === "concept") {
-    return "highlight-concept";
-  }
-  if (type === "complex") {
-    return "highlight-complex";
-  }
-  if (type === "fact") {
-    return "highlight-fact";
-  }
-
-  return "";
-}
-
-function detectHighlightType(text) {
   const normalized = String(text || "").trim();
   if (!normalized) {
     return "";
   }
 
-  const wordCount = normalized.split(/\s+/).filter(Boolean).length;
+  const shortText = normalized.length <= 220 ? normalized : normalized.slice(0, 220);
   const definitionPattern =
-    /\b(is defined as|defined as|means|refers to|is called|is known as|can be defined as|vocabulary|definition)\b/i;
+    /\b(is defined as|defined as|means|refers to|is called|is known as|can be defined as)\b/i;
   const keyConceptPattern =
-    /\b(key concept|core idea|main idea|principle|theorem|formula|topic|concept)\b/i;
+    /\b(key concept|core idea|main idea|principle|theorem|formula)\b/i;
   const importantFactPattern =
-    /\b(important|remember|must|always|never|critical|key fact|exam|on the test)\b/i;
-  const factSignalPattern = /\b\d{1,4}\b|%|\b(first|second|third)\b/i;
+    /\b(important|remember|must know|critical|key fact|exam tip)\b/i;
 
-  if (definitionPattern.test(normalized)) {
+  if (definitionPattern.test(shortText)) {
     return "definition";
   }
-  if (keyConceptPattern.test(normalized)) {
+  if (keyConceptPattern.test(shortText)) {
     return "concept";
   }
-  if (wordCount >= 30 || normalized.length >= 180) {
+  if (normalized.length >= 280) {
     return "complex";
   }
-  if (importantFactPattern.test(normalized) || factSignalPattern.test(normalized)) {
+  if (importantFactPattern.test(shortText)) {
     return "fact";
   }
   return "";
@@ -3173,61 +3072,15 @@ function getPdfHighlightFill(highlightType) {
   return null;
 }
 
-function drawHighlightedPdfLines(doc, lines, x, y, maxWidth, lineHeight, highlightType) {
+function drawHighlightedPdfBlock(doc, lines, x, y, maxWidth, lineHeight, highlightType) {
   const fill = getPdfHighlightFill(highlightType);
   if (!fill || !Array.isArray(lines) || lines.length === 0) {
     return;
   }
 
   doc.setFillColor(fill[0], fill[1], fill[2]);
-  lines.forEach((line, lineIndex) => {
-    const lineY = y + lineIndex * lineHeight;
-    const width = Math.min(maxWidth + 4, doc.getTextWidth(String(line || "")) + 6);
-    doc.rect(x - 2, lineY - 10, width, 14, "F");
-  });
-}
-
-// Use this helper if you need to safely render HTML output and auto-highlight it.
-function renderHighlightedOutputSafe(container, unsafeHtml) {
-  if (!container) {
-    return;
-  }
-  container.innerHTML = sanitizeHtmlAllowlist(unsafeHtml);
-  applyAutoHighlights(container);
-}
-
-function sanitizeHtmlAllowlist(unsafeHtml) {
-  const allowedTags = new Set(["P", "BR", "UL", "OL", "LI", "STRONG", "EM", "B", "I", "CODE", "PRE"]);
-  const template = document.createElement("template");
-  template.innerHTML = String(unsafeHtml || "");
-
-  const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_ELEMENT, null);
-  const toUnwrap = [];
-  let node = walker.nextNode();
-  while (node) {
-    if (!allowedTags.has(node.tagName)) {
-      toUnwrap.push(node);
-      node = walker.nextNode();
-      continue;
-    }
-    Array.from(node.attributes).forEach((attr) => {
-      node.removeAttribute(attr.name);
-    });
-    node = walker.nextNode();
-  }
-
-  toUnwrap.forEach((el) => {
-    const parent = el.parentNode;
-    if (!parent) {
-      return;
-    }
-    while (el.firstChild) {
-      parent.insertBefore(el.firstChild, el);
-    }
-    parent.removeChild(el);
-  });
-
-  return template.innerHTML;
+  const blockHeight = lines.length * lineHeight + 4;
+  doc.rect(x - 2, y - 11, maxWidth + 4, blockHeight, "F");
 }
 
 async function copyTextToClipboard(text) {
@@ -3285,20 +3138,22 @@ function triggerFileOpenAnimation() {
   }
 
   requestAnimationFrame(() => {
-    const activeChip = filesList.querySelector(".file-chip.active");
-    if (activeChip) {
-      playTransientAnimation(activeChip, "file-open-in");
-    }
+    requestAnimationFrame(() => {
+      const activeChip = filesList.querySelector(".file-chip.active");
+      if (activeChip) {
+        playTransientAnimation(activeChip, "file-open-in");
+      }
 
-    if (summarizeModeCard && !summarizeModeCard.classList.contains("hidden")) {
-      playTransientAnimation(summarizeModeCard, "island-pop");
-    }
-    if (inputCard && !inputCard.classList.contains("hidden")) {
-      playTransientAnimation(inputCard, "file-open-in");
-    }
-    if (resultsSection && !resultsSection.classList.contains("hidden")) {
-      playTransientAnimation(resultsSection, "file-open-in");
-    }
+      if (summarizeModeCard && !summarizeModeCard.classList.contains("hidden")) {
+        playTransientAnimation(summarizeModeCard, "section-switch-in");
+      }
+      if (inputCard && !inputCard.classList.contains("hidden")) {
+        playTransientAnimation(inputCard, "section-switch-in");
+      }
+      if (resultsSection && !resultsSection.classList.contains("hidden")) {
+        playTransientAnimation(resultsSection, "section-switch-in");
+      }
+    });
   });
 }
 
@@ -4022,11 +3877,12 @@ function delay(ms) {
 
 function clearTransientAnimationClasses() {
   document.querySelectorAll(
-    ".file-open-in, .file-create-in, .mode-pop-in, .mode-pop-out, .island-pop, .pop-in, .pop-out, .check-pop, .click-burst, .modal-closing"
+    ".file-open-in, .file-create-in, .section-switch-in, .mode-pop-in, .mode-pop-out, .island-pop, .pop-in, .pop-out, .check-pop, .click-burst, .modal-closing"
   ).forEach((element) => {
     element.classList.remove(
       "file-open-in",
       "file-create-in",
+      "section-switch-in",
       "mode-pop-in",
       "mode-pop-out",
       "island-pop",

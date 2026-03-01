@@ -1318,6 +1318,12 @@ body.dark .preview-toggle-btn.active {
   animation: fileOpenIn 240ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.summarize-mode-card.section-switch-in,
+.input-card.section-switch-in,
+.results-grid.section-switch-in {
+  animation: sectionSwitchIn 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .result-card {
   flex: 1 1 calc(50% - 0.55rem);
   min-width: min(430px, 100%);
@@ -1377,57 +1383,6 @@ body.dark .preview-toggle-btn.active {
   padding-left: 1.6rem;
 }
 
-.auto-highlight {
-  border-radius: 0.35rem;
-  padding: 0.04rem 0.2rem;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-  animation: highlightFadeIn 240ms ease-out;
-}
-
-.highlight-concept {
-  background: rgba(245, 214, 107, 0.42);
-}
-
-.highlight-fact {
-  background: rgba(144, 204, 144, 0.38);
-}
-
-.highlight-complex {
-  background: rgba(236, 146, 146, 0.3);
-}
-
-.highlight-definition {
-  background: rgba(138, 184, 236, 0.34);
-}
-
-body.dark .highlight-concept {
-  background: rgba(245, 214, 107, 0.25);
-}
-
-body.dark .highlight-fact {
-  background: rgba(127, 205, 127, 0.24);
-}
-
-body.dark .highlight-complex {
-  background: rgba(240, 128, 128, 0.22);
-}
-
-body.dark .highlight-definition {
-  background: rgba(120, 166, 232, 0.24);
-}
-
-@keyframes highlightFadeIn {
-  from {
-    opacity: 0;
-    filter: saturate(0.85);
-  }
-  to {
-    opacity: 1;
-    filter: saturate(1);
-  }
-}
-
 @keyframes cardPopIn {
   0% {
     opacity: 0;
@@ -1473,6 +1428,17 @@ body.dark .highlight-definition {
   70% {
     opacity: 1;
     transform: translateY(-1px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sectionSwitchIn {
+  0% {
+    opacity: 0.84;
+    transform: translateY(8px) scale(0.992);
   }
   100% {
     opacity: 1;
@@ -1825,6 +1791,12 @@ body.ios-optimized .summarize-mode-card.file-open-in,
 body.ios-optimized .input-card.file-open-in,
 body.ios-optimized .results-grid.file-open-in {
   animation: iosFileFadeIn 200ms ease-out;
+}
+
+body.ios-optimized .summarize-mode-card.section-switch-in,
+body.ios-optimized .input-card.section-switch-in,
+body.ios-optimized .results-grid.section-switch-in {
+  animation: iosFileFadeIn 180ms ease-out;
 }
 
 body.ios-optimized .summarize-mode-card.island-pop,
