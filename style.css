@@ -78,54 +78,6 @@ body.dark {
   user-select: none;
 }
 
-.ad-rail-left {
-  position: fixed;
-  top: 1.6rem;
-  left: 1rem;
-  width: 190px;
-  z-index: 2;
-}
-
-.ad-rail-right {
-  position: fixed;
-  top: 1.6rem;
-  right: 1rem;
-  width: 190px;
-  z-index: 2;
-}
-
-.ad-rail-card {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 0.55rem;
-  background: color-mix(in srgb, var(--card), #ffffff 10%);
-  box-shadow: 0 12px 26px rgba(23, 32, 86, 0.14);
-}
-
-.ad-rail-label {
-  margin: 0 0 0.45rem;
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--muted);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-@media (max-width: 1320px) {
-  .ad-rail-left,
-  .ad-rail-right {
-    display: none;
-  }
-}
-
-@media (min-width: 1321px) {
-  .app-shell {
-    width: min(980px, calc(94vw - 440px));
-    margin-left: auto;
-    margin-right: auto;
-  }
-}
-
 body.auth-locked .app-shell {
   filter: blur(2px);
   opacity: 0.3;
@@ -1176,6 +1128,10 @@ body.dark .preview-toggle-btn.active {
 
 .modal-backdrop.modal-closing .modal-card {
   animation: modalCardOut 180ms cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
+}
+
+#tutorialSkipConfirmModal {
+  z-index: 40;
 }
 
 .modal-card h2 {
