@@ -2733,12 +2733,13 @@ function buildSimpleListPdfBlob(title, rawItems, ordered) {
   doc.setFontSize(11);
   rawItems.forEach((item, index) => {
     const prefix = ordered ? `${index + 1}. ` : "- ";
-    const wrapped = doc.splitTextToSize(`${prefix}${item}`, maxTextWidth);
+    const cleanItem = decodeHtmlEntities(String(item || ""));
+    const wrapped = doc.splitTextToSize(`${prefix}${cleanItem}`, maxTextWidth);
     if (y + wrapped.length * lineHeight > pageHeight - marginBottom) {
       doc.addPage("letter", "portrait");
       y = marginTop;
     }
-    drawHighlightedPdfBlock(doc, wrapped, marginX, y, maxTextWidth, lineHeight, detectHighlightType(item));
+    drawHighlightedPdfBlock(doc, wrapped, marginX, y, maxTextWidth, lineHeight, detectHighlightType(cleanItem));
     doc.text(wrapped, marginX, y);
     y += wrapped.length * lineHeight + 6;
   });
@@ -3017,8 +3018,8 @@ function parseFlashcardText(text, fallbackIndex) {
     .trim();
   const match = normalized.match(/front:\s*([\s\S]*?)(?:\s*\|\s*|\s+)back:\s*([\s\S]*)/i);
   if (match) {
-    const front = String(match[1] || "").trim();
-    const back = String(match[2] || "").trim();
+    const front = decodeHtmlEntities(String(match[1] || "").trim());
+    const back = decodeHtmlEntities(String(match[2] || "").trim());
     return {
       front: front || `Card ${fallbackIndex}`,
       back: back || "Review your notes."
@@ -3026,15 +3027,15 @@ function parseFlashcardText(text, fallbackIndex) {
   }
   const frontOnlyMatch = normalized.match(/front:\s*([\s\S]*)/i);
   if (frontOnlyMatch) {
-    const front = String(frontOnlyMatch[1] || "").trim();
+    const front = decodeHtmlEntities(String(frontOnlyMatch[1] || "").trim());
     return {
       front: front || `Card ${fallbackIndex}`,
       back: "Review your notes."
     };
   }
   return {
-    front: buildFlashcardFrontFromLine(normalized, fallbackIndex),
-    back: normalized || "Review your notes."
+    front: buildFlashcardFrontFromLine(decodeHtmlEntities(normalized), fallbackIndex),
+    back: decodeHtmlEntities(normalized) || "Review your notes."
   };
 }
 
@@ -3143,7 +3144,8 @@ async function renderFlashcardsVisualsWithTyping(cards) {
 }
 
 function highlightImportantParts(text) {
-  const escaped = escapeHtml(String(text || ""));
+  const decoded = decodeHtmlEntities(String(text || ""));
+  const escaped = escapeHtml(decoded);
   if (!escaped.trim()) {
     return escaped;
   }
@@ -3159,6 +3161,17 @@ function highlightImportantParts(text) {
     html = html.replace(pattern, (match) => `<mark class="important-chip">${match}</mark>`);
   });
   return html;
+}
+
+function decodeHtmlEntities(input) {
+  const raw = String(input || "");
+  if (!raw || !raw.includes("&")) {
+    return raw;
+  }
+
+  const parser = document.createElement("textarea");
+  parser.innerHTML = raw;
+  return parser.value;
 }
 
 function escapeHtml(input) {
