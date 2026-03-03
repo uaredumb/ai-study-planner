@@ -321,13 +321,26 @@
 
   <div id="proModeModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="proModeTitle">
     <div class="modal-card">
+      <button id="proModeCloseXButton" type="button" class="modal-close-x" aria-label="Close Pro modal">X</button>
       <h2 id="proModeTitle">Unlock Pro Mode</h2>
-      <form id="proModeForm" class="modal-form">
+      <p id="proModeMessage" class="modal-message">
+        Pro features unlock higher limits for larger study sessions.
+      </p>
+      <ul id="proModeBenefits" class="modal-message">
+        <li>Up to 10 flashcards per generation (instead of 5).</li>
+        <li>Up to 8000 notes characters (instead of 3000).</li>
+        <li>Up to 5 study files (instead of 1).</li>
+      </ul>
+      <div id="proModeIntroActions" class="modal-actions">
+        <button id="proModeCloseIntroButton" type="button" class="secondary-btn">Close</button>
+        <button id="proModeHaveCodeButton" type="button" class="primary-btn">I have a pro code</button>
+      </div>
+      <form id="proModeForm" class="modal-form hidden">
         <label for="proCodeInput" class="input-label">Enter Pro Code</label>
         <input id="proCodeInput" class="modal-input" type="password" maxlength="80" autocomplete="off" />
         <p id="proCodeError" class="modal-error hidden" aria-live="polite"></p>
         <div class="modal-actions">
-          <button id="proModeCancelButton" type="button" class="secondary-btn">Cancel</button>
+          <button id="proModeBackButton" type="button" class="secondary-btn">Back</button>
           <button id="proModeUnlockButton" type="submit" class="primary-btn">Unlock</button>
         </div>
       </form>

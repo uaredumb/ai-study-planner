@@ -944,6 +944,10 @@ body.dark .output-icon {
   filter: brightness(0) invert(1);
 }
 
+body.dark #themeToggle .btn-icon {
+  filter: none;
+}
+
 .output-option input[type="checkbox"] {
   width: 16px;
   height: 16px;
@@ -1005,6 +1009,18 @@ body.dark .output-icon {
   margin: 0;
   font-size: 0.96rem;
   line-height: 1.4;
+}
+
+.important-chip {
+  background: color-mix(in srgb, #ffd96a, transparent 40%);
+  color: inherit;
+  border-radius: 6px;
+  padding: 0.05rem 0.28rem;
+  font-weight: 700;
+}
+
+body.dark .important-chip {
+  background: color-mix(in srgb, #f8cc52, transparent 55%);
 }
 
 .flashcards-preview-wrap {
@@ -1136,6 +1152,30 @@ body.dark .preview-toggle-btn.active {
 
 .modal-card h2 {
   margin: 0 0 0.7rem;
+}
+
+.modal-close-x {
+  float: right;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  border-radius: 12px;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0.15rem 0.4rem;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close-x:hover {
+  background: color-mix(in srgb, var(--card), var(--accent) 10%);
+}
+
+.modal-close-x:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent), transparent 55%);
 }
 
 .webcam-modal-card {

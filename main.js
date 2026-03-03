@@ -23,10 +23,16 @@ const previewBacksButton = document.getElementById("previewBacksButton");
 const moreFlashcardsModal = document.getElementById("moreFlashcardsModal");
 const moreFlashcardsCloseButton = document.getElementById("moreFlashcardsCloseButton");
 const proModeModal = document.getElementById("proModeModal");
+const proModeMessage = document.getElementById("proModeMessage");
+const proModeBenefits = document.getElementById("proModeBenefits");
+const proModeIntroActions = document.getElementById("proModeIntroActions");
+const proModeHaveCodeButton = document.getElementById("proModeHaveCodeButton");
+const proModeCloseIntroButton = document.getElementById("proModeCloseIntroButton");
+const proModeCloseXButton = document.getElementById("proModeCloseXButton");
 const proModeForm = document.getElementById("proModeForm");
 const proCodeInput = document.getElementById("proCodeInput");
 const proCodeError = document.getElementById("proCodeError");
-const proModeCancelButton = document.getElementById("proModeCancelButton");
+const proModeBackButton = document.getElementById("proModeBackButton");
 const webcamCaptureModal = document.getElementById("webcamCaptureModal");
 const webcamVideo = document.getElementById("webcamVideo");
 const webcamCanvas = document.getElementById("webcamCanvas");
@@ -378,7 +384,7 @@ initStatusNotificationRouter();
 cleanButton.addEventListener("click", handleCleanNotes);
 themeToggle.addEventListener("click", toggleTheme);
 if (proModeButton) {
-  proModeButton.addEventListener("click", openProModeModal);
+  proModeButton.addEventListener("click", () => openProModeModal("general"));
 }
 if (performanceToggle) {
   performanceToggle.addEventListener("click", togglePerformanceMode);
@@ -461,8 +467,17 @@ if (proModeForm) {
 if (proCodeInput) {
   proCodeInput.addEventListener("input", clearProCodeError);
 }
-if (proModeCancelButton) {
-  proModeCancelButton.addEventListener("click", closeProModeModal);
+if (proModeHaveCodeButton) {
+  proModeHaveCodeButton.addEventListener("click", showProCodeForm);
+}
+if (proModeCloseIntroButton) {
+  proModeCloseIntroButton.addEventListener("click", closeProModeModal);
+}
+if (proModeCloseXButton) {
+  proModeCloseXButton.addEventListener("click", closeProModeModal);
+}
+if (proModeBackButton) {
+  proModeBackButton.addEventListener("click", showProIntroScreen);
 }
 if (proModeModal) {
   proModeModal.addEventListener("click", (event) => {
@@ -635,7 +650,7 @@ if (photoModeButton) {
 if (moreNotesCharsButton) {
   moreNotesCharsButton.addEventListener("click", () => {
     if (!isProMode) {
-      openProModeModal();
+      openProModeModal("notes");
       statusText.textContent = "Unlock Pro Mode to use up to 8000 characters.";
       return;
     }
@@ -1509,7 +1524,7 @@ function applyProModeUi() {
   updateNotesLimitHint();
 }
 
-function openProModeModal() {
+function openProModeModal(source = "general") {
   if (isProMode) {
     statusText.textContent = "Pro Mode is already unlocked.";
     return;
@@ -1517,17 +1532,56 @@ function openProModeModal() {
   if (!proModeModal) {
     return;
   }
+  if (proModeMessage) {
+    proModeMessage.textContent =
+      source === "flashcards"
+        ? "This is a Pro feature. Pro increases your flashcard limit and unlocks higher study limits."
+        : source === "notes"
+          ? "This is a Pro feature. Pro gives you much more note space and unlocks higher study limits."
+          : "This is a Pro feature. Unlock Pro Mode to increase study limits and productivity.";
+  }
+  showProIntroScreen();
   proModeModal.classList.remove("hidden");
+  clearProCodeError();
+}
+
+function closeProModeModal() {
+  closeModalWithAnimation(proModeModal);
+}
+
+function showProIntroScreen() {
+  if (proModeForm) {
+    proModeForm.classList.add("hidden");
+  }
+  if (proModeBenefits) {
+    proModeBenefits.classList.remove("hidden");
+  }
+  if (proModeIntroActions) {
+    proModeIntroActions.classList.remove("hidden");
+  }
+  if (proCodeInput) {
+    proCodeInput.value = "";
+    proCodeInput.classList.remove("input-error");
+  }
+  clearProCodeError();
+}
+
+function showProCodeForm() {
+  if (proModeForm) {
+    proModeForm.classList.remove("hidden");
+  }
+  if (proModeBenefits) {
+    proModeBenefits.classList.add("hidden");
+  }
+  if (proModeIntroActions) {
+    proModeIntroActions.classList.add("hidden");
+  }
   if (proCodeInput) {
     proCodeInput.value = "";
     proCodeInput.classList.remove("input-error");
     setTimeout(() => proCodeInput.focus(), 0);
   }
   clearProCodeError();
-}
-
-function closeProModeModal() {
-  closeModalWithAnimation(proModeModal);
 }
 
 function showProCodeError(message) {
@@ -1940,7 +1994,7 @@ function renderList(listElement, items) {
 
   items.forEach((item) => {
     const li = document.createElement("li");
-    li.textContent = item;
+    li.innerHTML = highlightImportantParts(item);
     listElement.appendChild(li);
   });
 }
@@ -1972,15 +2026,9 @@ async function renderResultsWithTyping(result) {
 }
 
 async function renderFlashcardsWithTyping(cards) {
-  if (flashcardsVisualGrid) {
-    flashcardsVisualGrid.classList.add("hidden");
-  }
-  if (flashcardsList) {
-    flashcardsList.classList.remove("hidden");
-  }
-  await renderListWithTyping(flashcardsList, cards, 10);
-  await delay(120);
-  renderFlashcardsVisuals(cards);
+  renderList(flashcardsList, cards);
+  await renderFlashcardsVisualsWithTyping(cards);
+  refreshFlashcardsPdfPreview(cards);
 }
 
 function activeFileHasGeneratedContent() {
@@ -2072,6 +2120,7 @@ async function renderListWithTyping(listElement, items, typingDelayMs = 16) {
     const li = document.createElement("li");
     listElement.appendChild(li);
     await typeText(li, item, typingDelayMs);
+    li.innerHTML = highlightImportantParts(item);
   }
 }
 
@@ -2115,6 +2164,8 @@ function renderFileResults(file) {
   renderFlashcardsVisuals(file.flashcards);
   if (ensureStringArray(file.flashcards).length === 0) {
     hideFlashcardsPdfPreview();
+  } else {
+    refreshFlashcardsPdfPreview(file.flashcards);
   }
   renderList(quizQuestionsList, file.quizQuestions);
 
@@ -2175,25 +2226,73 @@ function setCardVisibility(card, isVisible) {
 
 function generateFlashcards(sourceLines) {
   const requestedCount = getRequestedFlashcardsCount();
-  return ensureStringArray(sourceLines)
-    .slice(0, requestedCount)
-    .map((line, index) => {
-      const normalized = String(line || "").replace(/\s+/g, " ").trim();
-      const separatorIndex = normalized.indexOf(":");
-      const front =
-        separatorIndex > 0
-          ? normalized.slice(0, separatorIndex).trim()
-          : buildFlashcardFrontFromLine(normalized, index + 1);
-      const back =
-        separatorIndex > 0
-          ? normalized.slice(separatorIndex + 1).trim()
-          : normalized;
-      return `Front: ${front} | Back: ${back || normalized}`;
-    })
-    .map((cardText, index) => {
-      const { front, back } = parseFlashcardText(cardText, index + 1);
-      return `${index + 1}. Front: ${front} | Back: ${back}`;
-    });
+  const units = buildFlashcardUnits(sourceLines, requestedCount);
+
+  return units.map((unit, index) => {
+    const normalized = String(unit || "").replace(/\s+/g, " ").trim();
+    const separatorIndex = normalized.indexOf(":");
+    const front =
+      separatorIndex > 0
+        ? normalized.slice(0, separatorIndex).trim()
+        : buildFlashcardFrontFromLine(normalized, index + 1);
+    const back =
+      separatorIndex > 0
+        ? normalized.slice(separatorIndex + 1).trim()
+        : normalized;
+    return `${index + 1}. Front: ${front} | Back: ${back || "Review your notes."}`;
+  });
+}
+
+function buildFlashcardUnits(sourceLines, requestedCount) {
+  const base = ensureStringArray(sourceLines)
+    .map((line) => String(line || "").replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const units = [];
+  const seen = new Set();
+
+  const pushUnit = (value) => {
+    const normalized = String(value || "").replace(/\s+/g, " ").trim();
+    if (!normalized) {
+      return;
+    }
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    units.push(normalized);
+  };
+
+  base.forEach((line) => pushUnit(line));
+
+  const combined = base.join(" ");
+  combined
+    .split(/[.!?\n;]+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 18)
+    .forEach((part) => pushUnit(part));
+
+  const words = combined.split(/\s+/).filter(Boolean);
+  if (words.length > 0) {
+    const chunkSize = Math.max(6, Math.min(16, Math.ceil(words.length / Math.max(1, requestedCount))));
+    const step = Math.max(4, Math.floor(chunkSize * 0.7));
+    for (let start = 0; start < words.length && units.length < requestedCount * 2; start += step) {
+      const chunk = words.slice(start, start + chunkSize).join(" ").trim();
+      if (chunk.length >= 18) {
+        pushUnit(chunk);
+      }
+    }
+  }
+
+  if (units.length === 0) {
+    units.push("Review your notes and identify the most important concept to remember.");
+  }
+
+  const output = [];
+  for (let i = 0; i < requestedCount; i += 1) {
+    output.push(units[i % units.length]);
+  }
+  return output;
 }
 
 function buildFlashcardFrontFromLine(line, index) {
@@ -2581,7 +2680,7 @@ function bindDownloadFlashcardsButton() {
       downloadBlob(backsBlob, `${safeNameBase}-flashcards-backs.pdf`);
     }, 120);
 
-    statusText.textContent = "Downloaded flashcard PDFs with fronts + backs.";
+    statusText.textContent = "Downloaded flashcard PDFs. Use the combined file for double-sided printing.";
   });
 }
 
@@ -2654,7 +2753,7 @@ function bindMoreFlashcardsButton() {
 
   moreFlashcardsButton.addEventListener("click", () => {
     if (!isProMode) {
-      openProModeModal();
+      openProModeModal("flashcards");
       statusText.textContent = "Unlock Pro Mode to use up to 10 flashcards.";
       return;
     }
@@ -2767,45 +2866,59 @@ function buildCombinedFlashcardsPdf(rawCards) {
   const marginX = (pageWidth - (cardWidth * 2 + colGap)) / 2;
   const marginY = 0.6;
   const perPage = 8;
+  const totalPages = Math.ceil(rawCards.length / perPage);
 
-  const drawSide = (isBack) => {
-    rawCards.forEach((cardText, index) => {
-      const pageIndex = Math.floor(index / perPage);
-      const slot = index % perPage;
+  for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
+    const start = pageIndex * perPage;
+    const end = Math.min(start + perPage, rawCards.length);
+
+    if (pageIndex > 0) {
+      combined.addPage("letter", "portrait");
+    }
+    combined.setFont("helvetica", "bold");
+    combined.setFontSize(9);
+    combined.text(`Flashcards Fronts - Page ${pageIndex + 1}`, marginX, 0.35);
+
+    for (let index = start; index < end; index += 1) {
+      const slot = index - start;
       const row = Math.floor(slot / 2);
       const col = slot % 2;
       const x = marginX + col * (cardWidth + colGap);
       const y = marginY + row * (cardHeight + rowGap);
-      const { front, back } = parseFlashcardText(cardText, index + 1);
+      const { front } = parseFlashcardText(rawCards[index], index + 1);
+      drawCutCard(combined, x, y, cardWidth, cardHeight, `Card ${index + 1} Front`, front);
+    }
 
-      if (index > 0 && slot === 0) {
-        combined.addPage("letter", "portrait");
-      }
-
-      drawCutCard(
-        combined,
-        x,
-        y,
-        cardWidth,
-        cardHeight,
-        `Card ${index + 1} ${isBack ? "Back" : "Front"}`,
-        isBack ? back : front
-      );
-
-      if (slot === 0) {
-        combined.setFont("helvetica", "bold");
-        combined.setFontSize(9);
-        combined.text(`Flashcards ${isBack ? "Backs" : "Fronts"} - Page ${pageIndex + 1}`, marginX, 0.35);
-      }
-    });
-  };
-
-  drawSide(false);
-  if (rawCards.length > 0) {
     combined.addPage("letter", "portrait");
+    combined.setFont("helvetica", "bold");
+    combined.setFontSize(9);
+    combined.text(`Flashcards Backs - Page ${pageIndex + 1}`, marginX, 0.35);
+
+    for (let index = start; index < end; index += 1) {
+      const slot = index - start;
+      const row = Math.floor(slot / 2);
+      const col = slot % 2;
+      const x = marginX + col * (cardWidth + colGap);
+      const y = marginY + row * (cardHeight + rowGap);
+      const { back } = parseFlashcardText(rawCards[index], index + 1);
+      drawCutCard(combined, x, y, cardWidth, cardHeight, `Card ${index + 1} Back`, back);
+    }
   }
-  drawSide(true);
+
   return combined.output("blob");
+}
+
+function refreshFlashcardsPdfPreview(rawCards) {
+  const cards = ensureStringArray(rawCards);
+  if (cards.length === 0) {
+    hideFlashcardsPdfPreview();
+    return;
+  }
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    return;
+  }
+  const { frontsBlob, backsBlob } = buildCuttableFlashcardsPdfs(cards);
+  showFlashcardsPdfPreview(frontsBlob, backsBlob);
 }
 
 function downloadBlob(blob, fileName) {
@@ -2955,7 +3068,7 @@ function renderFlashcardsVisuals(cards) {
     frontTitle.textContent = `Card ${index + 1} Front`;
     const frontText = document.createElement("p");
     frontText.className = "flashcard-visual-text";
-    frontText.textContent = front;
+    frontText.innerHTML = highlightImportantParts(front);
 
     const backTitle = document.createElement("p");
     backTitle.className = "flashcard-visual-title";
@@ -2963,7 +3076,7 @@ function renderFlashcardsVisuals(cards) {
     backTitle.textContent = `Card ${index + 1} Back`;
     const backText = document.createElement("p");
     backText.className = "flashcard-visual-text";
-    backText.textContent = back;
+    backText.innerHTML = highlightImportantParts(back);
 
     wrapper.appendChild(frontTitle);
     wrapper.appendChild(frontText);
@@ -2974,6 +3087,87 @@ function renderFlashcardsVisuals(cards) {
   flashcardsVisualGrid.appendChild(fragment);
 
   flashcardsVisualGrid.classList.remove("hidden");
+}
+
+async function renderFlashcardsVisualsWithTyping(cards) {
+  if (!flashcardsVisualGrid) {
+    return;
+  }
+
+  flashcardsVisualGrid.innerHTML = "";
+  const items = ensureStringArray(cards);
+  if (items.length === 0) {
+    flashcardsVisualGrid.classList.add("hidden");
+    if (flashcardsList) {
+      flashcardsList.classList.remove("hidden");
+    }
+    return;
+  }
+
+  if (flashcardsList) {
+    flashcardsList.classList.add("hidden");
+  }
+
+  for (let index = 0; index < items.length; index += 1) {
+    const { front, back } = parseFlashcardText(items[index], index + 1);
+    const wrapper = document.createElement("div");
+    wrapper.className = "flashcard-visual";
+
+    const frontTitle = document.createElement("p");
+    frontTitle.className = "flashcard-visual-title";
+    frontTitle.textContent = `Card ${index + 1} Front`;
+    const frontText = document.createElement("p");
+    frontText.className = "flashcard-visual-text";
+
+    const backTitle = document.createElement("p");
+    backTitle.className = "flashcard-visual-title";
+    backTitle.style.marginTop = "0.6rem";
+    backTitle.textContent = `Card ${index + 1} Back`;
+    const backText = document.createElement("p");
+    backText.className = "flashcard-visual-text";
+
+    wrapper.appendChild(frontTitle);
+    wrapper.appendChild(frontText);
+    wrapper.appendChild(backTitle);
+    wrapper.appendChild(backText);
+    flashcardsVisualGrid.appendChild(wrapper);
+    flashcardsVisualGrid.classList.remove("hidden");
+
+    await typeText(frontText, front, 5);
+    frontText.innerHTML = highlightImportantParts(front);
+    await delay(24);
+    await typeText(backText, back, 4);
+    backText.innerHTML = highlightImportantParts(back);
+    await delay(48);
+  }
+}
+
+function highlightImportantParts(text) {
+  const escaped = escapeHtml(String(text || ""));
+  if (!escaped.trim()) {
+    return escaped;
+  }
+
+  const patterns = [
+    /\b(important|key|must know|critical|remember|focus|exam|test|quiz|deadline|due|formula|definition|theorem)\b/gi,
+    /\b\d+(?:\.\d+)?%?\b/g,
+    /\b(today|tomorrow|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi
+  ];
+
+  let html = escaped;
+  patterns.forEach((pattern) => {
+    html = html.replace(pattern, (match) => `<mark class="important-chip">${match}</mark>`);
+  });
+  return html;
+}
+
+function escapeHtml(input) {
+  return String(input)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 function hasCopyableItems(listElement) {
