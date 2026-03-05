@@ -227,6 +227,8 @@ let flashcardsBacksPreviewUrl = "";
 let webcamStream = null;
 let statusToastStack = null;
 let statusRouterSuppress = false;
+let fileOpenAnimationFrameA = 0;
+let fileOpenAnimationFrameB = 0;
 
 enforceFileLimitForCurrentMode();
 
@@ -382,6 +384,9 @@ loadPerformanceMode();
 renderFiles();
 loadActiveFileIntoEditor();
 initStatusNotificationRouter();
+window.setTimeout(() => {
+  document.body.classList.add("app-booted");
+}, 700);
 
 cleanButton.addEventListener("click", handleCleanNotes);
 themeToggle.addEventListener("click", toggleTheme);
@@ -3377,8 +3382,19 @@ function triggerFileOpenAnimation() {
     return;
   }
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
+  if (fileOpenAnimationFrameA) {
+    cancelAnimationFrame(fileOpenAnimationFrameA);
+    fileOpenAnimationFrameA = 0;
+  }
+  if (fileOpenAnimationFrameB) {
+    cancelAnimationFrame(fileOpenAnimationFrameB);
+    fileOpenAnimationFrameB = 0;
+  }
+
+  fileOpenAnimationFrameA = requestAnimationFrame(() => {
+    fileOpenAnimationFrameA = 0;
+    fileOpenAnimationFrameB = requestAnimationFrame(() => {
+      fileOpenAnimationFrameB = 0;
       const activeChip = filesList.querySelector(".file-chip.active");
       if (activeChip) {
         playTransientAnimation(activeChip, "file-open-in");
@@ -4122,6 +4138,15 @@ function delay(ms) {
 }
 
 function clearTransientAnimationClasses() {
+  if (fileOpenAnimationFrameA) {
+    cancelAnimationFrame(fileOpenAnimationFrameA);
+    fileOpenAnimationFrameA = 0;
+  }
+  if (fileOpenAnimationFrameB) {
+    cancelAnimationFrame(fileOpenAnimationFrameB);
+    fileOpenAnimationFrameB = 0;
+  }
+
   document.querySelectorAll(
     ".file-open-in, .file-create-in, .section-switch-in, .mode-pop-in, .mode-pop-out, .island-pop, .pop-in, .pop-out, .check-pop, .click-burst, .modal-closing"
   ).forEach((element) => {

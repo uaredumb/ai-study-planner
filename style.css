@@ -606,6 +606,12 @@ h1 {
   animation-delay: 80ms;
 }
 
+body.app-booted .input-card,
+body.app-booted .files-card,
+body.app-booted .summarize-mode-card {
+  animation: none;
+}
+
 .summarize-mode-card.island-pop {
   animation: islandPop 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
