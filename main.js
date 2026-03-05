@@ -2509,12 +2509,6 @@ function handleSummaryModeChange(mode) {
     if (summarizeModeCard && !summarizeModeCard.classList.contains("hidden")) {
       playTransientAnimation(summarizeModeCard, "mode-island-pop");
     }
-    if (inputCard && !inputCard.classList.contains("hidden")) {
-      playTransientAnimation(inputCard, "mode-island-pop");
-    }
-    if (resultsSection && !resultsSection.classList.contains("hidden")) {
-      playTransientAnimation(resultsSection, "mode-island-pop");
-    }
   }
 }
 
