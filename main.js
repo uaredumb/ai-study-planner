@@ -3404,6 +3404,9 @@ function playTransientAnimation(element, className) {
 
   const safeClassToken = className.replace(/[^a-zA-Z0-9]+(.)/g, (_match, chr) => String(chr || "").toUpperCase());
   const timerKey = `${safeClassToken}Timer`;
+  const runKey = `${safeClassToken}Run`;
+  const nextRun = String((Number(element.dataset[runKey] || 0) + 1) % Number.MAX_SAFE_INTEGER || 1);
+  element.dataset[runKey] = nextRun;
   const existingTimer = Number(element.dataset[timerKey] || 0);
   if (existingTimer) {
     clearTimeout(existingTimer);
@@ -3415,6 +3418,9 @@ function playTransientAnimation(element, className) {
   element.classList.add(className);
 
   const clearClass = () => {
+    if (element.dataset[runKey] !== nextRun) {
+      return;
+    }
     element.classList.remove(className);
     const timerId = Number(element.dataset[timerKey] || 0);
     if (timerId) {
