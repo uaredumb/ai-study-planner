@@ -2454,12 +2454,6 @@ function handleSummaryModeChange(mode) {
     element.classList.remove("file-open-in", "mode-pop-in", "mode-pop-out");
   });
 
-  if (summarizeModeCard && previousMode !== mode) {
-    summarizeModeCard.classList.remove("island-pop");
-    void summarizeModeCard.offsetWidth;
-    summarizeModeCard.classList.add("island-pop");
-  }
-
   if (articleInputWrap) {
     articleInputWrap.classList.toggle("hidden", !isArticle);
   }
@@ -2509,6 +2503,18 @@ function handleSummaryModeChange(mode) {
     statusText.textContent = "Notes photo mode selected. Upload or take a photo, then generate your study pack.";
   } else {
     statusText.textContent = "Notes mode selected. Paste notes and generate your study pack.";
+  }
+
+  if (!document.body.classList.contains("performance-mode")) {
+    if (summarizeModeCard && !summarizeModeCard.classList.contains("hidden")) {
+      playTransientAnimation(summarizeModeCard, "island-pop");
+    }
+    if (inputCard && !inputCard.classList.contains("hidden")) {
+      playTransientAnimation(inputCard, "section-switch-in");
+    }
+    if (resultsSection && !resultsSection.classList.contains("hidden")) {
+      playTransientAnimation(resultsSection, "section-switch-in");
+    }
   }
 }
 
