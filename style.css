@@ -1377,11 +1377,13 @@ body.dark .preview-toggle-btn.active {
 .summarize-mode-card.mode-island-pop,
 .input-card.mode-island-pop,
 .results-grid.mode-island-pop {
-  animation: modeIslandPop 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: modeIslandPop 360ms cubic-bezier(0.22, 0.85, 0.28, 1);
+  will-change: transform, opacity;
 }
 
 .mode-content-pop {
-  animation: modeContentPop 230ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: modeContentPop 280ms cubic-bezier(0.22, 0.85, 0.28, 1);
+  will-change: transform, opacity;
 }
 
 .result-card {
@@ -1626,14 +1628,17 @@ body.dark .preview-toggle-btn.active {
 
 @keyframes modeIslandPop {
   0% {
-    transform: scale(0.986) translateY(4px);
-    box-shadow: var(--shadow);
+    opacity: 0.9;
+    transform: scale(0.992) translateY(5px);
+    box-shadow: 0 10px 24px rgba(40, 61, 158, 0.1);
   }
-  60% {
-    transform: scale(1.012) translateY(-2px);
-    box-shadow: 0 22px 48px rgba(40, 61, 158, 0.2);
+  55% {
+    opacity: 1;
+    transform: scale(1.006) translateY(-1px);
+    box-shadow: 0 18px 38px rgba(40, 61, 158, 0.15);
   }
   100% {
+    opacity: 1;
     transform: scale(1) translateY(0);
     box-shadow: var(--shadow);
   }
@@ -1641,8 +1646,12 @@ body.dark .preview-toggle-btn.active {
 
 @keyframes modeContentPop {
   0% {
-    opacity: 0.7;
-    transform: translateY(6px) scale(0.992);
+    opacity: 0.78;
+    transform: translateY(8px) scale(0.996);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(1px) scale(1.001);
   }
   100% {
     opacity: 1;
@@ -1891,11 +1900,11 @@ body.ios-optimized .input-card.mode-island-pop,
 body.ios-optimized .results-grid.mode-island-pop,
 body.ios-optimized .mode-pop-in,
 body.ios-optimized .mode-pop-out {
-  animation: iosFileFadeIn 180ms ease-out;
+  animation: iosFileFadeIn 210ms ease-out;
 }
 
 body.ios-optimized .mode-content-pop {
-  animation: iosFileFadeIn 160ms ease-out;
+  animation: iosFileFadeIn 190ms ease-out;
 }
 
 @keyframes iosCheckFade {
