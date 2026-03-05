@@ -606,9 +606,9 @@ h1 {
   animation-delay: 80ms;
 }
 
-body.app-booted .input-card,
+body.app-booted .input-card:not(.file-open-in):not(.section-switch-in):not(.mode-pop-in):not(.mode-pop-out):not(.mode-island-pop),
 body.app-booted .files-card,
-body.app-booted .summarize-mode-card {
+body.app-booted .summarize-mode-card:not(.file-open-in):not(.section-switch-in):not(.island-pop):not(.mode-island-pop) {
   animation: none;
 }
 
