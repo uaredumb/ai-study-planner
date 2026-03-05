@@ -2443,7 +2443,6 @@ function setSummaryMode(mode) {
 }
 
 function handleSummaryModeChange(mode) {
-  const previousMode = getCurrentSummaryMode();
   const isArticle = mode === "article";
   const isPhoto = mode === "photo";
 
@@ -2471,10 +2470,6 @@ function handleSummaryModeChange(mode) {
     }
     inputCard.classList.remove("mode-pop-in", "mode-pop-out");
     inputCard.classList.toggle("hidden", isArticle);
-    if (!isArticle && previousMode !== mode) {
-      void inputCard.offsetWidth;
-      inputCard.classList.add("mode-pop-in");
-    }
   }
   notesInput.disabled = isArticle || isPhoto;
   if (summarizeLinkButton) {
@@ -2511,6 +2506,12 @@ function handleSummaryModeChange(mode) {
     }
     if (inputCard && !inputCard.classList.contains("hidden")) {
       playTransientAnimation(inputCard, "mode-island-pop");
+    }
+    if (notesInputWrap && !notesInputWrap.classList.contains("hidden")) {
+      playTransientAnimation(notesInputWrap, "mode-content-pop");
+    }
+    if (photoInputWrap && !photoInputWrap.classList.contains("hidden")) {
+      playTransientAnimation(photoInputWrap, "mode-content-pop");
     }
   }
 }
@@ -4148,13 +4149,14 @@ function clearTransientAnimationClasses() {
   }
 
   document.querySelectorAll(
-    ".file-open-in, .file-create-in, .section-switch-in, .mode-island-pop, .mode-pop-in, .mode-pop-out, .island-pop, .pop-in, .pop-out, .check-pop, .click-burst, .modal-closing"
+    ".file-open-in, .file-create-in, .section-switch-in, .mode-island-pop, .mode-content-pop, .mode-pop-in, .mode-pop-out, .island-pop, .pop-in, .pop-out, .check-pop, .click-burst, .modal-closing"
   ).forEach((element) => {
     element.classList.remove(
       "file-open-in",
       "file-create-in",
       "section-switch-in",
       "mode-island-pop",
+      "mode-content-pop",
       "mode-pop-in",
       "mode-pop-out",
       "island-pop",

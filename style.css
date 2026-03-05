@@ -1380,6 +1380,10 @@ body.dark .preview-toggle-btn.active {
   animation: modeIslandPop 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.mode-content-pop {
+  animation: modeContentPop 230ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .result-card {
   flex: 1 1 calc(50% - 0.55rem);
   min-width: min(430px, 100%);
@@ -1635,6 +1639,17 @@ body.dark .preview-toggle-btn.active {
   }
 }
 
+@keyframes modeContentPop {
+  0% {
+    opacity: 0.7;
+    transform: translateY(6px) scale(0.992);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes toastIn {
   from {
     opacity: 0;
@@ -1877,6 +1892,10 @@ body.ios-optimized .results-grid.mode-island-pop,
 body.ios-optimized .mode-pop-in,
 body.ios-optimized .mode-pop-out {
   animation: iosFileFadeIn 180ms ease-out;
+}
+
+body.ios-optimized .mode-content-pop {
+  animation: iosFileFadeIn 160ms ease-out;
 }
 
 @keyframes iosCheckFade {
