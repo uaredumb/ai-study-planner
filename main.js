@@ -2507,13 +2507,13 @@ function handleSummaryModeChange(mode) {
 
   if (!document.body.classList.contains("performance-mode")) {
     if (summarizeModeCard && !summarizeModeCard.classList.contains("hidden")) {
-      playTransientAnimation(summarizeModeCard, "island-pop");
+      playTransientAnimation(summarizeModeCard, "mode-island-pop");
     }
     if (inputCard && !inputCard.classList.contains("hidden")) {
-      playTransientAnimation(inputCard, "section-switch-in");
+      playTransientAnimation(inputCard, "mode-island-pop");
     }
     if (resultsSection && !resultsSection.classList.contains("hidden")) {
-      playTransientAnimation(resultsSection, "section-switch-in");
+      playTransientAnimation(resultsSection, "mode-island-pop");
     }
   }
 }
@@ -4151,12 +4151,13 @@ function clearTransientAnimationClasses() {
   }
 
   document.querySelectorAll(
-    ".file-open-in, .file-create-in, .section-switch-in, .mode-pop-in, .mode-pop-out, .island-pop, .pop-in, .pop-out, .check-pop, .click-burst, .modal-closing"
+    ".file-open-in, .file-create-in, .section-switch-in, .mode-island-pop, .mode-pop-in, .mode-pop-out, .island-pop, .pop-in, .pop-out, .check-pop, .click-burst, .modal-closing"
   ).forEach((element) => {
     element.classList.remove(
       "file-open-in",
       "file-create-in",
       "section-switch-in",
+      "mode-island-pop",
       "mode-pop-in",
       "mode-pop-out",
       "island-pop",

@@ -1374,6 +1374,12 @@ body.dark .preview-toggle-btn.active {
   animation: sectionSwitchIn 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.summarize-mode-card.mode-island-pop,
+.input-card.mode-island-pop,
+.results-grid.mode-island-pop {
+  animation: modeIslandPop 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .result-card {
   flex: 1 1 calc(50% - 0.55rem);
   min-width: min(430px, 100%);
@@ -1607,6 +1613,21 @@ body.dark .preview-toggle-btn.active {
   70% {
     transform: scale(1.008) translateY(-1px);
     box-shadow: 0 20px 46px rgba(40, 61, 158, 0.18);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    box-shadow: var(--shadow);
+  }
+}
+
+@keyframes modeIslandPop {
+  0% {
+    transform: scale(0.986) translateY(4px);
+    box-shadow: var(--shadow);
+  }
+  60% {
+    transform: scale(1.012) translateY(-2px);
+    box-shadow: 0 22px 48px rgba(40, 61, 158, 0.2);
   }
   100% {
     transform: scale(1) translateY(0);
@@ -1850,6 +1871,9 @@ body.ios-optimized .results-grid.section-switch-in {
 }
 
 body.ios-optimized .summarize-mode-card.island-pop,
+body.ios-optimized .summarize-mode-card.mode-island-pop,
+body.ios-optimized .input-card.mode-island-pop,
+body.ios-optimized .results-grid.mode-island-pop,
 body.ios-optimized .mode-pop-in,
 body.ios-optimized .mode-pop-out {
   animation: iosFileFadeIn 180ms ease-out;
