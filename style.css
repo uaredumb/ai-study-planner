@@ -1097,6 +1097,36 @@ body.dark .preview-toggle-btn.active {
   animation: typingDots 1s steps(4, end) infinite;
 }
 
+.live-stream-wrap {
+  width: min(920px, 100%);
+  margin-top: 0.15rem;
+  border: 1px solid color-mix(in srgb, var(--border), #8ea7ff 24%);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card), #ffffff 6%);
+  padding: 0.55rem 0.62rem;
+}
+
+.live-stream-label {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.live-stream-text {
+  margin: 0;
+  max-height: 190px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.35;
+  font-size: 0.86rem;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
 .status-toast-stack {
   position: fixed;
   top: 0.9rem;

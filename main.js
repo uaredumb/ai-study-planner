@@ -3,6 +3,8 @@ const notesInputWrap = document.getElementById("notesInputWrap");
 const inputCard = document.querySelector(".input-card");
 const cleanButton = document.getElementById("cleanButton");
 const statusText = document.getElementById("statusText");
+const liveStreamWrap = document.getElementById("liveStreamWrap");
+const liveStreamText = document.getElementById("liveStreamText");
 const resultsSection = document.getElementById("resultsSection");
 const cleanNotesList = document.getElementById("cleanNotesList");
 const studyTasksList = document.getElementById("studyTasksList");
@@ -229,6 +231,7 @@ let statusToastStack = null;
 let statusRouterSuppress = false;
 let fileOpenAnimationFrameA = 0;
 let fileOpenAnimationFrameB = 0;
+let slowGenerationToastTimer = 0;
 
 enforceFileLimitForCurrentMode();
 
@@ -837,6 +840,7 @@ async function handleCleanNotes() {
 
   triggerSummarizeClickAnimation(cleanButton);
   setLoadingState(true, "clean");
+  scheduleSlowGenerationToast();
   statusText.textContent = "AI is typing";
   statusText.classList.add("is-streaming");
 
@@ -850,6 +854,7 @@ async function handleCleanNotes() {
   } catch (error) {
     statusText.textContent = error.message;
   } finally {
+    cancelSlowGenerationToast();
     setLoadingState(false);
   }
 }
@@ -877,6 +882,7 @@ async function summarizeArticleFromLink() {
 
   triggerSummarizeClickAnimation(summarizeLinkButton);
   setLoadingState(true, "article");
+  scheduleSlowGenerationToast();
   statusText.textContent = "AI is typing";
   statusText.classList.add("is-streaming");
 
@@ -898,6 +904,7 @@ async function summarizeArticleFromLink() {
   } catch (error) {
     statusText.textContent = error.message;
   } finally {
+    cancelSlowGenerationToast();
     setLoadingState(false);
   }
 }
@@ -993,6 +1000,7 @@ async function summarizeFromPhoto() {
 
   triggerSummarizeClickAnimation(cleanButton);
   setLoadingState(true, "clean");
+  scheduleSlowGenerationToast();
   statusText.textContent = "AI is reading text from your photo";
   statusText.classList.add("is-streaming");
 
@@ -1014,18 +1022,64 @@ async function summarizeFromPhoto() {
   } catch (error) {
     statusText.textContent = error.message;
   } finally {
+    cancelSlowGenerationToast();
     setLoadingState(false);
   }
+}
+
+function scheduleSlowGenerationToast() {
+  cancelSlowGenerationToast();
+  slowGenerationToastTimer = window.setTimeout(() => {
+    slowGenerationToastTimer = 0;
+    showCornerToast("Still generating your study pack. This can take a little longer for large notes.");
+  }, 9000);
+}
+
+function cancelSlowGenerationToast() {
+  if (!slowGenerationToastTimer) {
+    return;
+  }
+  clearTimeout(slowGenerationToastTimer);
+  slowGenerationToastTimer = 0;
 }
 
 function updateStreamingStatus(_chunk, fullText) {
   const preview = String(fullText || "").replace(/\s+/g, " ").trim();
   statusText.classList.add("is-streaming");
+  updateLiveStreamPreview(fullText);
   if (!preview) {
     statusText.textContent = "AI is typing";
     return;
   }
   statusText.textContent = `AI is typing: ${preview.slice(-90)}`;
+}
+
+function showLiveStreamPreview(initialText = "") {
+  if (!liveStreamWrap || !liveStreamText) {
+    return;
+  }
+  liveStreamWrap.classList.remove("hidden");
+  liveStreamText.textContent = initialText;
+}
+
+function hideLiveStreamPreview() {
+  if (!liveStreamWrap || !liveStreamText) {
+    return;
+  }
+  liveStreamWrap.classList.add("hidden");
+  liveStreamText.textContent = "";
+}
+
+function updateLiveStreamPreview(fullText) {
+  if (!liveStreamWrap || !liveStreamText) {
+    return;
+  }
+  const raw = String(fullText || "");
+  const maxChars = 6000;
+  const clipped = raw.length > maxChars ? `...\n${raw.slice(-maxChars)}` : raw;
+  liveStreamWrap.classList.remove("hidden");
+  liveStreamText.textContent = clipped || "Waiting for model response...";
+  liveStreamText.scrollTop = liveStreamText.scrollHeight;
 }
 
 function initStatusNotificationRouter() {
@@ -2003,6 +2057,9 @@ function setLoadingState(isLoading, mode = "clean") {
   statusText.classList.toggle("is-processing", isLoading);
   if (!isLoading) {
     statusText.classList.remove("is-streaming");
+    hideLiveStreamPreview();
+  } else {
+    showLiveStreamPreview("Waiting for model response...");
   }
 
   if (isLoading) {
@@ -2020,7 +2077,7 @@ function triggerSummarizeClickAnimation(button) {
   button.classList.add("click-burst");
 }
 
-function renderList(listElement, items) {
+function renderList(listElement, items, highlight = true) {
   listElement.innerHTML = "";
 
   if (!Array.isArray(items) || items.length === 0) {
@@ -2032,7 +2089,11 @@ function renderList(listElement, items) {
 
   items.forEach((item) => {
     const li = document.createElement("li");
-    li.innerHTML = highlightImportantParts(item);
+    if (highlight) {
+      li.innerHTML = highlightImportantParts(item);
+    } else {
+      li.textContent = decodeHtmlEntities(String(item || ""));
+    }
     listElement.appendChild(li);
   });
 }
@@ -2064,7 +2125,7 @@ async function renderResultsWithTyping(result) {
 }
 
 async function renderFlashcardsWithTyping(cards) {
-  renderList(flashcardsList, cards);
+  renderList(flashcardsList, cards, false);
   await renderFlashcardsVisualsWithTyping(cards);
   refreshFlashcardsPdfPreview(cards);
 }
@@ -2186,7 +2247,7 @@ function renderFileResults(file) {
     renderList(studyTasksList, []);
     renderList(studyOrderList, []);
     renderList(cleanNotesList, []);
-    renderList(flashcardsList, []);
+    renderList(flashcardsList, [], false);
     renderFlashcardsVisuals([]);
     hideFlashcardsPdfPreview();
     renderList(quizQuestionsList, []);
@@ -2198,7 +2259,7 @@ function renderFileResults(file) {
   renderList(studyTasksList, file.studyTasks);
   renderList(studyOrderList, file.studyOrder);
   renderList(cleanNotesList, file.cleanNotes);
-  renderList(flashcardsList, file.flashcards);
+  renderList(flashcardsList, file.flashcards, false);
   renderFlashcardsVisuals(file.flashcards);
   if (ensureStringArray(file.flashcards).length === 0) {
     hideFlashcardsPdfPreview();
@@ -3113,7 +3174,7 @@ function renderFlashcardsVisuals(cards) {
     frontTitle.textContent = `Card ${index + 1} Front`;
     const frontText = document.createElement("p");
     frontText.className = "flashcard-visual-text";
-    frontText.innerHTML = highlightImportantParts(front);
+    frontText.textContent = front;
 
     const backTitle = document.createElement("p");
     backTitle.className = "flashcard-visual-title";
@@ -3121,7 +3182,7 @@ function renderFlashcardsVisuals(cards) {
     backTitle.textContent = `Card ${index + 1} Back`;
     const backText = document.createElement("p");
     backText.className = "flashcard-visual-text";
-    backText.innerHTML = highlightImportantParts(back);
+    backText.textContent = back;
 
     wrapper.appendChild(frontTitle);
     wrapper.appendChild(frontText);
@@ -3179,10 +3240,10 @@ async function renderFlashcardsVisualsWithTyping(cards) {
     flashcardsVisualGrid.classList.remove("hidden");
 
     await typeText(frontText, front, 5);
-    frontText.innerHTML = highlightImportantParts(front);
+    frontText.textContent = front;
     await delay(24);
     await typeText(backText, back, 4);
-    backText.innerHTML = highlightImportantParts(back);
+    backText.textContent = back;
     await delay(48);
   }
 }
@@ -3223,8 +3284,7 @@ function escapeHtml(input) {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+    .replaceAll('"', "&quot;");
 }
 
 function hasCopyableItems(listElement) {

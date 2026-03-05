@@ -26,7 +26,7 @@
       window.location.replace(target);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=33" />
+  <link rel="stylesheet" href="style.css?v=34" />
 </head>
 <body>
   <div class="bg-shape bg-shape-1" aria-hidden="true"></div>
@@ -163,6 +163,10 @@
       <div class="actions-row">
         <button id="cleanButton" class="primary-btn">Generate Study Pack</button>
         <p id="statusText" class="status-text">Ready</p>
+      </div>
+      <div id="liveStreamWrap" class="live-stream-wrap hidden" aria-live="polite">
+        <p class="live-stream-label">Live AI Stream</p>
+        <pre id="liveStreamText" class="live-stream-text"></pre>
       </div>
     </section>
 
@@ -380,7 +384,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="main.js?v=35"></script>
+  <script src="main.js?v=39"></script>
 </body>
 </html>
 
