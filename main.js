@@ -3406,9 +3406,6 @@ function triggerFileOpenAnimation() {
       if (inputCard && !inputCard.classList.contains("hidden")) {
         playTransientAnimation(inputCard, "section-switch-in");
       }
-      if (resultsSection && !resultsSection.classList.contains("hidden")) {
-        playTransientAnimation(resultsSection, "section-switch-in");
-      }
     });
   });
 }
