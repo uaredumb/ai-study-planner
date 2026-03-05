@@ -228,6 +228,8 @@ let webcamStream = null;
 let statusToastStack = null;
 let statusRouterSuppress = false;
 
+enforceFileLimitForCurrentMode();
+
 function applyIosAnimationProfile() {
   const ua = navigator.userAgent || "";
   const platform = navigator.platform || "";
@@ -1312,6 +1314,20 @@ function createStudyFile(name) {
     quizQuestions: [],
     selectedOutputs: normalizeSelectedOutputs(null)
   };
+}
+
+function enforceFileLimitForCurrentMode() {
+  const maxFiles = getMaxFilesAllowed();
+  if (!Array.isArray(studyFiles) || studyFiles.length <= maxFiles) {
+    return;
+  }
+
+  // Keep the most recently created files and drop older overflow.
+  studyFiles = studyFiles.slice(-maxFiles);
+  if (!studyFiles.some((file) => file.id === activeFileId)) {
+    activeFileId = studyFiles[studyFiles.length - 1]?.id || "";
+  }
+  persistFiles();
 }
 
 function persistFiles() {
@@ -3370,7 +3386,6 @@ function triggerFileOpenAnimation() {
 
       if (summarizeModeCard && !summarizeModeCard.classList.contains("hidden")) {
         playTransientAnimation(summarizeModeCard, "island-pop");
-        playTransientAnimation(summarizeModeCard, "section-switch-in");
       }
       if (inputCard && !inputCard.classList.contains("hidden")) {
         playTransientAnimation(inputCard, "section-switch-in");

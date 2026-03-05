@@ -945,7 +945,7 @@ body.dark .output-icon {
 }
 
 body.dark #themeToggle .btn-icon {
-  filter: none;
+  filter: brightness(0) invert(1);
 }
 
 .output-option input[type="checkbox"] {
