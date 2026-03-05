@@ -1354,6 +1354,11 @@ body.dark .preview-toggle-btn.active {
   animation: loaderSpin 0.85s linear infinite;
 }
 
+.performance-loader.is-disabling .performance-spinner {
+  border-color: color-mix(in srgb, #64748b, transparent 65%);
+  border-top-color: #64748b;
+}
+
 .results-grid {
   margin-top: 1.3rem;
   display: flex;

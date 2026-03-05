@@ -2392,7 +2392,9 @@ async function togglePerformanceMode() {
   if (performanceToggle) {
     performanceToggle.disabled = true;
   }
-  showPerformanceLoader();
+  const isCurrentlyEnabled = document.body.classList.contains("performance-mode");
+  const isEnabling = !isCurrentlyEnabled;
+  showPerformanceLoader(isEnabling);
   await delay(320);
   clearTransientAnimationClasses();
 
@@ -4115,13 +4117,17 @@ function openTutorialSkipConfirm() {
   tutorialSkipConfirmModal.classList.remove("hidden");
 }
 
-function showPerformanceLoader() {
+function showPerformanceLoader(isEnabling = true) {
   if (!performanceLoader) {
     return;
   }
 
+  performanceLoader.classList.remove("is-enabling", "is-disabling");
+  performanceLoader.classList.add(isEnabling ? "is-enabling" : "is-disabling");
   if (performanceLoaderText) {
-    performanceLoaderText.textContent = "Applying performance mode...";
+    performanceLoaderText.textContent = isEnabling
+      ? "Turning Performance Mode On..."
+      : "Turning Performance Mode Off...";
   }
   performanceLoader.classList.remove("hidden");
 }
@@ -4131,6 +4137,7 @@ function hidePerformanceLoader() {
     return;
   }
 
+  performanceLoader.classList.remove("is-enabling", "is-disabling");
   performanceLoader.classList.add("hidden");
 }
 
