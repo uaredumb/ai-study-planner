@@ -166,7 +166,7 @@ const FREE_NOTES_CHAR_LIMIT = 3000;
 const PRO_NOTES_CHAR_LIMIT = 8000;
 const PRO_MODE_STORAGE = "pro_mode_unlocked_v1";
 const USED_PRO_CODE_HASHES_STORAGE = "used_pro_code_hashes_v1";
-const FREE_FILE_LIMIT = 1;
+const FREE_FILE_LIMIT = 2;
 const PRO_FILE_LIMIT = 5;
 const FREE_FLASHCARDS_LIMIT = 5;
 const PRO_FLASHCARDS_LIMIT = 10;
@@ -766,7 +766,6 @@ if (ENABLE_AUTH) {
 if (appLogo) {
   const logoCandidates = [
     appLogo.getAttribute("src"),
-    "Untitled design (14).png",
     "logo.png",
     "logo.jpg",
     "logo.jpeg",
@@ -1538,7 +1537,7 @@ function openProModeModal(source = "general") {
         ? "This is a Pro feature. Pro increases your flashcard limit and unlocks higher study limits."
         : source === "notes"
           ? "This is a Pro feature. Pro gives you much more note space and unlocks higher study limits."
-          : "This is a Pro feature. Unlock Pro Mode to increase study limits and productivity.";
+          : "Unlock Pro Mode to increase study limits and productivity.";
   }
   showProIntroScreen();
   proModeModal.classList.remove("hidden");
@@ -1652,10 +1651,11 @@ function createFile() {
   }
 
   if (studyFiles.length >= getMaxFilesAllowed()) {
-    statusText.textContent = isProMode
-      ? "You reached the Pro limit of 5 files."
-      : "Free mode allows 1 file. Unlock Pro Mode for up to 5 files.";
-    return;
+    if (isProMode) {
+      statusText.textContent = "You reached the Pro limit of 5 files.";
+      return;
+    }
+    statusText.textContent = "Free mode limit reached (2 files). Creating a new file will replace your oldest file.";
   }
 
   openNewFileModal();
@@ -1809,10 +1809,27 @@ function submitCreateFile(event) {
   }
 
   if (studyFiles.length >= getMaxFilesAllowed()) {
-    statusText.textContent = isProMode
-      ? "You reached the Pro limit of 5 files."
-      : "Free mode allows 1 file. Unlock Pro Mode for up to 5 files.";
-    closeNewFileModal();
+    if (isProMode) {
+      statusText.textContent = "You reached the Pro limit of 5 files.";
+      closeNewFileModal();
+      return;
+    }
+
+    const removedFile = studyFiles.shift();
+    const replacementFile = createStudyFile(name);
+    studyFiles.push(replacementFile);
+    activeFileId = replacementFile.id;
+    createdFileIdForAnimation = replacementFile.id;
+
+    persistFiles();
+    renderFiles();
+    loadActiveFileIntoEditor();
+    triggerFileOpenAnimation();
+    closeNewFileModal(true);
+    statusText.textContent = removedFile
+      ? `Free limit is 2 files. Replaced "${removedFile.name}" with "${replacementFile.name}".`
+      : `Created file: ${replacementFile.name}`;
+    handleTutorialCreateFileCompleted();
     return;
   }
 
@@ -3352,6 +3369,7 @@ function triggerFileOpenAnimation() {
       }
 
       if (summarizeModeCard && !summarizeModeCard.classList.contains("hidden")) {
+        playTransientAnimation(summarizeModeCard, "island-pop");
         playTransientAnimation(summarizeModeCard, "section-switch-in");
       }
       if (inputCard && !inputCard.classList.contains("hidden")) {

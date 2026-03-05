@@ -109,7 +109,7 @@ export async function onRequestPost(context) {
   const visionMaxTokens = Number(env.OPENROUTER_VISION_MAX_TOKENS || 900);
   const maxTokens = requestMode === "vision" || requestMode === "ocr" ? visionMaxTokens : textMaxTokens;
   const siteUrl = env.OPENROUTER_SITE_URL || "https://ai-study-planner.pages.dev";
-  const appName = env.OPENROUTER_APP_NAME || "AI Study Pal";
+  const appName = env.OPENROUTER_APP_NAME || "Lumi Study";
 
   const systemPrompt =
     "You are a study assistant. Return strict JSON only with keys cleanNotes, studyTasks, studyOrder. " +

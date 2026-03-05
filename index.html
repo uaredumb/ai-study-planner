@@ -3,10 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Study Pal</title>
+  <title>Lumi Study</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="favicon-512.png" />
+  <link rel="apple-touch-icon" href="logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="config.js"></script>
+  <script>
+    (function redirectDevHostname() {
+      const canonicalHost = window.APP_CONFIG && window.APP_CONFIG.CANONICAL_HOST;
+      if (!canonicalHost) return;
+
+      const host = window.location.hostname;
+      const isDevHost = host.endsWith(".pages.dev") || host.endsWith(".workers.dev");
+      const alreadyCanonical = host === canonicalHost || host === "www." + canonicalHost;
+      if (!isDevHost || alreadyCanonical) return;
+
+      const target = "https://" + canonicalHost + window.location.pathname + window.location.search + window.location.hash;
+      window.location.replace(target);
+    })();
+  </script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -15,8 +33,8 @@
   <main class="app-shell">
     <header class="top-bar">
       <div class="brand-block">
-        <img id="appLogo" class="app-logo" src="Untitled design (14).png" alt="AI Study Pal logo" />
-        <h1>AI Study Pal</h1>
+        <img id="appLogo" class="app-logo" src="logo.png" alt="Lumi Study logo" />
+        <h1>Lumi Study</h1>
         <p class="eyebrow">One Input. Full Study Pack. Faster Learning.</p>
       </div>
       <div class="top-actions">
@@ -268,7 +286,7 @@
   <aside id="tutorialCoach" class="tutorial-coach hidden" aria-live="polite">
     <div class="tutorial-step" id="tutorialStepCounter">Step 1 of 5</div>
     <h2 id="tutorialTitle">Get Started</h2>
-    <p id="tutorialText" class="modal-message">Welcome! Let's walk through AI Study Pal in under a minute.</p>
+    <p id="tutorialText" class="modal-message">Welcome! Let's walk through Lumi Study in under a minute.</p>
     <div class="tutorial-example-wrap">
       <p id="tutorialExampleLabel" class="tutorial-label">Assignment</p>
       <pre id="tutorialExample" class="tutorial-example"></pre>
@@ -329,7 +347,7 @@
       <ul id="proModeBenefits" class="modal-message">
         <li>Up to 10 flashcards per generation (instead of 5).</li>
         <li>Up to 8000 notes characters (instead of 3000).</li>
-        <li>Up to 5 study files (instead of 1).</li>
+        <li>Up to 5 study files (instead of 2).</li>
       </ul>
       <div id="proModeIntroActions" class="modal-actions">
         <button id="proModeCloseIntroButton" type="button" class="secondary-btn">Close</button>
