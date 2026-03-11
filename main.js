@@ -3222,17 +3222,50 @@ function initStudyQueueUiIfNeeded() {
   card.setAttribute("tabindex", "0");
   card.setAttribute("aria-pressed", "false");
   card.style.cursor = "pointer";
-  card.style.transition = "transform 200ms ease";
-  card.style.willChange = "transform";
+  card.style.position = "relative";
+  card.style.perspective = "900px";
+  card.style.minHeight = "160px";
 
-  const title = document.createElement("p");
-  title.className = "flashcard-visual-title";
+  const cardInner = document.createElement("div");
+  cardInner.style.position = "relative";
+  cardInner.style.width = "100%";
+  cardInner.style.minHeight = "150px";
+  cardInner.style.transformStyle = "preserve-3d";
+  cardInner.style.transition = "transform 220ms ease";
+  cardInner.style.willChange = "transform";
 
-  const text = document.createElement("p");
-  text.className = "flashcard-visual-text";
+  const frontFace = document.createElement("div");
+  frontFace.style.position = "absolute";
+  frontFace.style.inset = "0";
+  frontFace.style.backfaceVisibility = "hidden";
+  frontFace.style.display = "flex";
+  frontFace.style.flexDirection = "column";
 
-  card.appendChild(title);
-  card.appendChild(text);
+  const backFace = document.createElement("div");
+  backFace.style.position = "absolute";
+  backFace.style.inset = "0";
+  backFace.style.backfaceVisibility = "hidden";
+  backFace.style.transform = "rotateY(180deg)";
+  backFace.style.display = "flex";
+  backFace.style.flexDirection = "column";
+
+  const frontTitle = document.createElement("p");
+  frontTitle.className = "flashcard-visual-title";
+  const frontText = document.createElement("p");
+  frontText.className = "flashcard-visual-text";
+
+  const backTitle = document.createElement("p");
+  backTitle.className = "flashcard-visual-title";
+  const backText = document.createElement("p");
+  backText.className = "flashcard-visual-text";
+
+  frontFace.appendChild(frontTitle);
+  frontFace.appendChild(frontText);
+  backFace.appendChild(backTitle);
+  backFace.appendChild(backText);
+  cardInner.appendChild(frontFace);
+  cardInner.appendChild(backFace);
+  card.appendChild(cardInner);
 
   const progress = document.createElement("p");
   progress.className = "tutorial-label";
@@ -3270,8 +3303,11 @@ function initStudyQueueUiIfNeeded() {
   studyQueueUi = {
     container: flashcardsVisualGrid,
     card,
-    title,
-    text,
+    inner: cardInner,
+    frontTitle,
+    frontText,
+    backTitle,
+    backText,
     progress,
     buttons: {
       prev: prevButton,
@@ -3567,8 +3603,13 @@ function renderStudyQueueViewer() {
   const kindLabel = item.kind === "task" ? "Task" : item.kind === "plan" ? "Study Plan" : "Flashcard";
   const faceLabel = isStudyCardFlipped ? "Back" : "Front";
 
-  studyQueueUi.title.textContent = `${kindLabel} ${faceLabel}`;
-  studyQueueUi.text.textContent = isStudyCardFlipped ? item.back : item.front;
+  studyQueueUi.frontTitle.textContent = `${kindLabel} Front`;
+  studyQueueUi.frontText.textContent = item.front;
+  studyQueueUi.backTitle.textContent = `${kindLabel} Back`;
+  studyQueueUi.backText.textContent = item.back;
+  if (studyQueueUi.inner) {
+    studyQueueUi.inner.style.transform = isStudyCardFlipped ? "rotateY(180deg)" : "rotateY(0deg)";
+  }
   studyQueueUi.card.setAttribute("aria-pressed", isStudyCardFlipped ? "true" : "false");
   updateStudyQueueProgress(queue, index);
   updateStudyQueueControls(queue, index);
@@ -3617,15 +3658,11 @@ function flipStudyQueueCard() {
     return;
   }
   isStudyCardAnimating = true;
-  studyQueueUi.card.style.transform = "rotateY(90deg)";
+  isStudyCardFlipped = !isStudyCardFlipped;
+  renderStudyQueueViewer();
   setTimeout(() => {
-    isStudyCardFlipped = !isStudyCardFlipped;
-    renderStudyQueueViewer();
-    studyQueueUi.card.style.transform = "rotateY(0deg)";
-    setTimeout(() => {
-      isStudyCardAnimating = false;
-    }, 200);
-  }, 140);
+    isStudyCardAnimating = false;
+  }, 240);
 }
 
 function moveStudyQueueIndex(delta) {
