@@ -220,7 +220,7 @@ let authView = "sign-in";
 let clerkLoaded = false;
 let authFormsMounted = false;
 let authFlowStarted = false;
-const ENABLE_AUTH = Boolean(getClerkPublishableKey());
+let ENABLE_AUTH = Boolean(getClerkPublishableKey());
 let pendingRegenerateResolver = null;
 let uploadedNotesPhotoDataUrl = "";
 let flashcardsFrontsPreviewUrl = "";
@@ -4054,10 +4054,25 @@ function playTransientAnimation(element, className) {
 function getClerkPublishableKey() {
   const metaKey =
     document.querySelector('meta[name="clerk-publishable-key"]')?.getAttribute("content") || "";
+  const scriptKey =
+    document
+      .querySelector("script[data-clerk-publishable-key]")?.getAttribute("data-clerk-publishable-key") ||
+    document
+      .querySelector("script[data-clerk-publishableKey]")?.getAttribute("data-clerk-publishableKey") ||
+    "";
+  const globalKey =
+    window.__clerk_publishable_key ||
+    window.__clerk_publishable_key__ ||
+    window.__CLERK_PUBLISHABLE_KEY__ ||
+    window.__clerkPublishableKey ||
+    window.Clerk?.publishableKey ||
+    "";
   const configKey =
     window.APP_CONFIG?.CLERK_PUBLISHABLE_KEY ||
     window.CLERK_PUBLISHABLE_KEY ||
     metaKey ||
+    scriptKey ||
+    globalKey ||
     "";
   if (typeof configKey !== "string") {
     return "";
@@ -4250,6 +4265,13 @@ async function openAccountLogin() {
 
   promptAuthForFeature("access your account");
   if (!ENABLE_AUTH) {
+    const recoveredKey = getClerkPublishableKey();
+    if (recoveredKey) {
+      ENABLE_AUTH = true;
+      await initializeAuthGate();
+    }
+  }
+  if (!ENABLE_AUTH) {
     if (authGateText) {
       authGateText.textContent = "Login is currently disabled in this build.";
     }
@@ -4418,36 +4440,44 @@ async function handleAuthSignedOut() {
 
 async function initializeAuthGate() {
   const clerkPublishableKey = getClerkPublishableKey();
+  const hasExistingClerk = Boolean(window.Clerk && typeof window.Clerk.load === "function");
   continueAsGuest();
 
-  if (!clerkPublishableKey) {
+  if (!clerkPublishableKey && !hasExistingClerk) {
     if (authGateTitle) {
       authGateTitle.textContent = "Missing Clerk key";
     }
     if (authGateText) {
       authGateText.textContent =
-        "Set a Clerk publishable key in config.js or via the clerk-publishable-key meta tag.";
+        "Set a Clerk publishable key in config.js, the clerk-publishable-key meta tag, or your Clerk JS snippet.";
     }
     console.warn("Missing Clerk key. Auth-required actions cannot complete sign-in.");
     return;
   }
 
-  const hasClerk = await ensureClerkLoaded(clerkPublishableKey);
-  if (!hasClerk || !window.Clerk) {
-    if (authGateTitle) {
-      authGateTitle.textContent = "Login script failed to load";
+  if (clerkPublishableKey) {
+    const hasClerk = await ensureClerkLoaded(clerkPublishableKey);
+    if (!hasClerk || !window.Clerk) {
+      if (authGateTitle) {
+        authGateTitle.textContent = "Login script failed to load";
+      }
+      if (authGateText) {
+        authGateText.textContent =
+          "Could not load Clerk from the CDN. Disable strict blockers or try another network.";
+      }
+      console.warn("Could not load Clerk script. Auth-required actions may be unavailable.");
+      return;
     }
-    if (authGateText) {
-      authGateText.textContent =
-        "Could not load Clerk from the CDN. Disable strict blockers or try another network.";
-    }
-    console.warn("Could not load Clerk script. Auth-required actions may be unavailable.");
-    return;
   }
 
   try {
-    await window.Clerk.load({ publishableKey: clerkPublishableKey });
+    if (clerkPublishableKey) {
+      await window.Clerk.load({ publishableKey: clerkPublishableKey });
+    } else {
+      await window.Clerk.load();
+    }
     clerkLoaded = true;
+    ENABLE_AUTH = true;
 
     if (window.Clerk.user) {
       if (clerkUserButton) {
