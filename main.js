@@ -841,7 +841,7 @@ async function handleCleanNotes() {
   triggerSummarizeClickAnimation(cleanButton);
   setLoadingState(true, "clean");
   scheduleSlowGenerationToast();
-  statusText.textContent = "AI is typing";
+  statusText.textContent = "AI is streaming";
   statusText.classList.add("is-streaming");
 
   try {
@@ -883,7 +883,7 @@ async function summarizeArticleFromLink() {
   triggerSummarizeClickAnimation(summarizeLinkButton);
   setLoadingState(true, "article");
   scheduleSlowGenerationToast();
-  statusText.textContent = "AI is typing";
+  statusText.textContent = "AI is streaming";
   statusText.classList.add("is-streaming");
 
   try {
@@ -1048,10 +1048,10 @@ function updateStreamingStatus(_chunk, fullText) {
   statusText.classList.add("is-streaming");
   updateLiveStreamPreview(fullText);
   if (!preview) {
-    statusText.textContent = "AI is typing";
+    statusText.textContent = "AI is streaming";
     return;
   }
-  statusText.textContent = `AI is typing: ${preview.slice(-90)}`;
+  statusText.textContent = `AI is streaming: ${preview.slice(-90)}`;
 }
 
 function showLiveStreamPreview(initialText = "") {
@@ -1101,7 +1101,7 @@ function routeStatusToToastIfNeeded() {
   if (!message) {
     return;
   }
-  if (statusText.classList.contains("is-streaming") || message.startsWith("AI is typing")) {
+  if (statusText.classList.contains("is-streaming") || message.startsWith("AI is typing") || message.startsWith("AI is streaming")) {
     return;
   }
   if (message === "Ready") {
@@ -2107,26 +2107,26 @@ async function renderResultsWithTyping(result) {
   setCardVisibility(flashcardsCard, result.selectedOutputs?.flashcards);
   setCardVisibility(quizQuestionsCard, result.selectedOutputs?.quizQuestions);
 
-  await renderListWithTyping(studyTasksList, result.studyTasks);
+  renderListWithTyping(studyTasksList, result.studyTasks);
   setCopyButtonEnabledByContent(copyStudyTasksButton, studyTasksList);
   setDownloadButtonEnabledByContent(downloadStudyTasksButton, studyTasksList);
-  await renderListWithTyping(studyOrderList, result.studyOrder);
+  renderListWithTyping(studyOrderList, result.studyOrder);
   setCopyButtonEnabledByContent(copyStudyPlanButton, studyOrderList);
   setDownloadButtonEnabledByContent(downloadStudyPlanButton, studyOrderList);
-  await renderListWithTyping(cleanNotesList, result.cleanNotes);
+  renderListWithTyping(cleanNotesList, result.cleanNotes);
   setCopyButtonEnabledByContent(copyCleanNotesButton, cleanNotesList);
   setDownloadButtonEnabledByContent(downloadCleanNotesButton, cleanNotesList);
-  await renderFlashcardsWithTyping(result.flashcards);
+  renderFlashcardsWithTyping(result.flashcards);
   setCopyButtonEnabledByContent(copyFlashcardsButton, flashcardsList);
   setDownloadButtonEnabledByContent(downloadFlashcardsButton, flashcardsList);
-  await renderListWithTyping(quizQuestionsList, result.quizQuestions);
+  renderListWithTyping(quizQuestionsList, result.quizQuestions);
   setCopyButtonEnabledByContent(copyQuizButton, quizQuestionsList);
   setDownloadButtonEnabledByContent(downloadQuizButton, quizQuestionsList);
 }
 
-async function renderFlashcardsWithTyping(cards) {
+function renderFlashcardsWithTyping(cards) {
   renderList(flashcardsList, cards, false);
-  await renderFlashcardsVisualsWithTyping(cards);
+  renderFlashcardsVisualsWithTyping(cards);
   refreshFlashcardsPdfPreview(cards);
 }
 
@@ -2205,22 +2205,8 @@ function triggerCheckboxAnimation(checkbox) {
   checkbox.classList.add("check-pop");
 }
 
-async function renderListWithTyping(listElement, items, typingDelayMs = 16) {
-  listElement.innerHTML = "";
-
-  if (!Array.isArray(items) || items.length === 0) {
-    const fallbackItem = document.createElement("li");
-    fallbackItem.textContent = "No items generated yet.";
-    listElement.appendChild(fallbackItem);
-    return;
-  }
-
-  for (const item of items) {
-    const li = document.createElement("li");
-    listElement.appendChild(li);
-    await typeText(li, item, typingDelayMs);
-    li.innerHTML = highlightImportantParts(item);
-  }
+function renderListWithTyping(listElement, items) {
+  renderList(listElement, items);
 }
 
 function typeText(element, text, delayMs = 16) {
@@ -3195,57 +3181,8 @@ function renderFlashcardsVisuals(cards) {
   flashcardsVisualGrid.classList.remove("hidden");
 }
 
-async function renderFlashcardsVisualsWithTyping(cards) {
-  if (!flashcardsVisualGrid) {
-    return;
-  }
-
-  flashcardsVisualGrid.innerHTML = "";
-  const items = ensureStringArray(cards);
-  if (items.length === 0) {
-    flashcardsVisualGrid.classList.add("hidden");
-    if (flashcardsList) {
-      flashcardsList.classList.remove("hidden");
-    }
-    return;
-  }
-
-  if (flashcardsList) {
-    flashcardsList.classList.add("hidden");
-  }
-
-  for (let index = 0; index < items.length; index += 1) {
-    const { front, back } = parseFlashcardText(items[index], index + 1);
-    const wrapper = document.createElement("div");
-    wrapper.className = "flashcard-visual";
-
-    const frontTitle = document.createElement("p");
-    frontTitle.className = "flashcard-visual-title";
-    frontTitle.textContent = `Card ${index + 1} Front`;
-    const frontText = document.createElement("p");
-    frontText.className = "flashcard-visual-text";
-
-    const backTitle = document.createElement("p");
-    backTitle.className = "flashcard-visual-title";
-    backTitle.style.marginTop = "0.6rem";
-    backTitle.textContent = `Card ${index + 1} Back`;
-    const backText = document.createElement("p");
-    backText.className = "flashcard-visual-text";
-
-    wrapper.appendChild(frontTitle);
-    wrapper.appendChild(frontText);
-    wrapper.appendChild(backTitle);
-    wrapper.appendChild(backText);
-    flashcardsVisualGrid.appendChild(wrapper);
-    flashcardsVisualGrid.classList.remove("hidden");
-
-    await typeText(frontText, front, 5);
-    frontText.textContent = front;
-    await delay(24);
-    await typeText(backText, back, 4);
-    backText.textContent = back;
-    await delay(48);
-  }
+function renderFlashcardsVisualsWithTyping(cards) {
+  renderFlashcardsVisuals(cards);
 }
 
 function highlightImportantParts(text) {
@@ -4247,4 +4184,6 @@ window.addEventListener("beforeunload", () => {
     flashcardsBacksPreviewUrl = "";
   }
 });
+
+
 
