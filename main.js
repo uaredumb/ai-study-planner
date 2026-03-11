@@ -4318,6 +4318,10 @@ async function openAccountLogin() {
   }
 
   if (!clerkLoaded) {
+    await initializeAuthGate({ preserveAuthGate: true });
+  }
+
+  if (!clerkLoaded) {
     if (authGateText) {
       authGateText.textContent =
         "Login is still loading. If this persists, disable blockers and refresh once.";
@@ -4477,10 +4481,13 @@ async function handleAuthSignedOut() {
   await switchAuthView("sign-in");
 }
 
-async function initializeAuthGate() {
+async function initializeAuthGate(options = {}) {
+  const { preserveAuthGate = false } = options;
   const clerkPublishableKey = getClerkPublishableKey();
   const hasExistingClerk = Boolean(window.Clerk && typeof window.Clerk.load === "function");
-  continueAsGuest();
+  if (!preserveAuthGate) {
+    continueAsGuest();
+  }
 
   if (!clerkPublishableKey && !hasExistingClerk) {
     if (authGateTitle) {
