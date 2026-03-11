@@ -11,7 +11,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <meta name="clerk-publishable-key" content="" />
+  <meta name="clerk-publishable-key" content="pk_test_c2luZ3VsYXItYXBoaWQtMjcuY2xlcmsuYWNjb3VudHMuZGV2JA" />
+  <script>
+    window.APP_CONFIG = window.APP_CONFIG || {
+      CANONICAL_HOST: "",
+      CLERK_PUBLISHABLE_KEY:
+        document.querySelector('meta[name="clerk-publishable-key"]')?.getAttribute("content") || ""
+    };
+  </script>
   <script src="config.js"></script>
   <script>
     (function redirectDevHostname() {
