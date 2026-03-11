@@ -4115,8 +4115,10 @@ function getClerkPublishableKey() {
     return "";
   }
   const cleaned = configKey.trim().replace(/^['"]|['"]$/g, "");
-  const exact = cleaned.match(/^(pk_(?:test|live)_[A-Za-z0-9_-]+)$/);
-  return exact ? exact[1] : "";
+  if (cleaned.startsWith("pk_test_") || cleaned.startsWith("pk_live_")) {
+    return cleaned;
+  }
+  return "";
 }
 
 function decodeFrontendApiFromPublishableKey(key) {

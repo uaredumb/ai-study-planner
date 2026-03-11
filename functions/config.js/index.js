@@ -1,7 +1,11 @@
 export const onRequest = ({ env }) => {
   const canonicalHost = typeof env?.CANONICAL_HOST === "string" ? env.CANONICAL_HOST : "";
   const clerkPublishableKey =
-    typeof env?.CLERK_PUBLISHABLE_KEY === "string" ? env.CLERK_PUBLISHABLE_KEY : "";
+    typeof env?.CLERK_PUBLISHABLE_KEY === "string"
+      ? env.CLERK_PUBLISHABLE_KEY
+      : typeof env?.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY === "string"
+        ? env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        : "";
 
   const config = {};
   if (canonicalHost) {
