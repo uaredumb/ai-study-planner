@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <meta name="clerk-publishable-key" content="" />
   <script src="config.js"></script>
   <script>
     (function redirectDevHostname() {
@@ -39,6 +40,11 @@
         <p class="eyebrow">One Input. Full Study Pack. Faster Learning.</p>
       </div>
       <div class="top-actions">
+        <div id="clerkUserButton" class="clerk-user-button hidden" aria-label="Account"></div>
+        <button id="accountLoginButton" class="theme-btn" type="button" aria-label="Sign in">
+          <img class="btn-icon" src="icons/profile.svg" alt="" aria-hidden="true" />
+          <span class="btn-label">Sign In</span>
+        </button>
         <button id="tutorialLaunchButton" class="theme-btn" type="button" aria-label="Open help tutorial">
           <span class="btn-glyph" aria-hidden="true">?</span>
           <span class="btn-label">Help</span>
@@ -248,6 +254,37 @@
       </article>
     </section>
   </main>
+
+  <section id="authGate" class="auth-gate hidden" aria-live="polite">
+    <div class="auth-gate-panel card">
+      <p class="auth-kicker">Secure Access</p>
+      <h2 id="authGateTitle">Sign in to continue</h2>
+      <p id="authGateText" class="modal-message">
+        Sign in to save progress across devices, generate outputs, and access personalized tools.
+      </p>
+      <div id="authWelcomeIsland" class="auth-welcome-island">
+        <h3>Welcome to Lumi Study</h3>
+        <p>Sign in to sync study packs and keep your progress across devices.</p>
+        <div class="auth-welcome-actions">
+          <button id="authWelcomeSignIn" class="primary-btn" type="button">Sign In</button>
+          <button id="authWelcomeSignUp" class="secondary-btn" type="button">Create Account</button>
+        </div>
+      </div>
+      <div id="authFormShell" class="auth-form-shell hidden">
+        <div class="auth-switch-row">
+          <button id="authSignInTab" class="secondary-btn auth-tab-btn active" type="button">Sign In</button>
+          <button id="authSignUpTab" class="secondary-btn auth-tab-btn" type="button">Sign Up</button>
+        </div>
+        <div id="clerkAuthStack" class="clerk-auth-stack" data-auth-direction="backward">
+          <div id="clerkSignInMount" class="clerk-auth-mount auth-pane active" aria-hidden="false"></div>
+          <div id="clerkSignUpMount" class="clerk-auth-mount auth-pane hidden" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="auth-guest-actions">
+        <button id="authSkipButton" class="secondary-btn auth-skip-btn" type="button">Continue as guest</button>
+      </div>
+    </div>
+  </section>
 
   <div id="renameModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
     <div class="modal-card">
