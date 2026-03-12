@@ -235,6 +235,7 @@ let statusRouterSuppress = false;
 let fileOpenAnimationFrameA = 0;
 let fileOpenAnimationFrameB = 0;
 let slowGenerationToastTimer = 0;
+let guestGenerationCount = 0;
 
 enforceFileLimitForCurrentMode();
 
@@ -766,6 +767,7 @@ setSummaryMode(loadSummaryMode());
 updateOptionalOutputCards();
 bindCopyButtons();
 bootstrapAuthGate();
+applyAccountGatesUi();
 
 if (appLogo) {
   const logoCandidates = [
@@ -800,7 +802,7 @@ if (appLogo) {
 }
 
 async function handleCleanNotes() {
-  if (!requireAuthenticatedForFeature("generate study packs")) {
+  if (!canGenerateStudyPack()) {
     return;
   }
 
@@ -844,6 +846,7 @@ async function handleCleanNotes() {
     await renderResultsWithTyping(result);
 
     statusText.textContent = "Done. Your study pack is ready.";
+    recordGenerationSuccess();
     handleTutorialGenerationCompleted();
   } catch (error) {
     statusText.textContent = error.message;
@@ -854,7 +857,10 @@ async function handleCleanNotes() {
 }
 
 async function summarizeArticleFromLink() {
-  if (!requireAuthenticatedForFeature("generate study packs")) {
+  if (!requireAccount("use Summarize Article")) {
+    return;
+  }
+  if (!canGenerateStudyPack()) {
     return;
   }
 
@@ -894,6 +900,7 @@ async function summarizeArticleFromLink() {
     await renderResultsWithTyping(result);
 
     statusText.textContent = "Article converted into your study pack.";
+    recordGenerationSuccess();
     handleTutorialGenerationCompleted();
   } catch (error) {
     statusText.textContent = error.message;
@@ -983,6 +990,12 @@ function extractJsonObject(text) {
 }
 
 async function summarizeFromPhoto() {
+  if (!requireAccount("use Summarize Notes Photo")) {
+    return;
+  }
+  if (!canGenerateStudyPack()) {
+    return;
+  }
   if (!uploadedNotesPhotoDataUrl) {
     statusText.textContent = "Add a notes photo first.";
     return;
@@ -1012,6 +1025,7 @@ async function summarizeFromPhoto() {
     await renderResultsWithTyping(result);
 
     statusText.textContent = "Photo converted into your study pack.";
+    recordGenerationSuccess();
     handleTutorialGenerationCompleted();
   } catch (error) {
     statusText.textContent = error.message;
@@ -1306,7 +1320,7 @@ async function extractTextFromPhotoWithVision(imageDataUrl) {
   return typeof payload?.text === "string" ? payload.text.trim() : "";
 }
 
-function loadStudyFiles() {
+function loadStudyFilesFromStorage() {
   try {
     const raw = localStorage.getItem(STUDY_FILES_STORAGE);
 
@@ -1347,7 +1361,17 @@ function loadStudyFiles() {
   }
 }
 
-function loadActiveFileId(files) {
+function loadStudyFiles() {
+  if (!canPersistStudyData()) {
+    return [createStudyFile("My First Notes")];
+  }
+  return loadStudyFilesFromStorage();
+}
+
+function loadActiveFileId(files, useStorage = canPersistStudyData()) {
+  if (!useStorage) {
+    return files[0].id;
+  }
   const savedId = localStorage.getItem(ACTIVE_FILE_ID_STORAGE);
   const exists = files.some((file) => file.id === savedId);
 
@@ -1390,12 +1414,41 @@ function enforceFileLimitForCurrentMode() {
 }
 
 function persistFiles() {
-  if (ENABLE_AUTH && !isUserAuthenticated) {
+  if (!canPersistStudyData()) {
     return;
   }
 
   localStorage.setItem(STUDY_FILES_STORAGE, JSON.stringify(studyFiles));
   localStorage.setItem(ACTIVE_FILE_ID_STORAGE, activeFileId);
+}
+
+function clearPersistedStudyData() {
+  localStorage.removeItem(STUDY_FILES_STORAGE);
+  localStorage.removeItem(ACTIVE_FILE_ID_STORAGE);
+  localStorage.removeItem(PRO_MODE_STORAGE);
+  localStorage.removeItem(USED_PRO_CODE_HASHES_STORAGE);
+}
+
+function resetGuestStudySession() {
+  studyFiles = [createStudyFile("My First Notes")];
+  activeFileId = studyFiles[0].id;
+  guestGenerationCount = 0;
+  renderFiles();
+  loadActiveFileIntoEditor();
+  updateOptionalOutputCards();
+  refreshCopyButtonsFromContent();
+}
+
+function applyAccountGatesUi() {
+  const accountEnabled = hasAccount();
+  const lockedTitle = accountEnabled ? "" : "Sign in required";
+  [newFileButton, saveFileButton, renameFileButton, deleteFileButton].forEach((button) => {
+    if (!button) {
+      return;
+    }
+    button.disabled = false;
+    button.title = lockedTitle;
+  });
 }
 
 function renderFiles() {
@@ -1514,35 +1567,86 @@ function saveCurrentFileOutputSelection() {
 }
 
 function loadProModeState() {
+  if (!hasAccount()) {
+    return false;
+  }
   return localStorage.getItem(PRO_MODE_STORAGE) === "on";
 }
 
 function loadUsedProCodeHashes() {
-  try {
-    const raw = localStorage.getItem(USED_PRO_CODE_HASHES_STORAGE);
-    if (!raw) {
-      return [];
-    }
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-    return parsed.filter((item) => typeof item === "string");
-  } catch (_error) {
-    return [];
+  if (hasAccount()) {
+    return getAccountUsedProCodeHashes();
   }
+  return [];
 }
 
 function markProCodeHashAsUsed(codeHash) {
-  const used = loadUsedProCodeHashes();
-  if (used.includes(codeHash)) {
+  if (!codeHash) {
     return;
   }
-  used.push(codeHash);
-  localStorage.setItem(USED_PRO_CODE_HASHES_STORAGE, JSON.stringify(used));
+  if (canPersistStudyData()) {
+    const used = loadUsedProCodeHashes();
+    if (!used.includes(codeHash)) {
+      used.push(codeHash);
+      localStorage.setItem(USED_PRO_CODE_HASHES_STORAGE, JSON.stringify(used));
+    }
+  }
+  persistProCodeUsage(codeHash).catch(() => {});
+}
+
+function getAccountUnsafeMetadata() {
+  const metadata = window.Clerk?.user?.unsafeMetadata;
+  return metadata && typeof metadata === "object" ? metadata : {};
+}
+
+function getAccountUsedProCodeHashes() {
+  const metadata = getAccountUnsafeMetadata();
+  const hashes = metadata.usedProCodeHashes;
+  if (!Array.isArray(hashes)) {
+    return [];
+  }
+  return hashes.filter((item) => typeof item === "string");
+}
+
+async function persistProCodeUsage(codeHash) {
+  if (!hasAccount() || !window.Clerk?.user || typeof window.Clerk.user.update !== "function") {
+    return;
+  }
+  const metadata = getAccountUnsafeMetadata();
+  const existing = new Set(getAccountUsedProCodeHashes());
+  existing.add(codeHash);
+  const unsafeMetadata = {
+    ...metadata,
+    usedProCodeHashes: Array.from(existing),
+    proUnlocked: true,
+    proUnlockedAt: new Date().toISOString()
+  };
+  await window.Clerk.user.update({ unsafeMetadata });
+}
+
+function syncProModeFromAccount() {
+  if (!hasAccount()) {
+    return;
+  }
+  const metadata = getAccountUnsafeMetadata();
+  if (metadata.proUnlocked) {
+    isProMode = true;
+  } else if (localStorage.getItem(PRO_MODE_STORAGE) === "on") {
+    isProMode = true;
+    persistProCodeUsage("migrated-from-local").catch(() => {});
+  } else {
+    isProMode = false;
+  }
+  if (isProMode && canPersistStudyData()) {
+    localStorage.setItem(PRO_MODE_STORAGE, "on");
+  }
+  applyProModeUi();
 }
 
 function getMaxFilesAllowed() {
+  if (!hasAccount()) {
+    return 1;
+  }
   return isProMode ? PRO_FILE_LIMIT : FREE_FILE_LIMIT;
 }
 
@@ -1642,6 +1746,9 @@ function showProIntroScreen() {
 }
 
 function showProCodeForm() {
+  if (!requireAccount("unlock Pro Mode")) {
+    return;
+  }
   if (proModeForm) {
     proModeForm.classList.remove("hidden");
   }
@@ -1692,6 +1799,9 @@ async function hashTextSha256(text) {
 
 async function submitProCode(event) {
   event.preventDefault();
+  if (!requireAccount("redeem a Pro code")) {
+    return;
+  }
   clearProCodeError();
   const inputCode = proCodeInput?.value?.trim() || "";
   if (!inputCode) {
@@ -1715,14 +1825,16 @@ async function submitProCode(event) {
   }
   markProCodeHashAsUsed(codeHash);
   isProMode = true;
-  localStorage.setItem(PRO_MODE_STORAGE, "on");
+  if (canPersistStudyData()) {
+    localStorage.setItem(PRO_MODE_STORAGE, "on");
+  }
   applyProModeUi();
   closeProModeModal();
   statusText.textContent = "Pro Mode unlocked.";
 }
 
 function createFile() {
-  if (!requireAuthenticatedForFeature("create study files")) {
+  if (!requireAccount("create study files")) {
     return;
   }
 
@@ -1738,7 +1850,7 @@ function createFile() {
 }
 
 function exportActiveFile() {
-  if (!requireAuthenticatedForFeature("save progress")) {
+  if (!requireAccount("save progress")) {
     return;
   }
 
@@ -1789,7 +1901,7 @@ function exportActiveFile() {
 }
 
 function renameActiveFile() {
-  if (!requireAuthenticatedForFeature("rename study files")) {
+  if (!requireAccount("rename study files")) {
     return;
   }
 
@@ -1803,6 +1915,9 @@ function renameActiveFile() {
 }
 
 function openRenameModal(currentName) {
+  if (!requireAccount("rename study files")) {
+    return;
+  }
   if (!renameModal || !renameInput) {
     return;
   }
@@ -1821,6 +1936,10 @@ function closeRenameModal() {
 
 function submitRenameFile(event) {
   event.preventDefault();
+  if (!requireAccount("rename study files")) {
+    closeRenameModal();
+    return;
+  }
 
   const activeFile = getActiveFile();
 
@@ -1924,7 +2043,7 @@ function submitCreateFile(event) {
 }
 
 function deleteActiveFile() {
-  if (!requireAuthenticatedForFeature("delete study files")) {
+  if (!requireAccount("delete study files")) {
     return;
   }
 
@@ -1953,6 +2072,10 @@ function closeDeleteFileModal() {
 }
 
 function confirmDeleteFile() {
+  if (!requireAccount("delete study files")) {
+    closeDeleteFileModal();
+    return;
+  }
   const activeFile = getActiveFile();
 
   if (!activeFile) {
@@ -2509,6 +2632,14 @@ function setSummaryMode(mode) {
   const normalizedMode = mode === "article" || mode === "photo" ? mode : "notes";
   if (normalizedMode !== "notes" && isTutorialActive()) {
     statusText.textContent = "This mode is disabled during the tutorial.";
+    return;
+  }
+  if (normalizedMode === "article" && !requireAccount("use Summarize Article")) {
+    handleSummaryModeChange("notes");
+    return;
+  }
+  if (normalizedMode === "photo" && !requireAccount("use Summarize Notes Photo")) {
+    handleSummaryModeChange("notes");
     return;
   }
   localStorage.setItem(SUMMARY_MODE_STORAGE, normalizedMode);
@@ -3201,41 +3332,16 @@ function initStudyQueueUiIfNeeded() {
   card.setAttribute("tabindex", "0");
   card.setAttribute("aria-pressed", "false");
   card.style.cursor = "pointer";
-  card.style.position = "relative";
-  card.style.perspective = "900px";
-  card.style.minHeight = "190px";
-  card.style.boxShadow =
-    "0 18px 30px rgba(10, 18, 60, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.16)";
-  card.style.border = "1px solid color-mix(in srgb, var(--border), var(--accent) 20%)";
-  card.style.background =
-    "linear-gradient(145deg, color-mix(in srgb, var(--card), #ffffff 12%), color-mix(in srgb, var(--card), #000000 8%))";
+  card.classList.add("flashcard-virtual");
 
   const cardInner = document.createElement("div");
-  cardInner.style.position = "relative";
-  cardInner.style.width = "100%";
-  cardInner.style.minHeight = "170px";
-  cardInner.style.transformStyle = "preserve-3d";
-  cardInner.style.transition = "transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1)";
-  cardInner.style.willChange = "transform";
+  cardInner.className = "flashcard-visual-inner";
 
   const frontFace = document.createElement("div");
-  frontFace.style.position = "absolute";
-  frontFace.style.inset = "0";
-  frontFace.style.backfaceVisibility = "hidden";
-  frontFace.style.display = "flex";
-  frontFace.style.flexDirection = "column";
-  frontFace.style.padding = "0.75rem";
-  frontFace.style.borderRadius = "10px";
+  frontFace.className = "flashcard-visual-face flashcard-visual-front";
 
   const backFace = document.createElement("div");
-  backFace.style.position = "absolute";
-  backFace.style.inset = "0";
-  backFace.style.backfaceVisibility = "hidden";
-  backFace.style.transform = "rotateY(180deg)";
-  backFace.style.display = "flex";
-  backFace.style.flexDirection = "column";
-  backFace.style.padding = "0.75rem";
-  backFace.style.borderRadius = "10px";
+  backFace.className = "flashcard-visual-face flashcard-visual-back";
 
   const frontTitle = document.createElement("p");
   frontTitle.className = "flashcard-visual-title";
@@ -3595,9 +3701,7 @@ function renderStudyQueueViewer() {
   studyQueueUi.frontText.textContent = item.front;
   studyQueueUi.backTitle.textContent = `${kindLabel} Back`;
   studyQueueUi.backText.textContent = item.back;
-  if (studyQueueUi.inner) {
-    studyQueueUi.inner.style.transform = isStudyCardFlipped ? "rotateY(180deg)" : "rotateY(0deg)";
-  }
+  studyQueueUi.card.classList.toggle("is-flipped", isStudyCardFlipped);
   studyQueueUi.card.setAttribute("aria-pressed", isStudyCardFlipped ? "true" : "false");
   updateStudyQueueProgress(queue, index);
   updateStudyQueueControls(queue, index);
@@ -3697,7 +3801,7 @@ function skipCurrentStudyItem() {
 }
 
 function markCurrentStudyItemKnown() {
-  if (!requireAuthenticatedForFeature("save progress")) {
+  if (!requireAccount("save progress")) {
     return;
   }
   const file = getActiveFile();
@@ -4235,15 +4339,23 @@ function continueAsGuest(explicit = false) {
   }
   setAuthFlowStarted(false);
   updateAuthTabs("sign-in");
+  resetAuthGateGuestButton();
+  applyAccountGatesUi();
 }
 
-function promptAuthForFeature(featureLabel) {
+function promptAuthForFeature(featureLabel, options = {}) {
+  const mustLogin = Boolean(options.mustLogin);
   if (authGateTitle) {
     authGateTitle.textContent = `Sign in to ${featureLabel}`;
   }
   if (authGateText) {
-    authGateText.textContent =
-      "You can continue as a guest, but this feature requires an account.";
+    authGateText.textContent = mustLogin
+      ? "An account is required for this feature. Guest access is disabled."
+      : "You can continue as a guest, but this feature requires an account.";
+  }
+  if (authSkipButton) {
+    authSkipButton.disabled = mustLogin;
+    authSkipButton.textContent = mustLogin ? "Account required" : "Continue as guest";
   }
   setAuthFlowStarted(false);
   updateAuthTabs("sign-in");
@@ -4251,7 +4363,9 @@ function promptAuthForFeature(featureLabel) {
     authGate.classList.remove("hidden");
   }
   if (statusText) {
-    statusText.textContent = `Sign in required to ${featureLabel}.`;
+    statusText.textContent = mustLogin
+      ? `Account required to ${featureLabel}.`
+      : `Sign in required to ${featureLabel}.`;
   }
 
   if (ENABLE_AUTH && clerkLoaded && !authFormsMounted) {
@@ -4323,6 +4437,55 @@ async function openAccountLogin() {
       authGateText.textContent = "Could not open login right now. Please refresh and try again.";
     }
   });
+}
+
+function hasAccount() {
+  return Boolean(ENABLE_AUTH && isUserAuthenticated && !isGuestMode);
+}
+
+function canPersistStudyData() {
+  return hasAccount();
+}
+
+function requireAccount(featureLabel) {
+  if (hasAccount()) {
+    return true;
+  }
+  if (!ENABLE_AUTH) {
+    if (statusText) {
+      statusText.textContent = `Account required to ${featureLabel}. Login is unavailable.`;
+    }
+    return false;
+  }
+  promptAuthForFeature(featureLabel, { mustLogin: true });
+  return false;
+}
+
+function resetAuthGateGuestButton() {
+  if (authSkipButton) {
+    authSkipButton.disabled = false;
+    authSkipButton.textContent = "Continue as guest";
+  }
+}
+
+function canGenerateStudyPack() {
+  if (hasAccount()) {
+    return true;
+  }
+  if (guestGenerationCount >= 1) {
+    if (statusText) {
+      statusText.textContent = "Account required to generate more than one study pack.";
+    }
+    promptAuthForFeature("generate more than one study pack", { mustLogin: true });
+    return false;
+  }
+  return true;
+}
+
+function recordGenerationSuccess() {
+  if (!hasAccount()) {
+    guestGenerationCount += 1;
+  }
 }
 
 function bootstrapAuthGate() {
@@ -4482,6 +4645,16 @@ async function ensureAuthFormsMounted() {
 function handleAuthSignedIn() {
   isUserAuthenticated = true;
   isGuestMode = false;
+  guestGenerationCount = 0;
+  resetAuthGateGuestButton();
+  syncProModeFromAccount();
+  studyFiles = loadStudyFilesFromStorage();
+  activeFileId = loadActiveFileId(studyFiles, true);
+  enforceFileLimitForCurrentMode();
+  renderFiles();
+  loadActiveFileIntoEditor();
+  updateOptionalOutputCards();
+  applyAccountGatesUi();
   unlockAppAfterAuth();
 }
 
@@ -4491,6 +4664,12 @@ async function handleAuthSignedOut() {
     clerkUserButton.classList.add("hidden");
   }
   continueAsGuest(true);
+  resetAuthGateGuestButton();
+  isProMode = false;
+  clearPersistedStudyData();
+  resetGuestStudySession();
+  applyProModeUi();
+  applyAccountGatesUi();
   setAuthFlowStarted(false);
   if (!authFormsMounted) {
     await ensureAuthFormsMounted();

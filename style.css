@@ -1002,6 +1002,50 @@ body.dark #themeToggle .btn-icon {
   background: color-mix(in srgb, var(--card), #ffffff 10%);
 }
 
+.flashcard-visual.flashcard-virtual {
+  position: relative;
+  perspective: 900px;
+  min-height: 190px;
+  padding: 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--border), var(--accent) 20%);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--card), #ffffff 12%),
+    color-mix(in srgb, var(--card), #000000 8%)
+  );
+  box-shadow:
+    0 18px 30px rgba(10, 18, 60, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.flashcard-visual-inner {
+  position: relative;
+  width: 100%;
+  min-height: 175px;
+  transform-style: preserve-3d;
+  transition: transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+
+.flashcard-visual.is-flipped .flashcard-visual-inner {
+  transform: rotateY(180deg);
+}
+
+.flashcard-visual-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0.85rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--card), #ffffff 6%);
+}
+
+.flashcard-visual-back {
+  transform: rotateY(180deg);
+}
+
 .flashcard-visual-title {
   margin: 0 0 0.35rem;
   font-size: 0.82rem;
