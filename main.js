@@ -3013,19 +3013,7 @@ function buildCombinedFlashcardsPdf(rawCards) {
 }
 
 function refreshFlashcardsPdfPreview(rawCards) {
-  const cards = ensureStringArray(
-    Array.isArray(rawCards) && rawCards.length > 0 ? rawCards : getStudyQueueFlashcardStrings()
-  );
-  if (cards.length === 0) {
-    hideFlashcardsPdfPreview();
-    return;
-  }
-  if (!window.jspdf || !window.jspdf.jsPDF) {
-    return;
-  }
-
-  const { frontsBlob, backsBlob } = buildCuttableFlashcardsPdfs(cards);
-  showFlashcardsPdfPreview(frontsBlob, backsBlob);
+  hideFlashcardsPdfPreview();
 }
 
 function downloadBlob(blob, fileName) {
@@ -3039,30 +3027,7 @@ function downloadBlob(blob, fileName) {
 }
 
 function showFlashcardsPdfPreview(frontsBlob, backsBlob) {
-  if (!flashcardsPdfPreviewWrap || !flashcardsPdfPreview || !frontsBlob || !backsBlob) {
-    return;
-  }
-
-  if (flashcardsFrontsPreviewUrl) {
-    URL.revokeObjectURL(flashcardsFrontsPreviewUrl);
-    flashcardsFrontsPreviewUrl = "";
-  }
-  if (flashcardsBacksPreviewUrl) {
-    URL.revokeObjectURL(flashcardsBacksPreviewUrl);
-    flashcardsBacksPreviewUrl = "";
-  }
-
-  flashcardsFrontsPreviewUrl = URL.createObjectURL(frontsBlob);
-  flashcardsBacksPreviewUrl = URL.createObjectURL(backsBlob);
-  flashcardsPdfPreview.src = flashcardsFrontsPreviewUrl;
-  if (previewFrontsButton) {
-    previewFrontsButton.classList.add("active");
-  }
-  if (previewBacksButton) {
-    previewBacksButton.classList.remove("active");
-  }
-
-  flashcardsPdfPreviewWrap.classList.remove("hidden");
+  hideFlashcardsPdfPreview();
 }
 
 function hideFlashcardsPdfPreview() {
