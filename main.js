@@ -1427,6 +1427,10 @@ function clearPersistedStudyData() {
   localStorage.removeItem(ACTIVE_FILE_ID_STORAGE);
   localStorage.removeItem(PRO_MODE_STORAGE);
   localStorage.removeItem(USED_PRO_CODE_HASHES_STORAGE);
+  localStorage.removeItem(THEME_KEY);
+  localStorage.removeItem(PERFORMANCE_MODE_KEY);
+  localStorage.removeItem(SUMMARY_MODE_STORAGE);
+  localStorage.removeItem(TUTORIAL_SEEN_KEY);
 }
 
 function resetGuestStudySession() {
@@ -2552,7 +2556,9 @@ function generateQuizQuestions(sourceLines) {
 
 function toggleTheme() {
   const isDark = document.body.classList.toggle("dark");
-  localStorage.setItem(THEME_KEY, isDark ? "dark" : "light");
+  if (canPersistStudyData()) {
+    localStorage.setItem(THEME_KEY, isDark ? "dark" : "light");
+  }
   updateThemeButtonLabel(isDark);
 }
 
@@ -2593,7 +2599,9 @@ async function togglePerformanceMode() {
   clearTransientAnimationClasses();
 
   const enabled = document.body.classList.toggle("performance-mode");
-  localStorage.setItem(PERFORMANCE_MODE_KEY, enabled ? "on" : "off");
+  if (canPersistStudyData()) {
+    localStorage.setItem(PERFORMANCE_MODE_KEY, enabled ? "on" : "off");
+  }
   updatePerformanceButtonLabel(enabled);
   clearTransientAnimationClasses();
 
@@ -2642,7 +2650,9 @@ function setSummaryMode(mode) {
     handleSummaryModeChange("notes");
     return;
   }
-  localStorage.setItem(SUMMARY_MODE_STORAGE, normalizedMode);
+  if (canPersistStudyData()) {
+    localStorage.setItem(SUMMARY_MODE_STORAGE, normalizedMode);
+  }
   handleSummaryModeChange(normalizedMode);
 }
 
@@ -4320,6 +4330,7 @@ function unlockAppAfterAuth() {
 function continueAsGuest(explicit = false) {
   if (explicit) {
     isGuestMode = true;
+    clearPersistedStudyData();
   }
   if (authGate) {
     authGate.classList.add("hidden");
@@ -4857,7 +4868,9 @@ function skipTutorial() {
 }
 
 function finishTutorial() {
-  localStorage.setItem(TUTORIAL_SEEN_KEY, "yes");
+  if (canPersistStudyData()) {
+    localStorage.setItem(TUTORIAL_SEEN_KEY, "yes");
+  }
   clearTutorialHighlights();
   document.body.classList.remove("tutorial-lock");
   closeModalWithAnimation(tutorialSkipConfirmModal);
