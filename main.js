@@ -765,17 +765,7 @@ if (outputQuizQuestions) {
 setSummaryMode(loadSummaryMode());
 updateOptionalOutputCards();
 bindCopyButtons();
-if (ENABLE_AUTH) {
-  initializeAuthGate();
-} else {
-  if (authGate) {
-    authGate.classList.add("hidden");
-  }
-  if (clerkUserButton) {
-    clerkUserButton.classList.add("hidden");
-  }
-  isUserAuthenticated = true;
-}
+bootstrapAuthGate();
 
 if (appLogo) {
   const logoCandidates = [
@@ -4337,6 +4327,35 @@ async function openAccountLogin() {
   });
 }
 
+function bootstrapAuthGate() {
+  const initialKey = getClerkPublishableKey();
+  if (initialKey) {
+    ENABLE_AUTH = true;
+    initializeAuthGate().catch((error) => {
+      console.error("Initial auth bootstrap failed", error);
+    });
+    return;
+  }
+
+  if (authGate) {
+    authGate.classList.add("hidden");
+  }
+  if (clerkUserButton) {
+    clerkUserButton.classList.add("hidden");
+  }
+
+  window.setTimeout(() => {
+    const lateKey = getClerkPublishableKey();
+    if (!lateKey) {
+      return;
+    }
+    ENABLE_AUTH = true;
+    initializeAuthGate({ preserveAuthGate: true }).catch((error) => {
+      console.error("Delayed auth bootstrap failed", error);
+    });
+  }, 420);
+}
+
 function updateAuthTabs(view) {
   if (authSignInTab) {
     authSignInTab.classList.toggle("active", view === "sign-in");
@@ -4484,12 +4503,11 @@ async function handleAuthSignedOut() {
 async function initializeAuthGate(options = {}) {
   const { preserveAuthGate = false } = options;
   const clerkPublishableKey = getClerkPublishableKey();
-  const hasExistingClerk = Boolean(window.Clerk && typeof window.Clerk.load === "function");
   if (!preserveAuthGate) {
     continueAsGuest();
   }
 
-  if (!clerkPublishableKey && !hasExistingClerk) {
+  if (!clerkPublishableKey) {
     if (authGateTitle) {
       authGateTitle.textContent = "Missing Clerk key";
     }
@@ -4501,27 +4519,21 @@ async function initializeAuthGate(options = {}) {
     return;
   }
 
-  if (clerkPublishableKey) {
-    const hasClerk = await ensureClerkLoaded(clerkPublishableKey);
-    if (!hasClerk || !window.Clerk) {
-      if (authGateTitle) {
-        authGateTitle.textContent = "Login script failed to load";
-      }
-      if (authGateText) {
-        authGateText.textContent =
-          "Could not load Clerk from the CDN. Disable strict blockers or try another network.";
-      }
-      console.warn("Could not load Clerk script. Auth-required actions may be unavailable.");
-      return;
+  const hasClerk = await ensureClerkLoaded(clerkPublishableKey);
+  if (!hasClerk || !window.Clerk) {
+    if (authGateTitle) {
+      authGateTitle.textContent = "Login script failed to load";
     }
+    if (authGateText) {
+      authGateText.textContent =
+        "Could not load Clerk from the CDN. Disable strict blockers or try another network.";
+    }
+    console.warn("Could not load Clerk script. Auth-required actions may be unavailable.");
+    return;
   }
 
   try {
-    if (clerkPublishableKey) {
-      await window.Clerk.load({ publishableKey: clerkPublishableKey });
-    } else {
-      await window.Clerk.load();
-    }
+    await window.Clerk.load({ publishableKey: clerkPublishableKey });
     clerkLoaded = true;
     ENABLE_AUTH = true;
 
