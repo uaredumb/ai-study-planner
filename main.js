@@ -2105,7 +2105,11 @@ async function renderResultsWithTyping(result) {
   setCardVisibility(studyTasksCard, result.selectedOutputs?.studyTasks);
   setCardVisibility(studyPlanCard, result.selectedOutputs?.studyPlan);
   setCardVisibility(cleanNotesCard, result.selectedOutputs?.cleanNotes);
-  setCardVisibility(flashcardsCard, result.selectedOutputs?.flashcards);
+  const showSessionCard =
+    Boolean(result.selectedOutputs?.flashcards) ||
+    Boolean(result.selectedOutputs?.studyTasks) ||
+    Boolean(result.selectedOutputs?.studyPlan);
+  setCardVisibility(flashcardsCard, showSessionCard);
   setCardVisibility(quizQuestionsCard, result.selectedOutputs?.quizQuestions);
 
   renderListWithTyping(studyTasksList, result.studyTasks);
@@ -2260,7 +2264,13 @@ function renderFileResults(file) {
   setCardVisibility(cleanNotesCard, file.cleanNotes.length > 0 || Boolean(outputCleanNotes?.checked));
   setCardVisibility(studyTasksCard, file.studyTasks.length > 0 || Boolean(outputStudyTasks?.checked));
   setCardVisibility(studyPlanCard, file.studyOrder.length > 0 || Boolean(outputStudyPlan?.checked));
-  setCardVisibility(flashcardsCard, file.flashcards.length > 0 || Boolean(outputFlashcards?.checked));
+  setCardVisibility(
+    flashcardsCard,
+    hasStudyQueueItems(file) ||
+      Boolean(outputFlashcards?.checked) ||
+      Boolean(outputStudyTasks?.checked) ||
+      Boolean(outputStudyPlan?.checked)
+  );
   setCardVisibility(quizQuestionsCard, file.quizQuestions.length > 0 || Boolean(outputQuizQuestions?.checked));
   refreshCopyButtonsFromContent();
 }
@@ -2269,7 +2279,13 @@ function updateOptionalOutputCards() {
   setCardVisibility(studyTasksCard, Boolean(outputStudyTasks?.checked));
   setCardVisibility(studyPlanCard, Boolean(outputStudyPlan?.checked));
   setCardVisibility(cleanNotesCard, Boolean(outputCleanNotes?.checked));
-  setCardVisibility(flashcardsCard, Boolean(outputFlashcards?.checked));
+  const file = getActiveFile();
+  const showSessionCard =
+    Boolean(outputFlashcards?.checked) ||
+    Boolean(outputStudyTasks?.checked) ||
+    Boolean(outputStudyPlan?.checked) ||
+    hasStudyQueueItems(file);
+  setCardVisibility(flashcardsCard, showSessionCard);
   setCardVisibility(quizQuestionsCard, Boolean(outputQuizQuestions?.checked));
   if (flashcardsCountWrap) {
     flashcardsCountWrap.classList.toggle("hidden", !Boolean(outputFlashcards?.checked));
@@ -3164,6 +3180,14 @@ function ensureStudyQueueFields(file) {
   }
 }
 
+function hasStudyQueueItems(file) {
+  if (!file) {
+    return false;
+  }
+  ensureStudyQueueFields(file);
+  return Array.isArray(file.studyQueue) && file.studyQueue.length > 0;
+}
+
 function initStudyQueueUiIfNeeded() {
   if (studyQueueUi || !flashcardsVisualGrid) {
     return;
@@ -3551,7 +3575,7 @@ function renderStudyQueueViewer() {
     }
     flashcardsVisualGrid.classList.add("hidden");
     studyQueueUi.progress.textContent = "Cards left: 0 / 0";
-    statusText.textContent = "Study session complete.";
+    statusText.textContent = "Generate a study pack to start your session.";
     refreshCopyButtonsFromContent();
     return;
   }
