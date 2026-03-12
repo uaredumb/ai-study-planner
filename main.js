@@ -3179,14 +3179,19 @@ function initStudyQueueUiIfNeeded() {
   card.style.cursor = "pointer";
   card.style.position = "relative";
   card.style.perspective = "900px";
-  card.style.minHeight = "160px";
+  card.style.minHeight = "190px";
+  card.style.boxShadow =
+    "0 18px 30px rgba(10, 18, 60, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.16)";
+  card.style.border = "1px solid color-mix(in srgb, var(--border), var(--accent) 20%)";
+  card.style.background =
+    "linear-gradient(145deg, color-mix(in srgb, var(--card), #ffffff 12%), color-mix(in srgb, var(--card), #000000 8%))";
 
   const cardInner = document.createElement("div");
   cardInner.style.position = "relative";
   cardInner.style.width = "100%";
-  cardInner.style.minHeight = "150px";
+  cardInner.style.minHeight = "170px";
   cardInner.style.transformStyle = "preserve-3d";
-  cardInner.style.transition = "transform 220ms ease";
+  cardInner.style.transition = "transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1)";
   cardInner.style.willChange = "transform";
 
   const frontFace = document.createElement("div");
@@ -3195,6 +3200,8 @@ function initStudyQueueUiIfNeeded() {
   frontFace.style.backfaceVisibility = "hidden";
   frontFace.style.display = "flex";
   frontFace.style.flexDirection = "column";
+  frontFace.style.padding = "0.75rem";
+  frontFace.style.borderRadius = "10px";
 
   const backFace = document.createElement("div");
   backFace.style.position = "absolute";
@@ -3203,6 +3210,8 @@ function initStudyQueueUiIfNeeded() {
   backFace.style.transform = "rotateY(180deg)";
   backFace.style.display = "flex";
   backFace.style.flexDirection = "column";
+  backFace.style.padding = "0.75rem";
+  backFace.style.borderRadius = "10px";
 
   const frontTitle = document.createElement("p");
   frontTitle.className = "flashcard-visual-title";
