@@ -204,6 +204,12 @@ const PRO_CODE_HASHES = [
 const NON_NOTES_MESSAGE =
   "I can only generate from real study notes or learning material. Please add notes, class content, or an educational article.";
 
+let isUserAuthenticated = false;
+let isGuestMode = false;
+let authView = "sign-in";
+let clerkLoaded = false;
+let authFormsMounted = false;
+let authFlowStarted = false;
 let ENABLE_AUTH = Boolean(getClerkPublishableKey());
 let studyFiles = loadStudyFiles();
 let activeFileId = loadActiveFileId(studyFiles);
@@ -215,12 +221,6 @@ let allowNativeCopyOnce = false;
 let isPerformanceToggleBusy = false;
 let tutorialPendingAction = "";
 let tutorialDynamicStep = null;
-let isUserAuthenticated = false;
-let isGuestMode = false;
-let authView = "sign-in";
-let clerkLoaded = false;
-let authFormsMounted = false;
-let authFlowStarted = false;
 let pendingRegenerateResolver = null;
 let uploadedNotesPhotoDataUrl = "";
 let flashcardsFrontsPreviewUrl = "";
