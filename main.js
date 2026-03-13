@@ -834,6 +834,7 @@ applyAccountGatesUi();
 if (appLogo) {
   const logoCandidates = [
     appLogo.getAttribute("src"),
+    "LumiStudy logo with glowing orb (1).png",
     "UpdatedLogo.png",
     "logo.png",
     "logo.jpg",
