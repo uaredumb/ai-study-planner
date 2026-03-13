@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lumi Pro</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=20260304" />
+  <link rel="icon" type="image/png" sizes="512x512" href="favicon-512.png?v=20260304" />
+  <link rel="shortcut icon" href="favicon-32.png?v=20260304" />
+  <link rel="apple-touch-icon" sizes="180x180" href="logo.png?v=20260304" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <meta name="clerk-publishable-key" content="pk_test_c2luZ3VsYXItYXBoaWQtMjcuY2xlcmsuYWNjb3VudHMuZGV2JA" />
+  <script>
+    window.APP_CONFIG = window.APP_CONFIG || {
+      CANONICAL_HOST: "",
+      CLERK_PUBLISHABLE_KEY:
+        document.querySelector('meta[name="clerk-publishable-key"]')?.getAttribute("content") || ""
+    };
+  </script>
+  <script src="config.js"></script>
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_c2luZ3VsYXItYXBoaWQtMjcuY2xlcmsuYWNjb3VudHMuZGV2JA"
+    src="https://singular-aphid-27.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+    type="text/javascript">
+  </script>
+  <script>
+    (function redirectDevHostname() {
+      const canonicalHost = window.APP_CONFIG && window.APP_CONFIG.CANONICAL_HOST;
+      if (!canonicalHost) return;
+
+      const host = window.location.hostname;
+      const isDevHost = host.endsWith(".pages.dev") || host.endsWith(".workers.dev");
+      const alreadyCanonical = host === canonicalHost || host === "www." + canonicalHost;
+      if (!isDevHost || alreadyCanonical) return;
+
+      const target = "https://" + canonicalHost + window.location.pathname + window.location.search + window.location.hash;
+      window.location.replace(target);
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css?v=36" />
+</head>
+<body>
+  <div class="bg-shape bg-shape-1" aria-hidden="true"></div>
+  <div class="bg-shape bg-shape-2" aria-hidden="true"></div>
+
+  <main class="pricing-shell">
+    <header class="pricing-topbar">
+      <a id="pricingBackLink" class="theme-btn" href="index.html">
+        <span class="btn-glyph" aria-hidden="true">&#8592;</span>
+        <span class="btn-label">Back to App</span>
+      </a>
+      <div class="pricing-top-actions">
+        <div id="pricingUserButton" class="clerk-user-button hidden" aria-label="Account"></div>
+        <button id="pricingSignInButton" class="theme-btn" type="button" aria-label="Sign in to billing">
+          <span class="btn-glyph" aria-hidden="true">&#9673;</span>
+          <span class="btn-label">Sign In</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="card pricing-hero-card">
+      <div class="pricing-hero-copy">
+        <p class="eyebrow">Lumi Pro Beta</p>
+        <h1>One plan. More room. Cleaner studying.</h1>
+        <p class="pricing-hero-text">
+          Pro keeps Lumi simple: one low-cost plan that opens the higher study limits without turning the app into a mess.
+        </p>
+        <div class="pricing-chip-row">
+          <span class="pricing-chip">Single plan</span>
+          <span class="pricing-chip">Student-friendly price</span>
+          <span class="pricing-chip">Clerk billing ready</span>
+        </div>
+      </div>
+      <div class="pricing-hero-status">
+        <p class="pricing-small-label">Current access</p>
+        <p id="pricingStatusChip" class="pricing-status-chip">Free</p>
+        <p id="pricingStatusText" class="modal-message">Sign in to load secure checkout.</p>
+      </div>
+    </section>
+
+    <section class="pricing-grid">
+      <article class="card pricing-plan-card">
+        <div class="pricing-plan-head">
+          <div>
+            <p class="pricing-small-label">Subscription</p>
+            <h2 id="pricingPlanName">Pro</h2>
+          </div>
+          <span class="beta-pill">Beta</span>
+        </div>
+        <p class="pricing-plan-subtitle">Built for students who want higher limits without extra clutter.</p>
+        <div class="pricing-plan-price">
+          <span id="pricingPlanPrice">$1.50</span>
+          <span class="pricing-plan-cycle">/ month</span>
+        </div>
+        <ul class="pricing-feature-list">
+          <li>Up to 10 flashcards per generation instead of 5.</li>
+          <li>Up to 8000 note characters instead of 3000.</li>
+          <li>Up to 5 study files instead of 2.</li>
+          <li>Future Pro features can plug into the same plan.</li>
+        </ul>
+        <button id="pricingPrimaryButton" class="primary-btn" type="button">Create account to continue</button>
+        <p id="pricingPrimaryHint" class="tutorial-label">Secure checkout appears here after account login.</p>
+      </article>
+
+      <article id="pricingCheckoutCard" class="card pricing-checkout-card">
+        <div class="pricing-section-head">
+          <div>
+            <p class="pricing-small-label">Secure Checkout</p>
+            <h2>Clerk billing</h2>
+          </div>
+          <span id="pricingInlineStatus" class="pricing-inline-status">Waiting on setup</span>
+        </div>
+
+        <div id="pricingAuthNotice" class="pricing-inline-notice">
+          <p>You need a Lumi account before Clerk can show the checkout flow.</p>
+        </div>
+
+        <div id="pricingTableWrap" class="pricing-table-wrap hidden">
+          <div id="pricingTableMount"></div>
+        </div>
+
+        <div id="pricingFallback" class="pricing-fallback">
+          <p class="pricing-fallback-title">Billing is wired, but your Stripe-backed plan is not live yet.</p>
+          <ol class="pricing-setup-list">
+            <li>Connect Stripe inside Clerk billing.</li>
+            <li>Create a B2C monthly plan with slug <code id="pricingPlanSlug">pro</code>.</li>
+            <li>Set the public price to <span id="pricingPlanPriceInline">$1.50 / month</span>.</li>
+            <li>Refresh this page and Clerk's pricing table should appear here automatically.</li>
+          </ol>
+        </div>
+      </article>
+    </section>
+
+    <section class="pricing-meta-grid">
+      <article class="card pricing-meta-card">
+        <p class="pricing-small-label">What Happens Next</p>
+        <h2>Ready for Stripe later</h2>
+        <p>
+          This page is already set up to use Clerk's embedded pricing table once your Stripe connection and Pro plan exist.
+        </p>
+      </article>
+
+      <article class="card pricing-meta-card">
+        <p class="pricing-small-label">Plan Slug</p>
+        <h2><code id="pricingPlanSlugDisplay">pro</code></h2>
+        <p>Keep the Clerk plan slug as <code>pro</code> so the app can detect paid access without another UI rewrite.</p>
+      </article>
+    </section>
+  </main>
+
+  <script src="pricing.js?v=2"></script>
+</body>
+</html>

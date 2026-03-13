@@ -174,6 +174,9 @@ const FREE_FILE_LIMIT = 2;
 const PRO_FILE_LIMIT = 5;
 const FREE_FLASHCARDS_LIMIT = 5;
 const PRO_FLASHCARDS_LIMIT = 10;
+const DEFAULT_PRICING_PAGE_PATH = "pricing.html";
+const DEFAULT_PRO_PLAN_SLUG = "pro";
+const DEFAULT_PRO_PLAN_PRICE = "$1.50 / month";
 const PRO_CODE_HASHES = [
   "ea978dc49d8765817c29a92ea3e8512299ebd8c2606053505740a10311bfcdae",
   "b0d40f314074c7e22b0feda853c5cae72ef87916d353939a1c0ec6005f6007f1",
@@ -225,6 +228,7 @@ let allowNativeCopyOnce = false;
 let isPerformanceToggleBusy = false;
 let tutorialPendingAction = "";
 let tutorialDynamicStep = null;
+let tutorialScrollAdjustTimer = 0;
 let pendingRegenerateResolver = null;
 let uploadedNotesPhotoDataUrl = "";
 let flashcardsFrontsPreviewUrl = "";
@@ -405,7 +409,7 @@ window.setTimeout(() => {
 cleanButton.addEventListener("click", handleCleanNotes);
 themeToggle.addEventListener("click", toggleTheme);
 if (proModeButton) {
-  proModeButton.addEventListener("click", () => openProModeModal("general"));
+  proModeButton.addEventListener("click", () => openPricingPage("top-bar"));
 }
 if (performanceToggle) {
   performanceToggle.addEventListener("click", togglePerformanceMode);
@@ -489,7 +493,7 @@ if (proCodeInput) {
   proCodeInput.addEventListener("input", clearProCodeError);
 }
 if (proModeHaveCodeButton) {
-  proModeHaveCodeButton.addEventListener("click", showProCodeForm);
+  proModeHaveCodeButton.addEventListener("click", () => openPricingPage(proModeModal?.dataset?.source || "general"));
 }
 if (proModeCloseIntroButton) {
   proModeCloseIntroButton.addEventListener("click", closeProModeModal);
@@ -625,6 +629,12 @@ document.addEventListener(
   },
   true
 );
+window.addEventListener("resize", () => {
+  if (!isTutorialActive()) {
+    return;
+  }
+  updateTutorialCoachMetrics();
+});
 document.addEventListener("copy", (event) => {
   if (allowNativeCopyOnce) {
     allowNativeCopyOnce = false;
@@ -1508,6 +1518,7 @@ function applyAccountGatesUi() {
     button.disabled = false;
     button.title = lockedTitle;
   });
+  updateProModeButtonVisibility();
 }
 
 function renderFiles() {
@@ -1627,6 +1638,37 @@ function saveCurrentFileOutputSelection() {
   persistFiles();
 }
 
+function getPricingPagePath() {
+  const configured = window.APP_CONFIG?.PRICING_PAGE_PATH;
+  if (typeof configured === "string" && configured.trim()) {
+    return configured.trim();
+  }
+  return DEFAULT_PRICING_PAGE_PATH;
+}
+
+function getProPlanSlug() {
+  const configured = window.APP_CONFIG?.PRO_PLAN_SLUG;
+  if (typeof configured === "string" && configured.trim()) {
+    return configured.trim();
+  }
+  return DEFAULT_PRO_PLAN_SLUG;
+}
+
+function getProPlanPriceLabel() {
+  const configured = window.APP_CONFIG?.PRO_PLAN_PRICE;
+  if (typeof configured === "string" && configured.trim()) {
+    return configured.trim();
+  }
+  return DEFAULT_PRO_PLAN_PRICE;
+}
+
+function openPricingPage(source = "general") {
+  const target = new URL(getPricingPagePath(), window.location.href);
+  target.searchParams.set("source", source);
+  target.searchParams.set("returnTo", "index.html");
+  window.location.href = target.toString();
+}
+
 function loadProModeState() {
   if (!hasAccount()) {
     return false;
@@ -1685,12 +1727,28 @@ async function persistProCodeUsage(codeHash) {
   await window.Clerk.user.update({ unsafeMetadata });
 }
 
+function hasActiveClerkProPlan() {
+  const session = window.Clerk?.session;
+  const planSlug = getProPlanSlug();
+  if (!session || typeof session.checkAuthorization !== "function" || !planSlug) {
+    return false;
+  }
+
+  try {
+    return Boolean(session.checkAuthorization({ plan: planSlug }));
+  } catch (_error) {
+    return false;
+  }
+}
+
 function syncProModeFromAccount() {
   if (!hasAccount()) {
+    isProMode = false;
+    updateProModeButtonVisibility();
     return;
   }
   const metadata = getAccountUnsafeMetadata();
-  if (metadata.proUnlocked) {
+  if (metadata.proUnlocked || hasActiveClerkProPlan()) {
     isProMode = true;
   } else if (localStorage.getItem(PRO_MODE_STORAGE) === "on") {
     isProMode = true;
@@ -1724,8 +1782,9 @@ function updateProModeButtonLabel() {
     return;
   }
   proModeButton.innerHTML = isProMode
-    ? '<span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span><span class="btn-label">Pro: On</span><span class="beta-pill">Beta</span>'
-    : '<span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span><span class="btn-label">Pro: Off</span><span class="beta-pill">Beta</span>';
+    ? '<span class="btn-glyph pro-badge-icon" aria-hidden="true">&#9670;</span><span class="btn-label">Pro Active</span><span class="beta-pill">Beta</span>'
+    : '<span class="btn-glyph pro-badge-icon" aria-hidden="true">&#9670;</span><span class="btn-label">Upgrade</span><span class="beta-pill">Beta</span>';
+  proModeButton.classList.toggle("hidden", !hasAccount());
 }
 
 function updateFlashcardsLimitUi() {
@@ -1750,6 +1809,14 @@ function updateFlashcardsLimitUi() {
   }
 }
 
+function applyProModeButtonState() {
+  updateProModeButtonLabel();
+}
+
+function updateProModeButtonVisibility() {
+  applyProModeButtonState();
+}
+
 function applyProModeUi() {
   updateProModeButtonLabel();
   updateFlashcardsLimitUi();
@@ -1765,20 +1832,25 @@ function applyProModeUi() {
 }
 
 function openProModeModal(source = "general") {
+  if (!hasAccount()) {
+    promptAuthForFeature(`unlock ${getProPlanPriceLabel()} Pro`, { mustLogin: true });
+    return;
+  }
   if (isProMode) {
-    statusText.textContent = "Pro Mode is already unlocked.";
+    statusText.textContent = "Pro is already active on your account.";
     return;
   }
   if (!proModeModal) {
     return;
   }
+  proModeModal.dataset.source = source;
   if (proModeMessage) {
     proModeMessage.textContent =
       source === "flashcards"
-        ? "Pro Mode Beta increases your flashcard limit and unlocks higher study limits."
+        ? `Pro increases your flashcard limit and unlocks higher study limits for ${getProPlanPriceLabel()}.`
         : source === "notes"
-          ? "Pro Mode Beta gives you much more note space and unlocks higher study limits."
-          : "Unlock Pro Mode Beta to increase study limits and productivity.";
+          ? `Pro gives you much more note space and unlocks higher study limits for ${getProPlanPriceLabel()}.`
+          : `Unlock Pro to increase study limits and productivity for ${getProPlanPriceLabel()}.`;
   }
   showProIntroScreen();
   proModeModal.classList.remove("hidden");
@@ -3711,22 +3783,24 @@ function buildQuizAnswerFeedback(userAnswer, item, isCorrect) {
   const safeCorrectAnswer = decodeHtmlEntities(String(item?.answer || "")).trim() || "No answer available.";
   const missingKeywords = getQuizMissingKeywords(userAnswer, safeCorrectAnswer);
   const keywordText = formatQuizKeywordList(missingKeywords);
+  const userAnswerLabel = item?.answerMode === "multiple-choice" ? "You chose" : "Your answer";
 
   if (isCorrect) {
     return {
       title: "Correct",
-      userLine: `Your answer: ${safeUserAnswer}`,
-      answerLine: `Expected answer: ${safeCorrectAnswer}`,
-      fixLine: keywordText
-        ? `Strong answer. To make it even better, mention ${keywordText}.`
-        : "Strong answer. You matched the main idea."
+      userLine:
+        item?.answerMode === "multiple-choice"
+          ? "Nice work. You picked the right answer."
+          : "Nice work. Your answer matches the main idea.",
+      answerLine: "",
+      fixLine: ""
     };
   }
 
   return {
     title: "Needs Fixing",
-    userLine: `Your answer: ${safeUserAnswer}`,
-    answerLine: `Best answer: ${safeCorrectAnswer}`,
+    userLine: `${userAnswerLabel}: ${safeUserAnswer}`,
+    answerLine: `Correct answer: ${safeCorrectAnswer}`,
     fixLine: keywordText
       ? `How to fix it: mention ${keywordText}.`
       : `How to fix it: tie your answer more directly to ${safeCorrectAnswer}.`
@@ -3832,9 +3906,15 @@ function buildQuizResultsView(items, state, file) {
 
     row.appendChild(heading);
     row.appendChild(prompt);
-    row.appendChild(userLine);
-    row.appendChild(answerLine);
-    row.appendChild(fixLine);
+    if (feedback.userLine) {
+      row.appendChild(userLine);
+    }
+    if (feedback.answerLine) {
+      row.appendChild(answerLine);
+    }
+    if (feedback.fixLine) {
+      row.appendChild(fixLine);
+    }
     reviewList.appendChild(row);
   });
 
@@ -3979,9 +4059,15 @@ function renderQuizStudyPanel() {
     fixLine.textContent = nextFeedback.fixLine;
 
     feedback.appendChild(titleLine);
-    feedback.appendChild(userLine);
-    feedback.appendChild(answerLine);
-    feedback.appendChild(fixLine);
+    if (nextFeedback.userLine) {
+      feedback.appendChild(userLine);
+    }
+    if (nextFeedback.answerLine) {
+      feedback.appendChild(answerLine);
+    }
+    if (nextFeedback.fixLine) {
+      feedback.appendChild(fixLine);
+    }
     card.appendChild(feedback);
   }
 
@@ -5813,15 +5899,78 @@ function startTutorial() {
   }
 
   tutorialStepIndex = 0;
-  renderTutorialStep();
   document.body.classList.add("tutorial-lock");
   tutorialCoach.classList.remove("hidden");
+  updateTutorialCoachMetrics();
+  renderTutorialStep();
   if (articleModeButton) {
     articleModeButton.disabled = true;
   }
   if (photoModeButton) {
     photoModeButton.disabled = true;
   }
+}
+
+function updateTutorialCoachMetrics() {
+  const coachHeight =
+    tutorialCoach && !tutorialCoach.classList.contains("hidden")
+      ? Math.ceil(tutorialCoach.getBoundingClientRect().height)
+      : 0;
+  document.documentElement.style.setProperty("--tutorial-coach-height", `${coachHeight}px`);
+}
+
+function scrollTutorialTargetIntoView(target) {
+  if (!target || typeof target.scrollIntoView !== "function") {
+    return;
+  }
+
+  updateTutorialCoachMetrics();
+  const useMobileLayout = window.innerWidth <= 600 || isLikelyMobileDevice();
+  target.scrollIntoView({
+    behavior: "smooth",
+    block: useMobileLayout ? "start" : "center",
+    inline: "nearest"
+  });
+
+  if (tutorialScrollAdjustTimer) {
+    clearTimeout(tutorialScrollAdjustTimer);
+    tutorialScrollAdjustTimer = 0;
+  }
+
+  if (!useMobileLayout || !tutorialCoach || tutorialCoach.classList.contains("hidden")) {
+    return;
+  }
+
+  tutorialScrollAdjustTimer = window.setTimeout(() => {
+    tutorialScrollAdjustTimer = 0;
+    if (!tutorialCoach || tutorialCoach.classList.contains("hidden")) {
+      return;
+    }
+
+    const coachRect = tutorialCoach.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const coachIsTopSheet = coachRect.top <= window.innerHeight * 0.35;
+    const safeGap = 14;
+
+    if (coachIsTopSheet) {
+      const minVisibleTop = coachRect.bottom + safeGap;
+      if (targetRect.top < minVisibleTop) {
+        window.scrollBy({
+          top: targetRect.top - minVisibleTop,
+          behavior: "smooth"
+        });
+      }
+      return;
+    }
+
+    const maxVisibleBottom = coachRect.top - safeGap;
+    if (targetRect.bottom > maxVisibleBottom) {
+      window.scrollBy({
+        top: targetRect.bottom - maxVisibleBottom,
+        behavior: "smooth"
+      });
+    }
+  }, 260);
 }
 
 function renderTutorialStep() {
@@ -5838,7 +5987,7 @@ function renderTutorialStep() {
   const target = getTutorialTarget(step.target);
   if (target) {
     target.classList.add("tutorial-highlight");
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    scrollTutorialTargetIntoView(target);
   }
 
   if (tutorialStepCounter) {
@@ -5913,6 +6062,11 @@ function finishTutorial() {
   }
   clearTutorialHighlights();
   document.body.classList.remove("tutorial-lock");
+  if (tutorialScrollAdjustTimer) {
+    clearTimeout(tutorialScrollAdjustTimer);
+    tutorialScrollAdjustTimer = 0;
+  }
+  document.documentElement.style.setProperty("--tutorial-coach-height", "0px");
   closeModalWithAnimation(tutorialSkipConfirmModal);
   if (tutorialCoach) {
     tutorialCoach.classList.add("hidden");

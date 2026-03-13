@@ -7,6 +7,7 @@
   --accent: #3557ff;
   --accent-strong: #2847df;
   --shadow: 0 16px 40px rgba(40, 61, 158, 0.14);
+  --tutorial-coach-height: 0px;
 }
 
 body.dark {
@@ -76,6 +77,10 @@ body.dark {
   position: relative;
   z-index: 1;
   user-select: none;
+}
+
+body.tutorial-lock .app-shell {
+  padding-bottom: calc(var(--tutorial-coach-height, 0px) + 1rem);
 }
 
 body.auth-locked .app-shell {
@@ -1702,6 +1707,8 @@ body.dark .preview-toggle-btn.active {
   outline-offset: 3px;
   border-radius: 12px;
   animation: tutorialPulse 1.3s ease-in-out infinite;
+  scroll-margin-top: 1rem;
+  scroll-margin-bottom: calc(var(--tutorial-coach-height, 0px) + 1rem);
 }
 
 
@@ -2110,6 +2117,304 @@ body.dark .preview-toggle-btn.active {
   font-weight: 700;
 }
 
+.pricing-shell {
+  width: min(1120px, 94vw);
+  margin: 2rem auto 3rem;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1rem;
+}
+
+.pricing-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem 1rem;
+  flex-wrap: wrap;
+}
+
+.pricing-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.pricing-top-actions .theme-btn {
+  justify-content: center;
+}
+
+.pricing-hero-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.9fr);
+  gap: 1rem;
+  padding: clamp(1.2rem, 2.8vw, 1.7rem);
+  border-radius: 26px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top right, rgba(255, 214, 119, 0.44), transparent 34%),
+    linear-gradient(135deg, #fff7dd 0%, #f5f8ff 46%, #eef3ff 100%);
+  border: 1px solid color-mix(in srgb, var(--border), #f4c764 34%);
+  box-shadow: 0 24px 50px rgba(27, 43, 116, 0.12);
+}
+
+.pricing-hero-copy h1,
+.pricing-plan-head h2,
+.pricing-section-head h2,
+.pricing-meta-card h2 {
+  margin: 0;
+}
+
+.pricing-hero-text {
+  max-width: 56ch;
+  margin: 0.5rem 0 0;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--text), #5e6f8f 18%);
+}
+
+.pricing-chip-row {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.pricing-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.38rem 0.72rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid color-mix(in srgb, #f3be4b, white 48%);
+  color: #6e5100;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.pricing-hero-status {
+  align-self: stretch;
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  padding: 1rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 206, 118, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.pricing-small-label {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pricing-status-chip,
+.pricing-inline-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent), transparent 86%);
+  border: 1px solid color-mix(in srgb, var(--accent), transparent 64%);
+  color: color-mix(in srgb, var(--accent), var(--text) 28%);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pricing-grid,
+.pricing-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.pricing-plan-card,
+.pricing-checkout-card,
+.pricing-meta-card {
+  padding: 1.15rem;
+  border-radius: 24px;
+}
+
+.pricing-plan-card {
+  background:
+    radial-gradient(circle at top right, rgba(255, 215, 126, 0.3), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(245, 248, 255, 0.96) 100%);
+}
+
+.pricing-plan-head,
+.pricing-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pricing-plan-subtitle,
+.pricing-meta-card p {
+  margin: 0.5rem 0 0;
+  color: color-mix(in srgb, var(--text), #657696 18%);
+  line-height: 1.6;
+}
+
+.pricing-plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  font-size: clamp(2rem, 4vw, 2.9rem);
+  font-weight: 800;
+  color: #1f2751;
+}
+
+.pricing-plan-cycle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.pricing-feature-list,
+.pricing-setup-list {
+  margin: 1rem 0 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.55rem;
+  line-height: 1.5;
+}
+
+.pricing-plan-card .primary-btn {
+  width: 100%;
+  margin-top: 1.1rem;
+  justify-content: center;
+}
+
+.pricing-checkout-card,
+.pricing-meta-card {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--card), #ffffff 12%) 0%,
+    color-mix(in srgb, var(--card), var(--bg) 10%) 100%
+  );
+}
+
+.pricing-inline-notice,
+.pricing-fallback {
+  margin-top: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--border), #c8d2ec 28%);
+  background: color-mix(in srgb, var(--card), #f7f9ff 42%);
+}
+
+.pricing-inline-notice p,
+.pricing-fallback p,
+.pricing-setup-list {
+  margin-top: 0;
+}
+
+.pricing-fallback-title {
+  font-weight: 700;
+}
+
+.pricing-table-wrap {
+  margin-top: 1rem;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border), #c7d2ef 28%);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.pricing-table-wrap > div {
+  min-height: 240px;
+}
+
+.pricing-meta-card code,
+.pricing-fallback code {
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 0.9em;
+  padding: 0.12rem 0.28rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent), transparent 88%);
+}
+
+body.dark .pricing-hero-card {
+  background:
+    radial-gradient(circle at top right, rgba(255, 214, 119, 0.16), transparent 34%),
+    linear-gradient(135deg, #242e59 0%, #1b2448 52%, #161e3e 100%);
+  border-color: color-mix(in srgb, var(--border), #f4c764 14%);
+}
+
+body.dark .pricing-hero-text,
+body.dark .pricing-plan-subtitle,
+body.dark .pricing-meta-card p {
+  color: color-mix(in srgb, var(--text), #cad5ff 14%);
+}
+
+body.dark .pricing-hero-status,
+body.dark .pricing-table-wrap,
+body.dark .pricing-inline-notice,
+body.dark .pricing-fallback {
+  background: rgba(16, 24, 50, 0.78);
+}
+
+body.dark .pricing-plan-card {
+  background:
+    radial-gradient(circle at top right, rgba(255, 215, 126, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(26, 34, 68, 0.96) 0%, rgba(21, 29, 58, 0.96) 100%);
+}
+
+body.dark .pricing-plan-price {
+  color: #f6f7ff;
+}
+
+@media (max-width: 900px) {
+  .pricing-hero-card,
+  .pricing-grid,
+  .pricing-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .pricing-shell {
+    width: min(100%, calc(100vw - 1rem));
+    margin: 0.75rem auto 1.5rem;
+  }
+
+  .pricing-topbar {
+    align-items: stretch;
+  }
+
+  .pricing-topbar .theme-btn,
+  .pricing-topbar .pricing-top-actions {
+    width: 100%;
+  }
+
+  .pricing-top-actions {
+    justify-content: space-between;
+  }
+
+  .pricing-top-actions > * {
+    flex: 1 1 calc(50% - 0.3rem);
+  }
+
+  .pricing-plan-card,
+  .pricing-checkout-card,
+  .pricing-meta-card,
+  .pricing-hero-card {
+    border-radius: 20px;
+  }
+}
+
 @media (max-width: 640px) {
   .quiz-study-summary {
     align-items: flex-start;
@@ -2405,6 +2710,21 @@ body.dark .preview-toggle-btn.active {
 }
 
 @media (max-width: 600px) {
+  .files-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .file-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .file-actions .secondary-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .top-actions {
     gap: 0.4rem;
   }
@@ -2488,9 +2808,10 @@ body.dark .preview-toggle-btn.active {
   .tutorial-coach {
     left: 0.6rem;
     right: 0.6rem;
-    bottom: max(0.6rem, env(safe-area-inset-bottom));
+    top: max(0.6rem, env(safe-area-inset-top));
+    bottom: auto;
     width: auto;
-    max-height: calc(100dvh - 1.2rem - env(safe-area-inset-bottom));
+    max-height: min(44dvh, calc(100dvh - 1.2rem - env(safe-area-inset-top)));
     border-radius: 14px;
     padding: 0.8rem;
   }
@@ -2505,6 +2826,17 @@ body.dark .preview-toggle-btn.active {
   }
 
   .tutorial-actions {
+    position: sticky;
+    bottom: calc(-0.8rem);
+    margin-inline: -0.8rem;
+    margin-bottom: -0.8rem;
+    padding: 0.7rem 0.8rem 0.8rem;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--card), transparent 14%) 0%,
+      var(--card) 34%
+    );
+    border-top: 1px solid color-mix(in srgb, var(--border), transparent 25%);
     gap: 0.45rem;
   }
 

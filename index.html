@@ -41,7 +41,7 @@
       window.location.replace(target);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=34" />
+  <link rel="stylesheet" href="style.css?v=36" />
 </head>
 <body>
   <div class="bg-shape bg-shape-1" aria-hidden="true"></div>
@@ -63,9 +63,9 @@
           <span class="btn-glyph" aria-hidden="true">?</span>
           <span class="btn-label">Help</span>
         </button>
-        <button id="proModeButton" class="theme-btn" type="button" aria-label="Open Pro mode beta">
+        <button id="proModeButton" class="theme-btn hidden" type="button" aria-label="Open Pro plans">
           <span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span>
-          <span class="btn-label">Pro: Off</span>
+          <span class="btn-label">Upgrade</span>
           <span class="beta-pill">Beta</span>
         </button>
         <button id="performanceToggle" class="theme-btn" aria-label="Toggle performance mode">
@@ -406,13 +406,14 @@
         Pro Mode is currently in beta and unlocks higher limits for larger study sessions.
       </p>
       <ul id="proModeBenefits" class="modal-message">
+        <li>Pro subscription: $1.50 per month.</li>
         <li>Up to 10 flashcards per generation (instead of 5).</li>
         <li>Up to 8000 notes characters (instead of 3000).</li>
         <li>Up to 5 study files (instead of 2).</li>
       </ul>
       <div id="proModeIntroActions" class="modal-actions">
         <button id="proModeCloseIntroButton" type="button" class="secondary-btn">Close</button>
-        <button id="proModeHaveCodeButton" type="button" class="primary-btn">I have a pro code</button>
+        <button id="proModeHaveCodeButton" type="button" class="primary-btn">View Pro Plan</button>
       </div>
       <form id="proModeForm" class="modal-form hidden">
         <label for="proCodeInput" class="input-label">Enter Pro Code</label>
@@ -440,7 +441,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="main.js?v=44"></script>
+  <script src="main.js?v=46"></script>
 </body>
 </html>
 
