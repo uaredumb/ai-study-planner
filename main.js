@@ -14,10 +14,12 @@ const copyStudyPlanButton = document.getElementById("copyStudyPlanButton");
 const copyCleanNotesButton = document.getElementById("copyCleanNotesButton");
 const copyFlashcardsButton = document.getElementById("copyFlashcardsButton");
 const downloadFlashcardsButton = document.getElementById("downloadFlashcardsButton");
+const printFlashcardsButton = document.getElementById("printFlashcardsButton");
 const downloadStudyTasksButton = document.getElementById("downloadStudyTasksButton");
 const downloadStudyPlanButton = document.getElementById("downloadStudyPlanButton");
 const downloadCleanNotesButton = document.getElementById("downloadCleanNotesButton");
 const moreFlashcardsButton = document.getElementById("moreFlashcardsButton");
+const beginFlashcardsButton = document.getElementById("beginFlashcardsButton");
 const flashcardsPdfPreviewWrap = document.getElementById("flashcardsPdfPreviewWrap");
 const flashcardsPdfPreview = document.getElementById("flashcardsPdfPreview");
 const previewFrontsButton = document.getElementById("previewFrontsButton");
@@ -47,6 +49,8 @@ const studyPlanCard = document.getElementById("studyPlanCard");
 const flashcardsList = document.getElementById("flashcardsList");
 const flashcardsVisualGrid = document.getElementById("flashcardsVisualGrid");
 const quizQuestionsList = document.getElementById("quizQuestionsList");
+const beginQuizButton = document.getElementById("beginQuizButton");
+const quizStudyPanel = document.getElementById("quizStudyPanel");
 const cleanNotesCard = document.getElementById("cleanNotesCard");
 const flashcardsCard = document.getElementById("flashcardsCard");
 const quizQuestionsCard = document.getElementById("quizQuestionsCard");
@@ -228,6 +232,8 @@ let flashcardsBacksPreviewUrl = "";
 let studyQueueUi = null;
 let isStudyCardFlipped = false;
 let isStudyCardAnimating = false;
+let flashcardStudyStateByFileId = new Map();
+let quizSessionStateByFileId = new Map();
 let studyQueueKeyboardBound = false;
 let webcamStream = null;
 let statusToastStack = null;
@@ -358,11 +364,11 @@ const tutorialSteps = [
   {
     title: "Outputs + Buttons",
     target: "outputs",
-    text: "Pick outputs you want in your study pack: tasks, plan, clean notes, flashcards, and quiz questions.",
+    text: "Pick outputs you want in your study pack: study plan, clean notes, flashcards, and quiz questions.",
     waitForAction: "select-output",
     exampleLabel: "Try",
     example:
-      "Try these outputs: Study Tasks + Study Plan + Flashcards."
+      "Try these outputs: Study Plan + Flashcards + Quiz Questions."
   },
   {
     title: "Try Generate",
@@ -912,7 +918,7 @@ async function summarizeArticleFromLink() {
 
 function getSelectedOutputs() {
   return {
-    studyTasks: Boolean(outputStudyTasks?.checked),
+    studyTasks: false,
     studyPlan: Boolean(outputStudyPlan?.checked),
     cleanNotes: Boolean(outputCleanNotes?.checked),
     flashcards: Boolean(outputFlashcards?.checked),
@@ -922,7 +928,7 @@ function getSelectedOutputs() {
 
 function normalizeSelectedOutputs(selectedOutputs) {
   return {
-    studyTasks: Boolean(selectedOutputs?.studyTasks),
+    studyTasks: false,
     studyPlan: Boolean(selectedOutputs?.studyPlan),
     cleanNotes: Boolean(selectedOutputs?.cleanNotes),
     flashcards: Boolean(selectedOutputs?.flashcards),
@@ -933,7 +939,7 @@ function normalizeSelectedOutputs(selectedOutputs) {
 function applySelectedOutputs(selectedOutputs) {
   const normalized = normalizeSelectedOutputs(selectedOutputs);
   if (outputStudyTasks) {
-    outputStudyTasks.checked = normalized.studyTasks;
+    outputStudyTasks.checked = false;
   }
   if (outputStudyPlan) {
     outputStudyPlan.checked = normalized.studyPlan;
@@ -953,16 +959,65 @@ async function generateStudyPack(text, selectedOutputs) {
   const base = await cleanNotesWithOpenRouter(text, (chunk, fullText) => {
     updateStreamingStatus(chunk, fullText);
   });
-  const sourceLines = base.cleanNotes.length > 0 ? base.cleanNotes : base.studyTasks;
+  const studyPlan = buildEnhancedStudyPlan(base.studyOrder, base.studyTasks, base.cleanNotes);
+  const sourceLines =
+    base.cleanNotes.length > 0
+      ? base.cleanNotes
+      : studyPlan.length > 0
+        ? studyPlan
+        : base.studyTasks;
 
   return {
     cleanNotes: selectedOutputs.cleanNotes ? base.cleanNotes : [],
-    studyTasks: selectedOutputs.studyTasks ? base.studyTasks : [],
-    studyOrder: selectedOutputs.studyPlan ? base.studyOrder : [],
+    studyTasks: [],
+    studyOrder: selectedOutputs.studyPlan ? studyPlan : [],
     flashcards: selectedOutputs.flashcards ? generateFlashcards(sourceLines) : [],
     quizQuestions: selectedOutputs.quizQuestions ? generateQuizQuestions(sourceLines) : [],
     selectedOutputs
   };
+}
+
+function buildEnhancedStudyPlan(studyOrder, studyTasks, cleanNotes) {
+  const merged = [];
+  const seen = new Set();
+
+  const pushLine = (value, transform) => {
+    const raw = decodeHtmlEntities(String(value || "")).replace(/\s+/g, " ").trim();
+    if (!raw) {
+      return;
+    }
+    const nextLine = typeof transform === "function" ? transform(raw) : raw;
+    const normalized = decodeHtmlEntities(String(nextLine || "")).replace(/\s+/g, " ").trim();
+    if (!normalized) {
+      return;
+    }
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    merged.push(normalized);
+  };
+
+  ensureStringArray(studyOrder).forEach((line) => pushLine(line));
+  ensureStringArray(studyTasks).forEach((line, index) => {
+    pushLine(line, (raw) => {
+      if (/:/.test(raw)) {
+        return raw;
+      }
+      return `Step ${Math.min(index + 1, 9)}: ${raw}`;
+    });
+  });
+
+  if (merged.length < 3) {
+    ensureStringArray(cleanNotes)
+      .slice(0, 4)
+      .forEach((line, index) => {
+        pushLine(line, (raw) => `Review ${index + 1}: ${raw}`);
+      });
+  }
+
+  return merged.slice(0, 8);
 }
 
 function extractJsonObject(text) {
@@ -1557,6 +1612,8 @@ function saveActiveFileResults(result) {
   activeFile.flashcards = ensureStringArray(result.flashcards);
   activeFile.quizQuestions = ensureStringArray(result.quizQuestions);
   activeFile.selectedOutputs = normalizeSelectedOutputs(result.selectedOutputs || getSelectedOutputs());
+  flashcardStudyStateByFileId.delete(activeFile.id);
+  quizSessionStateByFileId.delete(activeFile.id);
   appendStudyItemsToQueue(activeFile, result);
   persistFiles();
 }
@@ -1667,8 +1724,8 @@ function updateProModeButtonLabel() {
     return;
   }
   proModeButton.innerHTML = isProMode
-    ? '<span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span><span class="btn-label">Mode: On</span>'
-    : '<span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span><span class="btn-label">Mode: Off</span>';
+    ? '<span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span><span class="btn-label">Pro: On</span><span class="beta-pill">Beta</span>'
+    : '<span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span><span class="btn-label">Pro: Off</span><span class="beta-pill">Beta</span>';
 }
 
 function updateFlashcardsLimitUi() {
@@ -1718,10 +1775,10 @@ function openProModeModal(source = "general") {
   if (proModeMessage) {
     proModeMessage.textContent =
       source === "flashcards"
-        ? "This is a Pro feature. Pro increases your flashcard limit and unlocks higher study limits."
+        ? "Pro Mode Beta increases your flashcard limit and unlocks higher study limits."
         : source === "notes"
-          ? "This is a Pro feature. Pro gives you much more note space and unlocks higher study limits."
-          : "Unlock Pro Mode to increase study limits and productivity.";
+          ? "Pro Mode Beta gives you much more note space and unlocks higher study limits."
+          : "Unlock Pro Mode Beta to increase study limits and productivity.";
   }
   showProIntroScreen();
   proModeModal.classList.remove("hidden");
@@ -1872,9 +1929,6 @@ function exportActiveFile() {
     "",
     "Raw Notes",
     notesInput.value.trim() || "(empty)",
-    "",
-    "Study Tasks",
-    ...(activeFile.studyTasks.length > 0 ? activeFile.studyTasks.map((item) => `- ${item}`) : ["- (empty)"]),
     "",
     "Study Plan",
     ...(activeFile.studyOrder.length > 0 ? activeFile.studyOrder.map((item, index) => `${index + 1}. ${item}`) : ["1. (empty)"]),
@@ -2206,6 +2260,9 @@ function triggerSummarizeClickAnimation(button) {
 }
 
 function renderList(listElement, items, highlight = true) {
+  if (!listElement) {
+    return;
+  }
   listElement.innerHTML = "";
 
   if (!Array.isArray(items) || items.length === 0) {
@@ -2229,23 +2286,21 @@ function renderList(listElement, items, highlight = true) {
 async function renderResultsWithTyping(result) {
   setAllCopyButtonsEnabled(false);
   setAllDownloadButtonsEnabled(false);
-  setCardVisibility(studyTasksCard, result.selectedOutputs?.studyTasks);
+  setCardVisibility(studyTasksCard, false);
   setCardVisibility(studyPlanCard, result.selectedOutputs?.studyPlan);
   setCardVisibility(cleanNotesCard, result.selectedOutputs?.cleanNotes);
-  const showSessionCard =
-    Boolean(result.selectedOutputs?.flashcards) ||
-    Boolean(result.selectedOutputs?.studyTasks) ||
-    Boolean(result.selectedOutputs?.studyPlan);
+  const showSessionCard = Boolean(result.selectedOutputs?.flashcards);
   setCardVisibility(flashcardsCard, showSessionCard);
   setCardVisibility(quizQuestionsCard, result.selectedOutputs?.quizQuestions);
 
-  renderListWithTyping(studyTasksList, result.studyTasks);
+  renderListWithTyping(studyTasksList, []);
   renderListWithTyping(studyOrderList, result.studyOrder);
   renderListWithTyping(cleanNotesList, result.cleanNotes);
   ensureUnifiedStudyQueue(getActiveFile());
   isStudyCardFlipped = false;
   renderFlashcardsWithTyping(result.flashcards);
-  renderListWithTyping(quizQuestionsList, result.quizQuestions);
+  renderQuizQuestionsList(result.quizQuestions);
+  renderQuizStudyPanel();
   refreshCopyButtonsFromContent();
 }
 
@@ -2286,6 +2341,8 @@ function clearActiveFileGeneratedContent() {
   activeFile.studyQueue = [];
   activeFile.studyQueueIndex = 0;
   activeFile.knownStudyItemIds = [];
+  flashcardStudyStateByFileId.delete(activeFile.id);
+  quizSessionStateByFileId.delete(activeFile.id);
   persistFiles();
   renderFileResults(activeFile);
 }
@@ -2368,13 +2425,16 @@ function renderFileResults(file) {
       flashcardsVisualGrid.classList.add("hidden");
     }
     hideFlashcardsPdfPreview();
-    renderList(quizQuestionsList, []);
+    renderQuizQuestionsList([]);
+    renderQuizStudyPanel();
+    updateFlashcardStudyActions(null);
+    updateQuizStudyActions(null);
     updateOptionalOutputCards();
     refreshCopyButtonsFromContent();
     return;
   }
 
-  renderList(studyTasksList, file.studyTasks);
+  renderList(studyTasksList, []);
   renderList(studyOrderList, file.studyOrder);
   renderList(cleanNotesList, file.cleanNotes);
   renderList(flashcardsList, file.flashcards, false);
@@ -2386,32 +2446,23 @@ function renderFileResults(file) {
   } else {
     refreshFlashcardsPdfPreview();
   }
-  renderList(quizQuestionsList, file.quizQuestions);
+  renderQuizQuestionsList(file.quizQuestions);
+  renderQuizStudyPanel();
 
   setCardVisibility(cleanNotesCard, file.cleanNotes.length > 0 || Boolean(outputCleanNotes?.checked));
-  setCardVisibility(studyTasksCard, file.studyTasks.length > 0 || Boolean(outputStudyTasks?.checked));
+  setCardVisibility(studyTasksCard, false);
   setCardVisibility(studyPlanCard, file.studyOrder.length > 0 || Boolean(outputStudyPlan?.checked));
-  setCardVisibility(
-    flashcardsCard,
-    hasStudyQueueItems(file) ||
-      Boolean(outputFlashcards?.checked) ||
-      Boolean(outputStudyTasks?.checked) ||
-      Boolean(outputStudyPlan?.checked)
-  );
+  setCardVisibility(flashcardsCard, hasStudyQueueItems(file) || Boolean(outputFlashcards?.checked));
   setCardVisibility(quizQuestionsCard, file.quizQuestions.length > 0 || Boolean(outputQuizQuestions?.checked));
   refreshCopyButtonsFromContent();
 }
 
 function updateOptionalOutputCards() {
-  setCardVisibility(studyTasksCard, Boolean(outputStudyTasks?.checked));
+  setCardVisibility(studyTasksCard, false);
   setCardVisibility(studyPlanCard, Boolean(outputStudyPlan?.checked));
   setCardVisibility(cleanNotesCard, Boolean(outputCleanNotes?.checked));
   const file = getActiveFile();
-  const showSessionCard =
-    Boolean(outputFlashcards?.checked) ||
-    Boolean(outputStudyTasks?.checked) ||
-    Boolean(outputStudyPlan?.checked) ||
-    hasStudyQueueItems(file);
+  const showSessionCard = Boolean(outputFlashcards?.checked) || hasStudyQueueItems(file);
   setCardVisibility(flashcardsCard, showSessionCard);
   setCardVisibility(quizQuestionsCard, Boolean(outputQuizQuestions?.checked));
   if (flashcardsCountWrap) {
@@ -2550,8 +2601,33 @@ function getRequestedFlashcardsCount() {
 
 function generateQuizQuestions(sourceLines) {
   return ensureStringArray(sourceLines)
-    .slice(0, 8)
-    .map((line, index) => `Question ${index + 1}: Explain "${line}" in your own words.`);
+    .map((line, index) => buildQuizQuestionString(line, index + 1))
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
+function buildQuizQuestionString(line, index) {
+  const normalized = decodeHtmlEntities(String(line || "")).replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  const answerMode = index % 3 === 0 ? "short-answer" : "multiple-choice";
+  const { front, back } = splitStudyLineForItem(normalized);
+  if (front && back && front !== back) {
+    const prompt =
+      answerMode === "multiple-choice"
+        ? `Which answer best explains "${front}"?`
+        : `In your own words, explain "${front}".`;
+    return `Type: ${answerMode} || Question: ${prompt} || Answer: ${back}`;
+  }
+
+  const clue = front.split(" ").slice(0, 6).join(" ");
+  const prompt =
+    answerMode === "multiple-choice"
+      ? `Which note from your study set matches "${clue}${front.split(" ").length > 6 ? "..." : ""}"?`
+      : `Write a short answer for this note: "${front}"`;
+  return `Type: ${answerMode} || Question: ${prompt} || Answer: ${front}`;
 }
 
 function toggleTheme() {
@@ -2912,9 +2988,19 @@ function bindCopyButtons() {
   bindDownloadListPdfButton(downloadStudyTasksButton, "Study Tasks", studyTasksList, false, "study-tasks");
   bindDownloadListPdfButton(downloadStudyPlanButton, "Study Plan", studyOrderList, true, "study-plan");
   bindDownloadListPdfButton(downloadCleanNotesButton, "Clean Notes", cleanNotesList, false, "clean-notes");
-  bindDownloadListPdfButton(downloadQuizButton, "Quiz Questions", quizQuestionsList, true, "quiz-questions");
+  bindDownloadQuizButton();
   bindDownloadFlashcardsButton();
+  bindFlashcardStudyButton();
+  bindPrintFlashcardsButton();
+  bindQuizStudyButton();
   bindMoreFlashcardsButton();
+}
+
+function bindFlashcardStudyButton() {
+  if (!beginFlashcardsButton) {
+    return;
+  }
+  beginFlashcardsButton.addEventListener("click", toggleFlashcardStudy);
 }
 
 function bindDownloadFlashcardsButton() {
@@ -2947,6 +3033,37 @@ function bindDownloadFlashcardsButton() {
 
     statusText.textContent = "Downloaded flashcard PDFs. Use the combined file for double-sided printing.";
   });
+}
+
+function bindPrintFlashcardsButton() {
+  if (!printFlashcardsButton) {
+    return;
+  }
+
+  printFlashcardsButton.addEventListener("click", () => {
+    const activeFile = getActiveFile();
+    const rawCards = getStudyQueueFlashcardStrings().slice(0, getMaxFlashcardsAllowed());
+    if (rawCards.length === 0) {
+      statusText.textContent = "No flashcards to print yet.";
+      return;
+    }
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      statusText.textContent = "PDF generator unavailable. Refresh and try again.";
+      return;
+    }
+
+    const { frontsBlob, backsBlob, combinedBlob } = buildCuttableFlashcardsPdfs(rawCards);
+    showFlashcardsPdfPreview(frontsBlob, backsBlob);
+    printPdfBlob(combinedBlob);
+    statusText.textContent = `Printing flashcards for ${activeFile?.name || "your study notes"}.`;
+  });
+}
+
+function bindQuizStudyButton() {
+  if (!beginQuizButton) {
+    return;
+  }
+  beginQuizButton.addEventListener("click", toggleQuizStudy);
 }
 
 
@@ -3008,6 +3125,104 @@ function buildSimpleListPdfBlob(title, rawItems, ordered) {
     drawHighlightedPdfBlock(doc, wrapped, marginX, y, maxTextWidth, lineHeight, detectHighlightType(cleanItem));
     doc.text(wrapped, marginX, y);
     y += wrapped.length * lineHeight + 6;
+  });
+
+  return doc.output("blob");
+}
+
+function bindDownloadQuizButton() {
+  if (!downloadQuizButton) {
+    return;
+  }
+
+  downloadQuizButton.addEventListener("click", () => {
+    const activeFile = getActiveFile();
+    const quizItems = getQuizItemsForFile(activeFile);
+    if (quizItems.length === 0) {
+      statusText.textContent = "No quiz questions to download yet.";
+      return;
+    }
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      statusText.textContent = "PDF generator unavailable. Refresh and try again.";
+      return;
+    }
+
+    const pdfBlob = buildQuizPdfBlob(quizItems);
+    const safeNameBase = slugifyFileName(activeFile?.name || "study-notes");
+    downloadBlob(pdfBlob, `${safeNameBase}-quiz-with-answer-sheet.pdf`);
+    statusText.textContent = "Downloaded quiz PDF with answer sheet.";
+  });
+}
+
+function buildQuizPdfBlob(quizItems) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "pt",
+    format: "letter"
+  });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 48;
+  const marginTop = 56;
+  const marginBottom = 56;
+  const maxTextWidth = pageWidth - marginX * 2;
+  const lineHeight = 16;
+
+  const writePageHeader = (title) => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(title, marginX, marginTop);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    return marginTop + 28;
+  };
+
+  let y = writePageHeader("Quiz Questions");
+  quizItems.forEach((item, index) => {
+    const wrappedQuestion = doc.splitTextToSize(`${index + 1}. ${item.prompt}`, maxTextWidth);
+    const wrappedOptions = item.options.length > 1
+      ? item.options.map((option, optionIndex) => ({
+          label: `${String.fromCharCode(65 + optionIndex)}. ${option}`,
+          lines: doc.splitTextToSize(`${String.fromCharCode(65 + optionIndex)}. ${option}`, maxTextWidth - 18)
+        }))
+      : [];
+    const requiredHeight =
+      wrappedQuestion.length * lineHeight +
+      wrappedOptions.reduce((total, option) => total + option.lines.length * lineHeight + 2, 0) +
+      (wrappedOptions.length > 0 ? 10 : 26);
+
+    if (y + requiredHeight > pageHeight - marginBottom) {
+      doc.addPage("letter", "portrait");
+      y = writePageHeader("Quiz Questions (Continued)");
+    }
+
+    doc.text(wrappedQuestion, marginX, y);
+    y += wrappedQuestion.length * lineHeight + 4;
+
+    if (wrappedOptions.length > 0) {
+      wrappedOptions.forEach((option) => {
+        doc.text(option.lines, marginX + 18, y);
+        y += option.lines.length * lineHeight + 2;
+      });
+      y += 8;
+    } else {
+      doc.line(marginX, y + 6, pageWidth - marginX, y + 6);
+      y += 24;
+    }
+  });
+
+  doc.addPage("letter", "portrait");
+  y = writePageHeader("Answer Sheet");
+
+  quizItems.forEach((item, index) => {
+    const wrappedAnswer = doc.splitTextToSize(`${index + 1}. ${item.answer}`, maxTextWidth);
+    if (y + wrappedAnswer.length * lineHeight > pageHeight - marginBottom) {
+      doc.addPage("letter", "portrait");
+      y = writePageHeader("Answer Sheet (Continued)");
+    }
+    doc.text(wrappedAnswer, marginX, y);
+    y += wrappedAnswer.length * lineHeight + 6;
   });
 
   return doc.output("blob");
@@ -3183,6 +3398,30 @@ function downloadBlob(blob, fileName) {
   setTimeout(() => URL.revokeObjectURL(link.href), 0);
 }
 
+function printPdfBlob(blob) {
+  const blobUrl = URL.createObjectURL(blob);
+  const printWindow = window.open(blobUrl, "_blank");
+  if (!printWindow) {
+    statusText.textContent = "Popup blocked. Please allow popups to print the PDF.";
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 0);
+    return;
+  }
+
+  const cleanup = () => {
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+  };
+
+  setTimeout(() => {
+    try {
+      printWindow.focus();
+      printWindow.print();
+    } catch (_error) {
+      statusText.textContent = "The PDF opened, but print did not start automatically.";
+    }
+    cleanup();
+  }, 500);
+}
+
 function showFlashcardsPdfPreview(frontsBlob, backsBlob) {
   hideFlashcardsPdfPreview();
 }
@@ -3234,6 +3473,9 @@ function getListLines(listElement, ordered) {
 }
 
 function getRawListItems(listElement) {
+  if (!listElement) {
+    return [];
+  }
   return Array.from(listElement.querySelectorAll("li"))
     .map((li) => li.textContent.trim())
     .filter((text) => text.length > 0 && text !== "No items generated yet.");
@@ -3268,12 +3510,600 @@ function parseFlashcardText(text, fallbackIndex) {
 }
 
 function renderFlashcardsVisuals(cards) {
+  const file = getActiveFile();
+  updateFlashcardStudyActions(file);
+  if (!flashcardsVisualGrid) {
+    return;
+  }
+  if (!file || !isFlashcardStudyStarted(file)) {
+    flashcardsVisualGrid.classList.add("hidden");
+    return;
+  }
+
   initStudyQueueUiIfNeeded();
   renderStudyQueueViewer();
 }
 
 function renderFlashcardsVisualsWithTyping(cards) {
   renderFlashcardsVisuals(cards);
+}
+
+function isFlashcardStudyStarted(file = getActiveFile()) {
+  if (!file) {
+    return false;
+  }
+  return Boolean(flashcardStudyStateByFileId.get(file.id));
+}
+
+function setFlashcardStudyStarted(started, file = getActiveFile()) {
+  if (!file) {
+    return;
+  }
+  flashcardStudyStateByFileId.set(file.id, Boolean(started));
+}
+
+function updateFlashcardStudyActions(file = getActiveFile()) {
+  const hasItems = getStudyQueueItemsCount(file) > 0;
+  if (beginFlashcardsButton) {
+    beginFlashcardsButton.disabled = !hasItems;
+    beginFlashcardsButton.textContent = isFlashcardStudyStarted(file) ? "Hide Flashcard Study" : "Begin Flashcard Study";
+  }
+  if (printFlashcardsButton) {
+    printFlashcardsButton.disabled = !hasItems;
+  }
+}
+
+function toggleFlashcardStudy() {
+  const file = getActiveFile();
+  if (!file) {
+    return;
+  }
+  ensureUnifiedStudyQueue(file);
+  if (!hasStudyQueueItems(file)) {
+    statusText.textContent = "No flashcards are ready yet. Generate a study pack first.";
+    updateFlashcardStudyActions(file);
+    return;
+  }
+  const nextState = !isFlashcardStudyStarted(file);
+  setFlashcardStudyStarted(nextState, file);
+  renderFlashcardsVisuals(file.flashcards);
+  refreshCopyButtonsFromContent();
+  if (nextState) {
+    statusText.textContent = "Flashcard study started. Click a card to flip it.";
+  }
+}
+
+function getStudyQueueItemsCount(file = getActiveFile()) {
+  if (!file) {
+    return 0;
+  }
+  ensureUnifiedStudyQueue(file);
+  return Array.isArray(file.studyQueue) ? file.studyQueue.length : 0;
+}
+
+function getQuizSessionState(file = getActiveFile()) {
+  if (!file) {
+    return null;
+  }
+  if (!quizSessionStateByFileId.has(file.id)) {
+    quizSessionStateByFileId.set(file.id, {
+      started: false,
+      currentIndex: 0,
+      responses: {},
+      completed: false,
+      view: "question"
+    });
+  }
+  const state = quizSessionStateByFileId.get(file.id);
+  if (state.view !== "results") {
+    state.view = "question";
+  }
+  return state;
+}
+
+function resetQuizSessionState(file = getActiveFile()) {
+  if (!file) {
+    return null;
+  }
+  const nextState = {
+    started: true,
+    currentIndex: 0,
+    responses: {},
+    completed: false,
+    view: "question"
+  };
+  quizSessionStateByFileId.set(file.id, nextState);
+  return nextState;
+}
+
+function getQuizItemsForFile(file = getActiveFile()) {
+  return buildQuizSessionItems(file?.quizQuestions || []);
+}
+
+function updateQuizStudyActions(file = getActiveFile()) {
+  const items = getQuizItemsForFile(file);
+  const state = getQuizSessionState(file);
+  if (beginQuizButton) {
+    beginQuizButton.disabled = items.length === 0;
+    beginQuizButton.textContent = state?.started ? "Hide Quiz" : "Begin Quiz";
+  }
+}
+
+function toggleQuizStudy() {
+  const file = getActiveFile();
+  if (!file) {
+    return;
+  }
+  const items = getQuizItemsForFile(file);
+  if (items.length === 0) {
+    statusText.textContent = "No quiz questions are ready yet. Generate a study pack first.";
+    updateQuizStudyActions(file);
+    return;
+  }
+
+  const state = getQuizSessionState(file);
+  if (!state || !state.started) {
+    resetQuizSessionState(file);
+    renderQuizStudyPanel();
+    statusText.textContent = "Quiz started. Answer the question and check your work.";
+    return;
+  }
+
+  state.started = false;
+  state.completed = false;
+  state.view = "question";
+  renderQuizStudyPanel();
+}
+
+function ensureQuizResponseEntry(state, itemId) {
+  if (!state.responses[itemId]) {
+    state.responses[itemId] = {
+      selectedChoice: "",
+      typedAnswer: "",
+      submitted: false,
+      userAnswer: "",
+      correct: false,
+      feedback: null
+    };
+  }
+  return state.responses[itemId];
+}
+
+function getQuizScoreSummary(state, items) {
+  const responses = Object.values(state?.responses || {});
+  const submittedCount = responses.filter((entry) => entry && entry.submitted).length;
+  const correctCount = responses.filter((entry) => entry && entry.submitted && entry.correct).length;
+  const accuracy = submittedCount > 0 ? Math.round((correctCount / submittedCount) * 100) : 0;
+
+  return {
+    submittedCount,
+    correctCount,
+    accuracy,
+    total: Array.isArray(items) ? items.length : 0
+  };
+}
+
+function formatQuizAnswerModeLabel(answerMode) {
+  return answerMode === "multiple-choice" ? "Multiple Choice" : "Short Answer";
+}
+
+function getQuizMissingKeywords(userAnswer, correctAnswer) {
+  const correctTokens = [...new Set(tokenizeComparisonText(correctAnswer))];
+  const userTokens = new Set(tokenizeComparisonText(userAnswer));
+  return correctTokens.filter((token) => !userTokens.has(token)).slice(0, 4);
+}
+
+function formatQuizKeywordList(tokens) {
+  if (!Array.isArray(tokens) || tokens.length === 0) {
+    return "";
+  }
+  if (tokens.length === 1) {
+    return tokens[0];
+  }
+  if (tokens.length === 2) {
+    return `${tokens[0]} and ${tokens[1]}`;
+  }
+  return `${tokens.slice(0, -1).join(", ")}, and ${tokens[tokens.length - 1]}`;
+}
+
+function buildQuizAnswerFeedback(userAnswer, item, isCorrect) {
+  const safeUserAnswer = decodeHtmlEntities(String(userAnswer || "")).trim() || "No answer provided.";
+  const safeCorrectAnswer = decodeHtmlEntities(String(item?.answer || "")).trim() || "No answer available.";
+  const missingKeywords = getQuizMissingKeywords(userAnswer, safeCorrectAnswer);
+  const keywordText = formatQuizKeywordList(missingKeywords);
+
+  if (isCorrect) {
+    return {
+      title: "Correct",
+      userLine: `Your answer: ${safeUserAnswer}`,
+      answerLine: `Expected answer: ${safeCorrectAnswer}`,
+      fixLine: keywordText
+        ? `Strong answer. To make it even better, mention ${keywordText}.`
+        : "Strong answer. You matched the main idea."
+    };
+  }
+
+  return {
+    title: "Needs Fixing",
+    userLine: `Your answer: ${safeUserAnswer}`,
+    answerLine: `Best answer: ${safeCorrectAnswer}`,
+    fixLine: keywordText
+      ? `How to fix it: mention ${keywordText}.`
+      : `How to fix it: tie your answer more directly to ${safeCorrectAnswer}.`
+  };
+}
+
+function findFirstIncorrectQuizIndex(items, state) {
+  return items.findIndex((item) => {
+    const response = ensureQuizResponseEntry(state, item.id);
+    return response.submitted && !response.correct;
+  });
+}
+
+function buildQuizSummaryElement(items, state) {
+  const score = getQuizScoreSummary(state, items);
+  const summary = document.createElement("div");
+  summary.className = "quiz-study-summary";
+  summary.innerHTML = `
+    <p class="quiz-study-progress">${
+      state.view === "results" ? "Results" : `Question ${state.currentIndex + 1} of ${items.length}`
+    }</p>
+    <p class="quiz-study-score">Score: ${score.correctCount} / ${score.submittedCount}</p>
+    <p class="quiz-study-accuracy">Accuracy: ${score.accuracy}%</p>
+  `;
+
+  if (state.completed) {
+    const doneBadge = document.createElement("p");
+    doneBadge.className = "quiz-study-complete";
+    doneBadge.textContent = `Final score: ${score.correctCount} / ${score.total}`;
+    summary.appendChild(doneBadge);
+  }
+
+  return summary;
+}
+
+function buildQuizResultsView(items, state, file) {
+  const score = getQuizScoreSummary(state, items);
+  const resultsCard = document.createElement("section");
+  resultsCard.className = "quiz-results-card";
+
+  const title = document.createElement("h3");
+  title.className = "quiz-study-question";
+  title.textContent = score.correctCount === score.total ? "Nice work. You got everything right." : "Quiz results";
+  resultsCard.appendChild(title);
+
+  const intro = document.createElement("p");
+  intro.className = "quiz-study-helper";
+  intro.textContent =
+    score.correctCount === score.total
+      ? "You finished with a perfect score. Restart anytime for another round."
+      : "Review the questions you missed below, then reopen the quiz to try again.";
+  resultsCard.appendChild(intro);
+
+  const incorrectItems = items
+    .map((item, index) => ({ item, index, response: ensureQuizResponseEntry(state, item.id) }))
+    .filter((entry) => entry.response.submitted && !entry.response.correct);
+
+  if (incorrectItems.length === 0) {
+    const perfectState = document.createElement("div");
+    perfectState.className = "quiz-study-feedback is-correct";
+    perfectState.textContent = `Perfect score for ${file?.name || "this study set"}.`;
+    resultsCard.appendChild(perfectState);
+    return resultsCard;
+  }
+
+  const reviewList = document.createElement("div");
+  reviewList.className = "quiz-results-list";
+
+  incorrectItems.forEach(({ item, index, response }) => {
+    const feedback = response.feedback || buildQuizAnswerFeedback(response.userAnswer, item, response.correct);
+    const row = document.createElement("article");
+    row.className = "quiz-result-item";
+
+    const heading = document.createElement("div");
+    heading.className = "quiz-result-head";
+
+    const questionNumber = document.createElement("p");
+    questionNumber.className = "quiz-result-number";
+    questionNumber.textContent = `Question ${index + 1}`;
+
+    const status = document.createElement("span");
+    status.className = "quiz-result-status";
+    status.textContent = "Review this one";
+
+    heading.appendChild(questionNumber);
+    heading.appendChild(status);
+
+    const prompt = document.createElement("p");
+    prompt.className = "quiz-result-prompt";
+    prompt.textContent = item.prompt;
+
+    const userLine = document.createElement("p");
+    userLine.className = "quiz-result-line";
+    userLine.textContent = feedback.userLine;
+
+    const answerLine = document.createElement("p");
+    answerLine.className = "quiz-result-line";
+    answerLine.textContent = feedback.answerLine;
+
+    const fixLine = document.createElement("p");
+    fixLine.className = "quiz-result-fix";
+    fixLine.textContent = feedback.fixLine;
+
+    row.appendChild(heading);
+    row.appendChild(prompt);
+    row.appendChild(userLine);
+    row.appendChild(answerLine);
+    row.appendChild(fixLine);
+    reviewList.appendChild(row);
+  });
+
+  resultsCard.appendChild(reviewList);
+  return resultsCard;
+}
+
+function renderQuizStudyPanel() {
+  updateQuizStudyActions();
+  if (!quizStudyPanel) {
+    return;
+  }
+
+  const file = getActiveFile();
+  const items = getQuizItemsForFile(file);
+  const state = getQuizSessionState(file);
+  quizStudyPanel.innerHTML = "";
+
+  if (!file || !state?.started || items.length === 0) {
+    quizStudyPanel.classList.add("hidden");
+    return;
+  }
+
+  quizStudyPanel.classList.remove("hidden");
+  state.currentIndex = Math.min(Math.max(state.currentIndex || 0, 0), items.length - 1);
+  quizStudyPanel.appendChild(buildQuizSummaryElement(items, state));
+
+  if (state.completed && state.view === "results") {
+    const controls = document.createElement("div");
+    controls.className = "result-card-actions quiz-study-controls";
+
+    const reviewButton = createStudyQueueButton("Review Questions", () => {
+      const firstIncorrectIndex = findFirstIncorrectQuizIndex(items, state);
+      state.currentIndex = firstIncorrectIndex >= 0 ? firstIncorrectIndex : 0;
+      state.view = "question";
+      renderQuizStudyPanel();
+    });
+
+    const restartButton = createStudyQueueButton("Restart Quiz", () => {
+      resetQuizSessionState(file);
+      renderQuizStudyPanel();
+    });
+
+    controls.appendChild(reviewButton);
+    controls.appendChild(restartButton);
+    quizStudyPanel.appendChild(buildQuizResultsView(items, state, file));
+    quizStudyPanel.appendChild(controls);
+    return;
+  }
+
+  const item = items[state.currentIndex];
+  const response = ensureQuizResponseEntry(state, item.id);
+
+  const card = document.createElement("section");
+  card.className = "quiz-study-card";
+
+  const modeBadge = document.createElement("p");
+  modeBadge.className = "quiz-study-mode";
+  modeBadge.textContent = formatQuizAnswerModeLabel(item.answerMode);
+  card.appendChild(modeBadge);
+
+  const prompt = document.createElement("h3");
+  prompt.className = "quiz-study-question";
+  prompt.textContent = item.prompt;
+  card.appendChild(prompt);
+
+  const helper = document.createElement("p");
+  helper.className = "quiz-study-helper";
+  helper.textContent =
+    item.answerMode === "multiple-choice"
+      ? "Choose the best answer, then check your work."
+      : "Write a short answer in your own words, then check it when you're ready.";
+  card.appendChild(helper);
+
+  if (item.answerMode === "multiple-choice" && item.options.length > 1) {
+    const optionsWrap = document.createElement("div");
+    optionsWrap.className = "quiz-study-options";
+
+    item.options.forEach((option) => {
+      const optionButton = document.createElement("button");
+      optionButton.type = "button";
+      optionButton.className = "quiz-study-option";
+      optionButton.textContent = option;
+      if (response.selectedChoice === option) {
+        optionButton.classList.add("is-selected");
+      }
+      if (response.submitted && areAnswersEquivalent(option, item.answer)) {
+        optionButton.classList.add("is-correct");
+      } else if (response.submitted && response.selectedChoice === option && !response.correct) {
+        optionButton.classList.add("is-incorrect");
+      }
+      optionButton.disabled = response.submitted;
+      optionButton.addEventListener("click", () => {
+        response.selectedChoice = option;
+        response.typedAnswer = "";
+        renderQuizStudyPanel();
+      });
+      optionsWrap.appendChild(optionButton);
+    });
+
+    card.appendChild(optionsWrap);
+  }
+
+  if (item.answerMode !== "multiple-choice") {
+    const typedAnswerWrap = document.createElement("label");
+    typedAnswerWrap.className = "quiz-study-input-wrap";
+    typedAnswerWrap.innerHTML = '<span class="tutorial-label">Your answer</span>';
+
+    const typedAnswerInput = document.createElement("textarea");
+    typedAnswerInput.className = "quiz-study-input";
+    typedAnswerInput.rows = 4;
+    typedAnswerInput.placeholder = "Write a short answer here...";
+    typedAnswerInput.value = response.typedAnswer || "";
+    typedAnswerInput.disabled = response.submitted;
+    typedAnswerInput.addEventListener("input", () => {
+      response.typedAnswer = typedAnswerInput.value;
+    });
+    typedAnswerWrap.appendChild(typedAnswerInput);
+    card.appendChild(typedAnswerWrap);
+  }
+
+  if (response.submitted) {
+    const feedback = document.createElement("div");
+    feedback.className = `quiz-study-feedback ${response.correct ? "is-correct" : "is-incorrect"}`;
+    const nextFeedback = response.feedback || buildQuizAnswerFeedback(response.userAnswer, item, response.correct);
+    response.feedback = nextFeedback;
+
+    const titleLine = document.createElement("p");
+    titleLine.className = "quiz-feedback-title";
+    titleLine.textContent = nextFeedback.title;
+
+    const userLine = document.createElement("p");
+    userLine.className = "quiz-feedback-line";
+    userLine.textContent = nextFeedback.userLine;
+
+    const answerLine = document.createElement("p");
+    answerLine.className = "quiz-feedback-line";
+    answerLine.textContent = nextFeedback.answerLine;
+
+    const fixLine = document.createElement("p");
+    fixLine.className = "quiz-feedback-line";
+    fixLine.textContent = nextFeedback.fixLine;
+
+    feedback.appendChild(titleLine);
+    feedback.appendChild(userLine);
+    feedback.appendChild(answerLine);
+    feedback.appendChild(fixLine);
+    card.appendChild(feedback);
+  }
+
+  const controls = document.createElement("div");
+  controls.className = "result-card-actions quiz-study-controls";
+  const isLastQuestion = state.currentIndex >= items.length - 1;
+
+  const prevButton = createStudyQueueButton("Previous", () => {
+    state.currentIndex = Math.max(0, state.currentIndex - 1);
+    renderQuizStudyPanel();
+  });
+  prevButton.disabled = state.currentIndex === 0;
+
+  const checkButton = createStudyQueueButton(
+    response.submitted ? "Checked" : "Check Answer",
+    () => submitCurrentQuizAnswer(items, state)
+  );
+  checkButton.disabled = response.submitted;
+
+  const nextButton = createStudyQueueButton(
+    isLastQuestion ? "Show Results" : "Next Question",
+    () => advanceQuizQuestion(items, state)
+  );
+  nextButton.disabled = !response.submitted;
+
+  const restartButton = createStudyQueueButton("Restart Quiz", () => {
+    resetQuizSessionState(file);
+    renderQuizStudyPanel();
+  });
+
+  controls.appendChild(prevButton);
+  controls.appendChild(checkButton);
+  controls.appendChild(nextButton);
+  controls.appendChild(restartButton);
+
+  quizStudyPanel.appendChild(card);
+  quizStudyPanel.appendChild(controls);
+}
+
+function submitCurrentQuizAnswer(items, state) {
+  const item = items[state.currentIndex];
+  if (!item) {
+    return;
+  }
+  const response = ensureQuizResponseEntry(state, item.id);
+  const typedAnswer = String(response.typedAnswer || "").trim();
+  const chosenAnswer = String(response.selectedChoice || "").trim();
+  const userAnswer = item.answerMode === "multiple-choice" ? chosenAnswer : typedAnswer;
+
+  if (!userAnswer) {
+    statusText.textContent =
+      item.answerMode === "multiple-choice"
+        ? "Choose one answer before checking."
+        : "Type your answer before checking.";
+    return;
+  }
+
+  response.userAnswer = userAnswer;
+  response.correct = evaluateQuizResponse(userAnswer, item);
+  response.submitted = true;
+  response.feedback = buildQuizAnswerFeedback(userAnswer, item, response.correct);
+
+  if (state.currentIndex >= items.length - 1) {
+    state.completed = true;
+  }
+
+  renderQuizStudyPanel();
+  statusText.textContent = response.correct
+    ? "Nice work. That answer checks out."
+    : "Checked. Review what you missed, then keep going.";
+}
+
+function advanceQuizQuestion(items, state) {
+  if (state.currentIndex >= items.length - 1) {
+    state.completed = true;
+    state.view = "results";
+    renderQuizStudyPanel();
+    const score = getQuizScoreSummary(state, items);
+    statusText.textContent = `Quiz complete. Score: ${score.correctCount} / ${score.total}.`;
+    return;
+  }
+  state.currentIndex += 1;
+  state.view = "question";
+  renderQuizStudyPanel();
+}
+
+function evaluateQuizResponse(userAnswer, item) {
+  if (areAnswersEquivalent(userAnswer, item.answer)) {
+    return true;
+  }
+
+  const answerTokens = tokenizeComparisonText(item.answer);
+  const userTokens = tokenizeComparisonText(userAnswer);
+  if (answerTokens.length === 0 || userTokens.length === 0) {
+    return false;
+  }
+
+  const uniqueAnswerTokens = [...new Set(answerTokens)];
+  const overlapCount = uniqueAnswerTokens.filter((token) => userTokens.includes(token)).length;
+  const requiredMatches =
+    uniqueAnswerTokens.length <= 2
+      ? uniqueAnswerTokens.length
+      : Math.max(2, Math.ceil(uniqueAnswerTokens.length * 0.6));
+  return overlapCount >= Math.min(requiredMatches, uniqueAnswerTokens.length);
+}
+
+function areAnswersEquivalent(a, b) {
+  return normalizeComparisonText(a) === normalizeComparisonText(b);
+}
+
+function normalizeComparisonText(value) {
+  return decodeHtmlEntities(String(value || ""))
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokenizeComparisonText(value) {
+  return normalizeComparisonText(value)
+    .split(" ")
+    .filter((token) => token.length >= 3);
 }
 
 function ensureStudyQueue(value) {
@@ -3325,7 +4155,7 @@ function hasStudyQueueItems(file) {
   if (!file) {
     return false;
   }
-  ensureStudyQueueFields(file);
+  ensureUnifiedStudyQueue(file);
   return Array.isArray(file.studyQueue) && file.studyQueue.length > 0;
 }
 
@@ -3350,8 +4180,8 @@ function initStudyQueueUiIfNeeded() {
   const cardInner = document.createElement("div");
   cardInner.className = "flashcard-visual-inner";
 
-  const frontFaceUi = createStudyQueueFace("flashcard-visual-front", "Click to flip", "Reveal the answer");
-  const backFaceUi = createStudyQueueFace("flashcard-visual-back", "Click to flip back", "Review the prompt again");
+  const frontFaceUi = createStudyQueueFace("flashcard-visual-front", "");
+  const backFaceUi = createStudyQueueFace("flashcard-visual-back", "Click to flip back");
 
   cardInner.appendChild(frontFaceUi.face);
   cardInner.appendChild(backFaceUi.face);
@@ -3365,7 +4195,7 @@ function initStudyQueueUiIfNeeded() {
 
   const helper = document.createElement("p");
   helper.className = "flashcard-session-hint";
-  helper.textContent = "Click the card to reveal the answer. Use Left and Right arrow keys to move through the stack.";
+  helper.textContent = "Use Left and Right to move through your cards.";
 
   meta.appendChild(progress);
   meta.appendChild(helper);
@@ -3446,7 +4276,7 @@ function initStudyQueueUiIfNeeded() {
   bindStudyQueueKeyboardShortcuts();
 }
 
-function createStudyQueueFace(faceClassName, hintText, actionText) {
+function createStudyQueueFace(faceClassName, hintText) {
   const face = document.createElement("div");
   face.className = `flashcard-visual-face ${faceClassName}`;
 
@@ -3466,25 +4296,13 @@ function createStudyQueueFace(faceClassName, hintText, actionText) {
   const text = document.createElement("p");
   text.className = "flashcard-visual-text";
 
-  const footer = document.createElement("div");
-  footer.className = "flashcard-visual-footer";
-
-  const action = document.createElement("span");
-  action.className = "flashcard-visual-action";
-  action.textContent = actionText;
-
-  const keyHint = document.createElement("span");
-  keyHint.className = "flashcard-visual-keyhint";
-  keyHint.textContent = "Space flips the card";
-
   head.appendChild(kicker);
-  head.appendChild(inlineHint);
-  footer.appendChild(action);
-  footer.appendChild(keyHint);
+  if (hintText) {
+    head.appendChild(inlineHint);
+  }
   face.appendChild(head);
   face.appendChild(title);
   face.appendChild(text);
-  face.appendChild(footer);
 
   return { face, kicker, title, text };
 }
@@ -3541,6 +4359,8 @@ function ensureUnifiedStudyQueue(file) {
     return;
   }
   ensureStudyQueueFields(file);
+  file.studyQueue = file.studyQueue.filter((item) => item && item.kind === "flashcard");
+  file.studyQueueIndex = Math.min(file.studyQueueIndex || 0, Math.max(file.studyQueue.length - 1, 0));
   if (file.studyQueue.length > 0) {
     return;
   }
@@ -3548,9 +4368,7 @@ function ensureUnifiedStudyQueue(file) {
   const knownIds = new Set(file.knownStudyItemIds || []);
   const items = buildStudyItemsFromData(
     {
-      flashcards: file.flashcards,
-      studyTasks: file.studyTasks,
-      studyOrder: file.studyOrder
+      flashcards: file.flashcards
     },
     knownIds
   );
@@ -3591,26 +4409,6 @@ function buildStudyItemsFromData(sourceData, knownIds) {
     const item = createStudyItem("flashcard", parsed.front, parsed.back, {
       createdAt,
       known: knownSet.has(buildStudyItemId("flashcard", parsed.front, parsed.back))
-    });
-    items.push(item);
-  });
-
-  ensureStringArray(sourceData?.studyTasks).forEach((line) => {
-    const { front, back } = splitStudyLineForItem(line);
-    const metadata = { createdAt, ...extractStudyMetadata(line) };
-    const item = createStudyItem("task", front, back, {
-      ...metadata,
-      known: knownSet.has(buildStudyItemId("task", front, back))
-    });
-    items.push(item);
-  });
-
-  ensureStringArray(sourceData?.studyOrder).forEach((line) => {
-    const { front, back } = splitStudyLineForItem(line);
-    const metadata = { createdAt, ...extractStudyMetadata(line) };
-    const item = createStudyItem("plan", front, back, {
-      ...metadata,
-      known: knownSet.has(buildStudyItemId("plan", front, back))
     });
     items.push(item);
   });
@@ -3729,7 +4527,7 @@ function getActiveStudyQueue() {
   if (!file) {
     return [];
   }
-  ensureStudyQueueFields(file);
+  ensureUnifiedStudyQueue(file);
   return file.studyQueue;
 }
 
@@ -3750,27 +4548,22 @@ function renderStudyQueueViewer() {
 
   const queue = getActiveStudyQueue();
   if (queue.length === 0) {
-    if (flashcardsList) {
-      flashcardsList.classList.remove("hidden");
-    }
     flashcardsVisualGrid.classList.add("hidden");
     studyQueueUi.currentItemId = "";
     studyQueueUi.progress.textContent = "Card 0 of 0";
     studyQueueUi.helper.textContent = "Generate a study pack to start your flashcard session.";
     statusText.textContent = "Generate a study pack to start your session.";
+    updateFlashcardStudyActions(file);
     refreshCopyButtonsFromContent();
     return;
   }
 
-  if (flashcardsList) {
-    flashcardsList.classList.add("hidden");
-  }
   flashcardsVisualGrid.classList.remove("hidden");
 
   const index = Math.min(Math.max(file.studyQueueIndex || 0, 0), queue.length - 1);
   file.studyQueueIndex = index;
   const item = queue[index];
-  const kindLabel = item.kind === "task" ? "Task" : item.kind === "plan" ? "Study Plan" : "Flashcard";
+  const kindLabel = "Flashcard";
   const faceLabel = isStudyCardFlipped ? "Back" : "Front";
   const faceTitles = getStudyQueueFaceTitles(item.kind);
   const isNewCard = studyQueueUi.currentItemId !== item.id;
@@ -3788,12 +4581,10 @@ function renderStudyQueueViewer() {
   studyQueueUi.card.setAttribute(
     "aria-label",
     isStudyCardFlipped
-      ? `${kindLabel} back. Click to flip back to the prompt.`
+      ? `${kindLabel} back. Click to flip back.`
       : `${kindLabel} front. Click to reveal the answer.`
   );
-  studyQueueUi.helper.textContent = isStudyCardFlipped
-    ? "Click the card again to review the prompt. Use Left and Right arrow keys to move through the stack."
-    : "Click the card to reveal the answer. Use Left and Right arrow keys to move through the stack.";
+  studyQueueUi.helper.textContent = "Use Left and Right to move through your cards.";
   if (isNewCard) {
     animateStudyQueueCardEntry(studyQueueUi.card);
   }
@@ -3874,13 +4665,15 @@ function flipStudyQueueCard() {
   isStudyCardAnimating = true;
   isStudyCardFlipped = !isStudyCardFlipped;
   studyQueueUi.card.classList.add("is-flipping");
-  renderStudyQueueViewer();
+  requestAnimationFrame(() => {
+    renderStudyQueueViewer();
+  });
   setTimeout(() => {
     if (studyQueueUi) {
       studyQueueUi.card.classList.remove("is-flipping");
     }
     isStudyCardAnimating = false;
-  }, 560);
+  }, 420);
 }
 
 function moveStudyQueueIndex(delta) {
@@ -4091,6 +4884,9 @@ function setAllDownloadButtonsEnabled(enabled) {
   if (downloadFlashcardsButton) {
     downloadFlashcardsButton.disabled = !enabled;
   }
+  if (printFlashcardsButton) {
+    printFlashcardsButton.disabled = !enabled;
+  }
 }
 
 function setAllCopyButtonsEnabled(enabled) {
@@ -4118,6 +4914,11 @@ function refreshCopyButtonsFromContent() {
   if (downloadFlashcardsButton) {
     downloadFlashcardsButton.disabled = getStudyQueueFlashcardStrings().length === 0;
   }
+  if (printFlashcardsButton) {
+    printFlashcardsButton.disabled = getStudyQueueFlashcardStrings().length === 0;
+  }
+  updateFlashcardStudyActions();
+  updateQuizStudyActions();
 }
 
 function detectHighlightType(text) {
@@ -4399,6 +5200,129 @@ function loadScript(src) {
     script.onerror = () => reject(new Error(`Failed to load ${src}`));
     document.head.appendChild(script);
   });
+}
+
+function renderQuizQuestionsList(rawQuestions) {
+  if (!quizQuestionsList) {
+    return;
+  }
+
+  quizQuestionsList.innerHTML = "";
+  const items = buildQuizSessionItems(rawQuestions);
+
+  if (items.length === 0) {
+    const fallbackItem = document.createElement("li");
+    fallbackItem.textContent = "No items generated yet.";
+    quizQuestionsList.appendChild(fallbackItem);
+    return;
+  }
+
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    const typeBadge = document.createElement("span");
+    typeBadge.className = "quiz-question-badge";
+    typeBadge.textContent = formatQuizAnswerModeLabel(item.answerMode);
+
+    const text = document.createElement("span");
+    text.textContent = item.prompt;
+
+    li.appendChild(typeBadge);
+    li.appendChild(text);
+    quizQuestionsList.appendChild(li);
+  });
+}
+
+function buildQuizSessionItems(rawQuestions) {
+  const parsed = ensureStringArray(rawQuestions)
+    .map((question, index) => parseQuizQuestionItem(question, index + 1))
+    .filter(Boolean);
+  const answerPool = [...new Set(parsed.map((item) => item.answer).filter(Boolean))];
+
+  return parsed.map((item, index) => {
+    const options = buildQuizQuestionOptions(item, answerPool, index);
+    const answerMode = item.answerMode === "multiple-choice" && options.length > 1 ? "multiple-choice" : "short-answer";
+    return {
+      ...item,
+      answerMode,
+      options: answerMode === "multiple-choice" ? options : []
+    };
+  });
+}
+
+function parseQuizQuestionItem(rawText, fallbackIndex) {
+  const decoded = decodeHtmlEntities(String(rawText || "")).replace(/\s+/g, " ").trim();
+  if (!decoded) {
+    return null;
+  }
+
+  const parts = decoded.split("||").map((part) => part.trim()).filter(Boolean);
+  const metadata = {};
+  let basePrompt = decoded;
+
+  parts.forEach((part, index) => {
+    if (/^type\s*:/i.test(part)) {
+      metadata.type = part.replace(/^type\s*:/i, "").trim().toLowerCase();
+      return;
+    }
+    if (/^question\s*:/i.test(part)) {
+      metadata.question = part.replace(/^question\s*:/i, "").trim();
+      return;
+    }
+    if (/^answer\s*:/i.test(part)) {
+      metadata.answer = part.replace(/^answer\s*:/i, "").trim();
+      return;
+    }
+    if (index === 0) {
+      basePrompt = part;
+    }
+  });
+
+  const prompt = decodeHtmlEntities(String(metadata.question || basePrompt).replace(/^Question\s*\d+\s*:\s*/i, "").trim());
+  let answer = decodeHtmlEntities(String(metadata.answer || "").trim());
+
+  if (!answer) {
+    const quotedMatches = [...prompt.matchAll(/"([^"]+)"/g)].map((match) => match[1].trim()).filter(Boolean);
+    if (quotedMatches.length > 0) {
+      answer = quotedMatches[quotedMatches.length - 1];
+    }
+  }
+
+  if (!answer) {
+    answer = prompt;
+  }
+
+  return {
+    id: `quiz_${hashStudyKey(`${fallbackIndex}|${decoded}`)}`,
+    prompt,
+    answer,
+    raw: decoded,
+    answerMode: metadata.type === "multiple-choice" ? "multiple-choice" : "short-answer"
+  };
+}
+
+function buildQuizQuestionOptions(item, answerPool, index) {
+  if (item.answerMode !== "multiple-choice") {
+    return [];
+  }
+  const normalizedAnswer = normalizeComparisonText(item.answer);
+  const distractorPool = answerPool.filter((answer) => normalizeComparisonText(answer) !== normalizedAnswer);
+  const selected = [];
+
+  for (let offset = 0; offset < distractorPool.length && selected.length < 3; offset += 1) {
+    const candidate = distractorPool[(index + offset) % distractorPool.length];
+    if (candidate && !selected.includes(candidate)) {
+      selected.push(candidate);
+    }
+  }
+
+  if (selected.length === 0) {
+    return [];
+  }
+
+  const options = selected.slice(0, 3);
+  const insertIndex = Math.min(options.length, index % (options.length + 1));
+  options.splice(insertIndex, 0, item.answer);
+  return options.filter(Boolean);
 }
 
 async function ensureClerkLoaded(publishableKey) {
@@ -5151,12 +6075,12 @@ function buildDynamicOutputStep() {
   }
 
   return {
-    title: "Study Tasks Section",
-    target: "tasks",
+    title: "Study Plan Section",
+    target: "plan",
     exampleLabel: "Assignment",
-    text: "This section shows actionable tasks to complete first.",
+    text: "This section gives you a stronger step-by-step study flow.",
     hideExample: true,
-    example: "Use tasks as your checklist and mark them off as you finish."
+    example: "Follow the plan from top to bottom for a cleaner session."
   };
 }
 
@@ -5186,7 +6110,6 @@ async function getApiAuthHeaders() {
 
 function getFirstSelectedOutputKey() {
   const outputMap = [
-    { key: "studyTasks", input: outputStudyTasks },
     { key: "studyPlan", input: outputStudyPlan },
     { key: "cleanNotes", input: outputCleanNotes },
     { key: "flashcards", input: outputFlashcards },
@@ -5194,7 +6117,7 @@ function getFirstSelectedOutputKey() {
   ];
 
   const first = outputMap.find((entry) => entry.input && entry.input.checked);
-  return first ? first.key : "studyTasks";
+  return first ? first.key : "studyPlan";
 }
 
 function isTutorialActive() {

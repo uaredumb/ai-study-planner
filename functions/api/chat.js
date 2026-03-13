@@ -102,8 +102,8 @@ export async function onRequestPost(context) {
     }
   }
 
-  const textModel = env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
-  const visionModel = env.OPENROUTER_VISION_MODEL || "qwen/qwen3-vl-235b-a22b-thinking";
+  const textModel = env.OPENROUTER_MODEL || "stepfun/step-3.5-flash";
+  const visionModel = env.OPENROUTER_VISION_MODEL || "openrouter/healer-alpha";
   const model = requestMode === "vision" || requestMode === "ocr" ? visionModel : textModel;
   const textMaxTokens = Number(env.OPENROUTER_TEXT_MAX_TOKENS || 1200);
   const visionMaxTokens = Number(env.OPENROUTER_VISION_MAX_TOKENS || 900);

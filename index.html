@@ -63,9 +63,10 @@
           <span class="btn-glyph" aria-hidden="true">?</span>
           <span class="btn-label">Help</span>
         </button>
-        <button id="proModeButton" class="theme-btn" type="button" aria-label="Unlock Pro mode">
+        <button id="proModeButton" class="theme-btn" type="button" aria-label="Open Pro mode beta">
           <span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span>
-          <span class="btn-label">Mode: Off</span>
+          <span class="btn-label">Pro: Off</span>
+          <span class="beta-pill">Beta</span>
         </button>
         <button id="performanceToggle" class="theme-btn" aria-label="Toggle performance mode">
           <img class="btn-icon" src="icons/performance-off.svg" alt="" aria-hidden="true" />
@@ -109,7 +110,7 @@
       <div class="output-options-wrap">
         <p class="input-label">Choose outputs for your Study Pack</p>
         <div class="output-options-grid">
-          <label class="output-option">
+          <label class="output-option hidden">
             <input id="outputStudyTasks" type="checkbox" />
             <img class="output-icon" src="icons/output-tasks.svg" alt="" aria-hidden="true" />
             <span>Study Tasks</span>
@@ -191,7 +192,7 @@
     </section>
 
     <section id="resultsSection" class="results-grid" aria-live="polite">
-      <article id="studyTasksCard" class="card result-card">
+      <article id="studyTasksCard" class="card result-card hidden">
         <div class="result-card-head">
           <h2>Study Tasks</h2>
           <div class="result-card-actions">
@@ -234,8 +235,10 @@
         <div class="result-card-head">
           <h2>Flashcards</h2>
           <div class="result-card-actions">
+            <button id="beginFlashcardsButton" class="secondary-btn copy-btn" type="button">Begin Flashcard Study</button>
             <button id="copyFlashcardsButton" class="secondary-btn copy-btn" type="button">Copy</button>
             <button id="downloadFlashcardsButton" class="secondary-btn copy-btn" type="button">Download PDF</button>
+            <button id="printFlashcardsButton" class="secondary-btn copy-btn" type="button">Print Flashcards</button>
           </div>
         </div>
         <ul id="flashcardsList" class="result-list">
@@ -258,6 +261,7 @@
         <div class="result-card-head">
           <h2>Quiz Questions</h2>
           <div class="result-card-actions">
+            <button id="beginQuizButton" class="secondary-btn copy-btn" type="button">Begin Quiz</button>
             <button id="copyQuizButton" class="secondary-btn copy-btn" type="button">Copy</button>
             <button id="downloadQuizButton" class="secondary-btn copy-btn" type="button">Download PDF</button>
           </div>
@@ -265,6 +269,7 @@
         <ol id="quizQuestionsList" class="result-list ordered-list">
           <li>No items generated yet.</li>
         </ol>
+        <div id="quizStudyPanel" class="quiz-study-panel hidden"></div>
       </article>
     </section>
   </main>
@@ -396,9 +401,9 @@
   <div id="proModeModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="proModeTitle">
     <div class="modal-card">
       <button id="proModeCloseXButton" type="button" class="modal-close-x" aria-label="Close Pro modal">X</button>
-      <h2 id="proModeTitle">Unlock Pro Mode</h2>
+      <h2 id="proModeTitle">Unlock Pro Mode Beta</h2>
       <p id="proModeMessage" class="modal-message">
-        Pro features unlock higher limits for larger study sessions.
+        Pro Mode is currently in beta and unlocks higher limits for larger study sessions.
       </p>
       <ul id="proModeBenefits" class="modal-message">
         <li>Up to 10 flashcards per generation (instead of 5).</li>

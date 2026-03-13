@@ -1,4 +1,5 @@
 OPENROUTER_API_KEY=your_openrouter_api_key
-OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_MODEL=stepfun/step-3.5-flash
+OPENROUTER_VISION_MODEL=openrouter/healer-alpha
 OPENROUTER_SITE_URL=https://ai-study-planner.pages.dev
 OPENROUTER_APP_NAME=AI Study Pal

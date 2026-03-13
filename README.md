@@ -48,7 +48,8 @@ npm install
 
 ```env
 OPENROUTER_API_KEY=your_real_key_here
-AI_MODEL=arcee-ai/trinity-large-preview:free
+OPENROUTER_MODEL=stepfun/step-3.5-flash
+OPENROUTER_VISION_MODEL=openrouter/healer-alpha
 OPENROUTER_SITE_URL=http://localhost:3000
 OPENROUTER_APP_NAME=AI Study Planner
 PORT=3000
@@ -74,6 +75,7 @@ Frontend now calls `POST /api/chat` and never sends an API key from client code.
    - `OPENROUTER_API_KEY` (required)
 2. Optional env vars:
    - `OPENROUTER_MODEL`
+   - `OPENROUTER_VISION_MODEL`
    - `OPENROUTER_SITE_URL`
    - `OPENROUTER_APP_NAME`
 3. Deploy with the `functions/` directory included.
