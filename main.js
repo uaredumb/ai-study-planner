@@ -170,12 +170,16 @@ const ACTIVE_FILE_ID_STORAGE = "active_study_file_id_v1";
 const SUMMARY_MODE_STORAGE = "summary_mode_v1";
 const FREE_NOTES_CHAR_LIMIT = 3000;
 const PRO_NOTES_CHAR_LIMIT = 8000;
+const GOD_MODE_NOTES_CHAR_LIMIT = 50000;
 const PRO_MODE_STORAGE = "pro_mode_unlocked_v1";
+const GOD_MODE_STORAGE = "god_mode_unlocked_v1";
 const USED_PRO_CODE_HASHES_STORAGE = "used_pro_code_hashes_v1";
 const FREE_FILE_LIMIT = 2;
 const PRO_FILE_LIMIT = 5;
+const GOD_MODE_FILE_LIMIT = 100;
 const FREE_FLASHCARDS_LIMIT = 5;
 const PRO_FLASHCARDS_LIMIT = 10;
+const GOD_MODE_FLASHCARDS_LIMIT = 50;
 const DEFAULT_PRICING_PAGE_PATH = "pricing.html";
 const DEFAULT_PRO_PLAN_SLUG = "pro";
 const DEFAULT_PRO_PLAN_PRICE = "$1.50 / month";
@@ -210,6 +214,9 @@ const PRO_CODE_HASHES = [
   "1b2f0f3bb4bcc59c6e3bca6330987c6b162af44941aa75c29d8a460841c3dd52",
   "491d52f03896238e96b10fdae8e8788f89e74028c69b2651012ae14f05b93073"
 ];
+const GOD_MODE_HASHES = [
+  "6759ef91165e45070b43130b3bf70ba732ee1b43aa7d39c700509dc72acc59ec"
+];
 const NON_NOTES_MESSAGE =
   "I can only generate from real study notes or learning material. Please add notes, class content, or an educational article.";
 
@@ -224,6 +231,7 @@ let ENABLE_AUTH = Boolean(getClerkPublishableKey());
 let studyFiles = loadStudyFiles();
 let activeFileId = loadActiveFileId(studyFiles);
 let isProMode = loadProModeState();
+let isGodMode = false;
 let isGenerating = false;
 let createdFileIdForAnimation = "";
 let tutorialStepIndex = 0;
@@ -522,7 +530,7 @@ if (proCodeInput) {
   proCodeInput.addEventListener("input", clearProCodeError);
 }
 if (proModeHaveCodeButton) {
-  proModeHaveCodeButton.addEventListener("click", () => openPricingPage(proModeModal?.dataset?.source || "general"));
+  proModeHaveCodeButton.addEventListener("click", showProCodeForm);
 }
 if (proModeCloseIntroButton) {
   proModeCloseIntroButton.addEventListener("click", closeProModeModal);
@@ -824,6 +832,7 @@ applyAccountGatesUi();
 if (appLogo) {
   const logoCandidates = [
     appLogo.getAttribute("src"),
+    "UpdatedLogo.png",
     "logo.png",
     "logo.jpg",
     "logo.jpeg",
@@ -1747,6 +1756,15 @@ function getAccountUsedProCodeHashes() {
   return hashes.filter((item) => typeof item === "string");
 }
 
+function hasGodModeAccess() {
+  const metadata = getAccountUnsafeMetadata();
+  return Boolean(
+    metadata.godMode ||
+      metadata.isAdmin ||
+      (hasAccount() && localStorage.getItem(GOD_MODE_STORAGE) === "on")
+  );
+}
+
 async function persistProCodeUsage(codeHash) {
   if (!hasAccount() || !window.Clerk?.user || typeof window.Clerk.user.update !== "function") {
     return;
@@ -1759,6 +1777,24 @@ async function persistProCodeUsage(codeHash) {
     usedProCodeHashes: Array.from(existing),
     proUnlocked: true,
     proUnlockedAt: new Date().toISOString()
+  };
+  await window.Clerk.user.update({ unsafeMetadata });
+}
+
+async function persistGodModeUsage(codeHash) {
+  if (!hasAccount() || !window.Clerk?.user || typeof window.Clerk.user.update !== "function") {
+    return;
+  }
+  const metadata = getAccountUnsafeMetadata();
+  const existing = new Set(getAccountUsedProCodeHashes());
+  existing.add(codeHash);
+  const unsafeMetadata = {
+    ...metadata,
+    usedProCodeHashes: Array.from(existing),
+    proUnlocked: true,
+    proUnlockedAt: new Date().toISOString(),
+    godMode: true,
+    godModeUnlockedAt: new Date().toISOString()
   };
   await window.Clerk.user.update({ unsafeMetadata });
 }
@@ -1780,17 +1816,22 @@ function hasActiveClerkProPlan() {
 function syncProModeFromAccount() {
   if (!hasAccount()) {
     isProMode = false;
+    isGodMode = false;
     updateProModeButtonVisibility();
     return;
   }
   const metadata = getAccountUnsafeMetadata();
-  if (metadata.proUnlocked || hasActiveClerkProPlan()) {
+  isGodMode = hasGodModeAccess();
+  if (isGodMode || metadata.proUnlocked || hasActiveClerkProPlan()) {
     isProMode = true;
   } else if (localStorage.getItem(PRO_MODE_STORAGE) === "on") {
     isProMode = true;
     persistProCodeUsage("migrated-from-local").catch(() => {});
   } else {
     isProMode = false;
+  }
+  if (isGodMode && canPersistStudyData()) {
+    localStorage.setItem(GOD_MODE_STORAGE, "on");
   }
   if (isProMode && canPersistStudyData()) {
     localStorage.setItem(PRO_MODE_STORAGE, "on");
@@ -1802,14 +1843,23 @@ function getMaxFilesAllowed() {
   if (!hasAccount()) {
     return 1;
   }
+  if (isGodMode) {
+    return GOD_MODE_FILE_LIMIT;
+  }
   return isProMode ? PRO_FILE_LIMIT : FREE_FILE_LIMIT;
 }
 
 function getMaxFlashcardsAllowed() {
+  if (isGodMode) {
+    return GOD_MODE_FLASHCARDS_LIMIT;
+  }
   return isProMode ? PRO_FLASHCARDS_LIMIT : FREE_FLASHCARDS_LIMIT;
 }
 
 function getNotesCharLimit() {
+  if (isGodMode) {
+    return GOD_MODE_NOTES_CHAR_LIMIT;
+  }
   return isProMode ? PRO_NOTES_CHAR_LIMIT : FREE_NOTES_CHAR_LIMIT;
 }
 
@@ -1818,7 +1868,7 @@ function updateProModeButtonLabel() {
     return;
   }
   proModeButton.innerHTML = isProMode
-    ? '<span class="btn-glyph pro-badge-icon" aria-hidden="true">&#9670;</span><span class="btn-label">Pro Active</span><span class="beta-pill">Beta</span>'
+    ? `<span class="btn-glyph pro-badge-icon" aria-hidden="true">&#9670;</span><span class="btn-label">${isGodMode ? "God Mode" : "Pro Active"}</span><span class="beta-pill">Beta</span>`
     : '<span class="btn-glyph pro-badge-icon" aria-hidden="true">&#9670;</span><span class="btn-label">Upgrade</span><span class="beta-pill">Beta</span>';
   proModeButton.classList.toggle("hidden", !hasAccount());
 }
@@ -1838,7 +1888,11 @@ function updateFlashcardsLimitUi() {
   }
   flashcardsCountSelect.value = String(Math.max(1, Math.min(max, previousValue)));
   if (flashcardsLimitHint) {
-    flashcardsLimitHint.textContent = isProMode ? "Maximum: 10 cards (Pro)" : "Maximum: 5 cards (free)";
+    flashcardsLimitHint.textContent = isGodMode
+      ? "Maximum: 50 cards (God Mode)"
+      : isProMode
+        ? "Maximum: 10 cards (Pro)"
+        : "Maximum: 5 cards (free)";
   }
   if (moreFlashcardsButton) {
     moreFlashcardsButton.classList.toggle("hidden", isProMode);
