@@ -20,6 +20,7 @@ const downloadStudyPlanButton = document.getElementById("downloadStudyPlanButton
 const downloadCleanNotesButton = document.getElementById("downloadCleanNotesButton");
 const moreFlashcardsButton = document.getElementById("moreFlashcardsButton");
 const beginFlashcardsButton = document.getElementById("beginFlashcardsButton");
+const flashcardsExportHint = document.getElementById("flashcardsExportHint");
 const flashcardsPdfPreviewWrap = document.getElementById("flashcardsPdfPreviewWrap");
 const flashcardsPdfPreview = document.getElementById("flashcardsPdfPreview");
 const previewFrontsButton = document.getElementById("previewFrontsButton");
@@ -864,6 +865,11 @@ if (appLogo) {
 }
 
 async function handleCleanNotes() {
+  if (!hasSelectedOutputs()) {
+    statusText.textContent = "Choose at least one output first.";
+    updateGenerateActionState();
+    return;
+  }
   if (!canGenerateStudyPack()) {
     return;
   }
@@ -919,6 +925,11 @@ async function handleCleanNotes() {
 }
 
 async function summarizeArticleFromLink() {
+  if (!hasSelectedOutputs()) {
+    statusText.textContent = "Choose at least one output first.";
+    updateGenerateActionState();
+    return;
+  }
   if (!requireAccount("use Summarize Article")) {
     return;
   }
@@ -982,6 +993,16 @@ function getSelectedOutputs() {
   };
 }
 
+function hasSelectedOutputs(selectedOutputs = getSelectedOutputs()) {
+  const normalized = normalizeSelectedOutputs(selectedOutputs);
+  return Boolean(
+    normalized.studyPlan ||
+      normalized.cleanNotes ||
+      normalized.flashcards ||
+      normalized.quizQuestions
+  );
+}
+
 function normalizeSelectedOutputs(selectedOutputs) {
   return {
     studyTasks: false,
@@ -1009,6 +1030,7 @@ function applySelectedOutputs(selectedOutputs) {
   if (outputQuizQuestions) {
     outputQuizQuestions.checked = normalized.quizQuestions;
   }
+  updateGenerateActionState();
 }
 
 async function generateStudyPack(text, selectedOutputs) {
@@ -1102,6 +1124,11 @@ function extractJsonObject(text) {
 
 async function summarizeFromPhoto() {
   if (!requireAccount("use Summarize Notes Photo")) {
+    return;
+  }
+  if (!hasSelectedOutputs()) {
+    statusText.textContent = "Choose at least one output first.";
+    updateGenerateActionState();
     return;
   }
   if (!canGenerateStudyPack()) {
@@ -2355,7 +2382,6 @@ function ensureStringArray(value) {
 
 function setLoadingState(isLoading, mode = "clean") {
   isGenerating = isLoading;
-  cleanButton.disabled = isLoading;
   newFileButton.disabled = isLoading;
   saveFileButton.disabled = isLoading;
   renameFileButton.disabled = isLoading;
@@ -2403,9 +2429,9 @@ function setLoadingState(isLoading, mode = "clean") {
   } else {
     refreshCopyButtonsFromContent();
   }
+  updateGenerateActionState();
   cleanButton.classList.toggle("is-loading", isLoading && mode === "clean");
   if (summarizeLinkButton) {
-    summarizeLinkButton.disabled = isLoading;
     summarizeLinkButton.classList.toggle("is-loading", isLoading && mode === "article");
   }
   cleanButton.textContent = isLoading && mode === "clean" ? "Generating Study Pack..." : "Generate Study Pack";
@@ -2433,6 +2459,29 @@ function triggerSummarizeClickAnimation(button) {
   button.classList.remove("click-burst");
   void button.offsetWidth;
   button.classList.add("click-burst");
+}
+
+function animateStudyPanelReveal(panel) {
+  if (!panel) {
+    return;
+  }
+  panel.classList.remove("study-panel-reveal");
+  void panel.offsetWidth;
+  panel.classList.add("study-panel-reveal");
+}
+
+function scrollStudyPanelIntoView(panel, desktopBlock = "center") {
+  if (!panel || typeof panel.scrollIntoView !== "function") {
+    return;
+  }
+  const useMobileLayout = window.innerWidth <= 600 || isLikelyMobileDevice();
+  window.setTimeout(() => {
+    panel.scrollIntoView({
+      behavior: "smooth",
+      block: useMobileLayout ? "end" : desktopBlock,
+      inline: "nearest"
+    });
+  }, 90);
 }
 
 function renderList(listElement, items) {
@@ -2639,6 +2688,22 @@ function updateOptionalOutputCards() {
   setCardVisibility(quizQuestionsCard, Boolean(outputQuizQuestions?.checked));
   if (flashcardsCountWrap) {
     flashcardsCountWrap.classList.toggle("hidden", !Boolean(outputFlashcards?.checked));
+  }
+  updateGenerateActionState();
+}
+
+function updateGenerateActionState() {
+  const hasOutputs = hasSelectedOutputs();
+  const shouldDisable = isGenerating || !hasOutputs;
+  if (cleanButton) {
+    cleanButton.disabled = shouldDisable;
+    cleanButton.title = hasOutputs ? "" : "Choose at least one output first.";
+    cleanButton.setAttribute("aria-disabled", shouldDisable ? "true" : "false");
+  }
+  if (summarizeLinkButton) {
+    summarizeLinkButton.disabled = shouldDisable;
+    summarizeLinkButton.title = hasOutputs ? "" : "Choose at least one output first.";
+    summarizeLinkButton.setAttribute("aria-disabled", shouldDisable ? "true" : "false");
   }
 }
 
@@ -3491,7 +3556,7 @@ function bindDownloadFlashcardsButton() {
       downloadBlob(backsBlob, `${safeNameBase}-flashcards-backs.pdf`);
     }, 120);
 
-    statusText.textContent = "Downloaded flashcard PDFs. Use the combined file for double-sided printing.";
+    statusText.textContent = `Downloaded the full flashcard set: ${rawCards.length} cards with fronts, backs, and a combined print file.`;
   });
 }
 
@@ -3728,6 +3793,13 @@ function buildCuttableFlashcardsPdfs(rawCards) {
   const marginX = (pageWidth - (cardWidth * 2 + colGap)) / 2;
   const marginY = 0.6;
   const perPage = 8; // 2 cols x 4 rows
+  const totalCards = rawCards.length;
+
+  const getPageCardRangeLabel = (pageIndex) => {
+    const startCard = pageIndex * perPage + 1;
+    const endCard = Math.min((pageIndex + 1) * perPage, totalCards);
+    return `Cards ${startCard}-${endCard} of ${totalCards}`;
+  };
 
   rawCards.forEach((cardText, index) => {
     const pageIndex = Math.floor(index / perPage);
@@ -3743,17 +3815,22 @@ function buildCuttableFlashcardsPdfs(rawCards) {
       backsDoc.addPage("letter", "portrait");
     }
 
-    drawCutCard(frontsDoc, x, y, cardWidth, cardHeight, `Card ${index + 1} Front`, front);
-    drawCutCard(backsDoc, x, y, cardWidth, cardHeight, `Card ${index + 1} Back`, back);
+    drawCutCard(frontsDoc, x, y, cardWidth, cardHeight, `Flashcard ${index + 1} Front`, front);
+    drawCutCard(backsDoc, x, y, cardWidth, cardHeight, `Flashcard ${index + 1} Back`, back);
 
-    // Light page labels for print workflow.
     if (slot === 0) {
       frontsDoc.setFont("helvetica", "bold");
-      frontsDoc.setFontSize(9);
-      frontsDoc.text(`Flashcards Fronts - Page ${pageIndex + 1}`, marginX, 0.35);
+      frontsDoc.setFontSize(10);
+      frontsDoc.text(`Full Flashcard Set - Fronts - Page ${pageIndex + 1}`, marginX, 0.3);
+      frontsDoc.setFont("helvetica", "normal");
+      frontsDoc.setFontSize(8.5);
+      frontsDoc.text(getPageCardRangeLabel(pageIndex), marginX, 0.46);
       backsDoc.setFont("helvetica", "bold");
-      backsDoc.setFontSize(9);
-      backsDoc.text(`Flashcards Backs - Page ${pageIndex + 1}`, marginX, 0.35);
+      backsDoc.setFontSize(10);
+      backsDoc.text(`Full Flashcard Set - Backs - Page ${pageIndex + 1}`, marginX, 0.3);
+      backsDoc.setFont("helvetica", "normal");
+      backsDoc.setFontSize(8.5);
+      backsDoc.text(getPageCardRangeLabel(pageIndex), marginX, 0.46);
     }
   });
 
@@ -3802,6 +3879,13 @@ function buildCombinedFlashcardsPdf(rawCards) {
   const marginY = 0.6;
   const perPage = 8;
   const totalPages = Math.ceil(rawCards.length / perPage);
+  const totalCards = rawCards.length;
+
+  const getPageCardRangeLabel = (pageIndex) => {
+    const startCard = pageIndex * perPage + 1;
+    const endCard = Math.min((pageIndex + 1) * perPage, totalCards);
+    return `Cards ${startCard}-${endCard} of ${totalCards}`;
+  };
 
   for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
     const start = pageIndex * perPage;
@@ -3811,8 +3895,11 @@ function buildCombinedFlashcardsPdf(rawCards) {
       combined.addPage("letter", "portrait");
     }
     combined.setFont("helvetica", "bold");
-    combined.setFontSize(9);
-    combined.text(`Flashcards Fronts - Page ${pageIndex + 1}`, marginX, 0.35);
+    combined.setFontSize(10);
+    combined.text(`Full Flashcard Set - Fronts - Page ${pageIndex + 1}`, marginX, 0.3);
+    combined.setFont("helvetica", "normal");
+    combined.setFontSize(8.5);
+    combined.text(getPageCardRangeLabel(pageIndex), marginX, 0.46);
 
     for (let index = start; index < end; index += 1) {
       const slot = index - start;
@@ -3821,13 +3908,16 @@ function buildCombinedFlashcardsPdf(rawCards) {
       const x = marginX + col * (cardWidth + colGap);
       const y = marginY + row * (cardHeight + rowGap);
       const { front } = parseFlashcardText(rawCards[index], index + 1);
-      drawCutCard(combined, x, y, cardWidth, cardHeight, `Card ${index + 1} Front`, front);
+      drawCutCard(combined, x, y, cardWidth, cardHeight, `Flashcard ${index + 1} Front`, front);
     }
 
     combined.addPage("letter", "portrait");
     combined.setFont("helvetica", "bold");
-    combined.setFontSize(9);
-    combined.text(`Flashcards Backs - Page ${pageIndex + 1}`, marginX, 0.35);
+    combined.setFontSize(10);
+    combined.text(`Full Flashcard Set - Backs - Page ${pageIndex + 1}`, marginX, 0.3);
+    combined.setFont("helvetica", "normal");
+    combined.setFontSize(8.5);
+    combined.text(getPageCardRangeLabel(pageIndex), marginX, 0.46);
 
     for (let index = start; index < end; index += 1) {
       const slot = index - start;
@@ -3836,7 +3926,7 @@ function buildCombinedFlashcardsPdf(rawCards) {
       const x = marginX + col * (cardWidth + colGap);
       const y = marginY + row * (cardHeight + rowGap);
       const { back } = parseFlashcardText(rawCards[index], index + 1);
-      drawCutCard(combined, x, y, cardWidth, cardHeight, `Card ${index + 1} Back`, back);
+      drawCutCard(combined, x, y, cardWidth, cardHeight, `Flashcard ${index + 1} Back`, back);
     }
   }
 
@@ -4007,12 +4097,19 @@ function updateFlashcardStudyActions(file = getActiveFile()) {
     beginFlashcardsButton.disabled = !hasItems;
     beginFlashcardsButton.textContent = isFlashcardStudyStarted(file) ? "Hide Flashcard Study" : "Begin Flashcard Study";
   }
+  if (flashcardsExportHint) {
+    const count = getStudyQueueItemsCount(file);
+    flashcardsExportHint.textContent = count > 0
+      ? `Downloads and prints the full set of ${count} flashcard${count === 1 ? "" : "s"}, not just the card on screen.`
+      : "Generate flashcards to download printable flashcard sheets for the full set.";
+  }
   if (printFlashcardsButton) {
     printFlashcardsButton.disabled = !hasItems;
   }
 }
 
 function toggleFlashcardStudy() {
+  triggerSummarizeClickAnimation(beginFlashcardsButton);
   const file = getActiveFile();
   if (!file) {
     return;
@@ -4028,6 +4125,8 @@ function toggleFlashcardStudy() {
   renderFlashcardsVisuals(file.flashcards);
   refreshCopyButtonsFromContent();
   if (nextState) {
+    animateStudyPanelReveal(flashcardsVisualGrid);
+    scrollStudyPanelIntoView(flashcardsVisualGrid, "center");
     statusText.textContent = "Flashcard study started. Click a card to flip it.";
   }
 }
@@ -4089,6 +4188,7 @@ function updateQuizStudyActions(file = getActiveFile()) {
 }
 
 function toggleQuizStudy() {
+  triggerSummarizeClickAnimation(beginQuizButton);
   const file = getActiveFile();
   if (!file) {
     return;
@@ -4104,6 +4204,8 @@ function toggleQuizStudy() {
   if (!state || !state.started) {
     resetQuizSessionState(file);
     renderQuizStudyPanel();
+    animateStudyPanelReveal(quizStudyPanel);
+    scrollStudyPanelIntoView(quizStudyPanel, "end");
     statusText.textContent = "Quiz started. Answer the question and check your work.";
     return;
   }

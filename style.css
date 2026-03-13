@@ -409,6 +409,13 @@ body.auth-locked .app-shell {
   fill: #ffffff !important;
 }
 
+.clerk-auth-mount .cl-socialButtonsBlockButton[data-provider="apple"],
+.clerk-auth-mount .cl-socialButtonsBlockButton[data-provider="microsoft"],
+.clerk-auth-mount .cl-socialButtonsBlockButton[aria-label*="Apple"],
+.clerk-auth-mount .cl-socialButtonsBlockButton[aria-label*="Microsoft"] {
+  display: none !important;
+}
+
 .clerk-auth-mount .cl-dividerRow {
   margin: 1rem 0 1.05rem;
 }
@@ -1479,6 +1486,18 @@ body.dark .flashcard-visual-inline-hint {
   }
 }
 
+@keyframes studyPanelReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (max-width: 640px) {
   .flashcard-visual.flashcard-virtual {
     width: 100%;
@@ -1529,6 +1548,13 @@ body.dark .flashcard-visual-inline-hint {
     color-mix(in srgb, var(--card), #ffffff 10%) 0%,
     color-mix(in srgb, var(--card), var(--bg) 10%) 100%
   );
+}
+
+.flashcards-export-hint {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
 }
 
 .flashcards-preview-head {
@@ -1949,6 +1975,11 @@ body.dark .preview-toggle-btn.active {
   margin-top: 1rem;
   display: grid;
   gap: 0.85rem;
+}
+
+.study-panel-reveal {
+  animation: studyPanelReveal 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top center;
 }
 
 .quiz-study-summary {
