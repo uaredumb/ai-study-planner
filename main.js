@@ -257,6 +257,7 @@ let fileOpenAnimationFrameA = 0;
 let fileOpenAnimationFrameB = 0;
 let slowGenerationToastTimer = 0;
 let guestGenerationCount = 0;
+let pdfJsModulePromise = null;
 
 enforceFileLimitForCurrentMode();
 
@@ -1193,11 +1194,14 @@ function updateLiveStreamPreview(fullText) {
     return;
   }
   const raw = String(fullText || "");
-  const maxChars = 6000;
-  const clipped = raw.length > maxChars ? `...\n${raw.slice(-maxChars)}` : raw;
+  const latestLine = raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .pop();
+  const clipped = latestLine || raw.replace(/\s+/g, " ").trim();
   liveStreamWrap.classList.remove("hidden");
   liveStreamText.textContent = clipped || "Waiting for model response...";
-  liveStreamText.scrollTop = liveStreamText.scrollHeight;
 }
 
 function initStatusNotificationRouter() {
@@ -1536,6 +1540,7 @@ function clearPersistedStudyData() {
   localStorage.removeItem(STUDY_FILES_STORAGE);
   localStorage.removeItem(ACTIVE_FILE_ID_STORAGE);
   localStorage.removeItem(PRO_MODE_STORAGE);
+  localStorage.removeItem(GOD_MODE_STORAGE);
   localStorage.removeItem(USED_PRO_CODE_HASHES_STORAGE);
   localStorage.removeItem(THEME_KEY);
   localStorage.removeItem(PERFORMANCE_MODE_KEY);
@@ -1927,7 +1932,7 @@ function openProModeModal(source = "general") {
     return;
   }
   if (isProMode) {
-    statusText.textContent = "Pro is already active on your account.";
+    statusText.textContent = isGodMode ? "God Mode is already active on your account." : "Pro is already active on your account.";
     return;
   }
   if (!proModeModal) {
@@ -1937,10 +1942,10 @@ function openProModeModal(source = "general") {
   if (proModeMessage) {
     proModeMessage.textContent =
       source === "flashcards"
-        ? `Pro increases your flashcard limit and unlocks higher study limits for ${getProPlanPriceLabel()}.`
+        ? `Pro increases your flashcard limit, and a God Mode code unlocks the highest limits instantly.`
         : source === "notes"
-          ? `Pro gives you much more note space and unlocks higher study limits for ${getProPlanPriceLabel()}.`
-          : `Unlock Pro to increase study limits and productivity for ${getProPlanPriceLabel()}.`;
+          ? `Pro gives you much more note space, and a God Mode code unlocks the highest limits instantly.`
+          : `Unlock Pro with a plan or code, or use a God Mode code for the highest limits.`;
   }
   showProIntroScreen();
   proModeModal.classList.remove("hidden");
@@ -2038,7 +2043,9 @@ async function submitProCode(event) {
     showProCodeError("Pro unlock is unavailable in this context. Use the hosted app.");
     return;
   }
-  if (!PRO_CODE_HASHES.includes(codeHash)) {
+  const isGodModeCode = GOD_MODE_HASHES.includes(codeHash);
+  const isProCode = PRO_CODE_HASHES.includes(codeHash);
+  if (!isGodModeCode && !isProCode) {
     showProCodeError("Invalid Pro code.");
     return;
   }
@@ -2048,12 +2055,19 @@ async function submitProCode(event) {
   }
   markProCodeHashAsUsed(codeHash);
   isProMode = true;
+  if (isGodModeCode) {
+    isGodMode = true;
+    if (canPersistStudyData()) {
+      localStorage.setItem(GOD_MODE_STORAGE, "on");
+    }
+    await persistGodModeUsage(codeHash).catch(() => {});
+  }
   if (canPersistStudyData()) {
     localStorage.setItem(PRO_MODE_STORAGE, "on");
   }
   applyProModeUi();
   closeProModeModal();
-  statusText.textContent = "Pro Mode unlocked.";
+  statusText.textContent = isGodModeCode ? "God Mode unlocked." : "Pro Mode unlocked.";
 }
 
 function createFile() {
@@ -2421,7 +2435,7 @@ function triggerSummarizeClickAnimation(button) {
   button.classList.add("click-burst");
 }
 
-function renderList(listElement, items, highlight = true) {
+function renderList(listElement, items) {
   if (!listElement) {
     return;
   }
@@ -2436,11 +2450,7 @@ function renderList(listElement, items, highlight = true) {
 
   items.forEach((item) => {
     const li = document.createElement("li");
-    if (highlight) {
-      li.innerHTML = highlightImportantParts(item);
-    } else {
-      li.textContent = decodeHtmlEntities(String(item || ""));
-    }
+    li.textContent = decodeHtmlEntities(String(item || ""));
     listElement.appendChild(li);
   });
 }
@@ -2670,82 +2680,229 @@ function setCardVisibility(card, isVisible) {
 
 function generateFlashcards(sourceLines) {
   const requestedCount = getRequestedFlashcardsCount();
-  const units = buildFlashcardUnits(sourceLines, requestedCount);
+  const facts = buildStudyFacts(sourceLines);
+  const cards = [];
 
-  return units.map((unit, index) => {
-    const normalized = String(unit || "").replace(/\s+/g, " ").trim();
-    const separatorIndex = normalized.indexOf(":");
-    const front =
-      separatorIndex > 0
-        ? normalized.slice(0, separatorIndex).trim()
-        : buildFlashcardFrontFromLine(normalized, index + 1);
-    const back =
-      separatorIndex > 0
-        ? normalized.slice(separatorIndex + 1).trim()
-        : normalized;
-    return `${index + 1}. Front: ${front} | Back: ${back || "Review your notes."}`;
-  });
+  if (facts.length === 0) {
+    return Array.from({ length: requestedCount }, (_value, index) =>
+      `${index + 1}. Front: Review this concept. | Back: Review your notes.`
+    );
+  }
+
+  for (let index = 0; index < requestedCount; index += 1) {
+    const fact = facts[index % facts.length];
+    const front = buildFlashcardFrontFromFact(fact, index);
+    const back = fact.answer || fact.line || "Review your notes.";
+    cards.push(`${index + 1}. Front: ${front} | Back: ${back}`);
+  }
+
+  return cards;
 }
 
-function buildFlashcardUnits(sourceLines, requestedCount) {
+function buildStudyFacts(sourceLines) {
   const base = ensureStringArray(sourceLines)
-    .map((line) => String(line || "").replace(/\s+/g, " ").trim())
+    .map((line) =>
+      decodeHtmlEntities(String(line || ""))
+        .replace(/^\s*(?:[-*]|\u2022|\d+\.)\s*/, "")
+        .replace(/\s+/g, " ")
+        .trim()
+    )
     .filter(Boolean);
-  const units = [];
+  const facts = [];
   const seen = new Set();
 
-  const pushUnit = (value) => {
-    const normalized = String(value || "").replace(/\s+/g, " ").trim();
-    if (!normalized) {
+  const pushFact = (fact) => {
+    if (!fact) {
       return;
     }
-    const key = normalized.toLowerCase();
+    const subject = formatStudySubject(fact.subject || buildStudySubjectFallback(fact.line));
+    const answer = formatStudyAnswer(fact.answer || fact.line);
+    const line = decodeHtmlEntities(String(fact.line || answer || subject)).replace(/\s+/g, " ").trim();
+    if (!subject || !answer || !line) {
+      return;
+    }
+    const key = normalizeComparisonText(`${subject}|${answer}`);
     if (seen.has(key)) {
       return;
     }
     seen.add(key);
-    units.push(normalized);
+    facts.push({
+      subject,
+      answer,
+      kind: fact.kind || "fact",
+      line
+    });
   };
 
-  base.forEach((line) => pushUnit(line));
+  base.forEach((line) => {
+    pushFact(parseStudyFactLine(line));
+    line
+      .split(/[;\u2022]/)
+      .map((part) => part.trim())
+      .filter((part) => part.length >= 18)
+      .forEach((part) => pushFact(parseStudyFactLine(part)));
+  });
 
-  const combined = base.join(" ");
-  combined
-    .split(/[.!?\n;]+/)
-    .map((part) => part.trim())
-    .filter((part) => part.length >= 18)
-    .forEach((part) => pushUnit(part));
+  if (facts.length === 0) {
+    base.forEach((line) => {
+      pushFact({
+        subject: buildStudySubjectFallback(line),
+        answer: line,
+        kind: "fact",
+        line
+      });
+    });
+  }
 
-  const words = combined.split(/\s+/).filter(Boolean);
-  if (words.length > 0) {
-    const chunkSize = Math.max(6, Math.min(16, Math.ceil(words.length / Math.max(1, requestedCount))));
-    const step = Math.max(4, Math.floor(chunkSize * 0.7));
-    for (let start = 0; start < words.length && units.length < requestedCount * 2; start += step) {
-      const chunk = words.slice(start, start + chunkSize).join(" ").trim();
-      if (chunk.length >= 18) {
-        pushUnit(chunk);
-      }
+  if (facts.length === 0) {
+    facts.push({
+      subject: "Main idea",
+      answer: "Review your notes.",
+      kind: "fact",
+      line: "Review your notes."
+    });
+  }
+
+  return facts;
+}
+
+function parseStudyFactLine(line) {
+  const normalized = decodeHtmlEntities(String(line || ""))
+    .replace(/^\s*(?:[-*]|\u2022|\d+\.)\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const colonMatch = normalized.match(/^([^:]{2,80}):\s*(.+)$/);
+  if (colonMatch) {
+    return {
+      subject: colonMatch[1],
+      answer: colonMatch[2],
+      kind: "definition",
+      line: normalized
+    };
+  }
+
+  const patterns = [
+    {
+      regex: /^(.{2,80}?)\s+(?:is defined as|can be defined as|is known as|refers to|means)\s+(.+)$/i,
+      kind: "definition",
+      answer: (_subject, _verb, detail) => detail
+    },
+    {
+      regex: /^(.{2,80}?)\s+(is|are|was|were)\s+(.+)$/i,
+      kind: "definition",
+      answer: (_subject, _verb, detail) => detail
+    },
+    {
+      regex: /^(.{2,80}?)\s+(includes|include|contains|contain)\s+(.+)$/i,
+      kind: "examples",
+      answer: (subject, verb, detail) => `${subject} ${verb.toLowerCase()} ${detail}`
+    },
+    {
+      regex:
+        /^(.{2,80}?)\s+(helps|help|allows|allow|causes|cause|creates|create|prevents|prevent|supports|support|produces|produce|uses|use|moves|move|breaks down|break down|converts|convert|returns|return|captures|capture|affects|affect|destroys|destroy|harms|harm|shifts|shift|outcompetes|outcompete|depends on|depend on|enters|enter|flows through|flow through|comes from|come from)\s+(.+)$/i,
+      kind: "action",
+      answer: (subject, verb, detail) => `${subject} ${verb.toLowerCase()} ${detail}`
     }
+  ];
+
+  for (const pattern of patterns) {
+    const match = normalized.match(pattern.regex);
+    if (!match) {
+      continue;
+    }
+    const subject = match[1];
+    const verb = match[2] || "";
+    const detail = match[3] || match[2] || "";
+    return {
+      subject,
+      answer: pattern.answer(subject, verb, detail),
+      kind: pattern.kind,
+      line: normalized
+    };
   }
 
-  if (units.length === 0) {
-    units.push("Review your notes and identify the most important concept to remember.");
-  }
+  return {
+    subject: buildStudySubjectFallback(normalized),
+    answer: normalized,
+    kind: "fact",
+    line: normalized
+  };
+}
 
-  const output = [];
-  for (let i = 0; i < requestedCount; i += 1) {
-    output.push(units[i % units.length]);
+function formatStudySubject(value) {
+  const cleaned = decodeHtmlEntities(String(value || ""))
+    .replace(/^[,.;:!?-]+|[,.;:!?-]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) {
+    return "";
   }
-  return output;
+  const words = cleaned.split(" ");
+  const shortened = words.length > 10 ? words.slice(0, 10).join(" ") : cleaned;
+  return shortened.charAt(0).toUpperCase() + shortened.slice(1);
+}
+
+function formatStudyAnswer(value) {
+  const cleaned = decodeHtmlEntities(String(value || ""))
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) {
+    return "";
+  }
+  const sentence = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
+}
+
+function buildStudySubjectFallback(line) {
+  const cleaned = decodeHtmlEntities(String(line || ""))
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) {
+    return "This concept";
+  }
+  const words = cleaned.split(" ");
+  const slice = words.slice(0, Math.min(words.length, 6)).join(" ");
+  return slice || "This concept";
+}
+
+function buildFlashcardFrontFromFact(fact, index) {
+  const subject = formatStudySubject(fact?.subject || `Concept ${index + 1}`);
+  const templateSets = {
+    definition: [
+      `What is ${subject}?`,
+      `Define ${subject}.`,
+      `What does ${subject} mean?`
+    ],
+    action: [
+      `What does ${subject} do?`,
+      `What is the role of ${subject}?`,
+      `How does ${subject} work?`
+    ],
+    examples: [
+      `What does ${subject} include?`,
+      `What are examples of ${subject}?`,
+      `Which details belong to ${subject}?`
+    ],
+    fact: [
+      `What is true about ${subject}?`,
+      `Explain ${subject}.`,
+      `What is the key idea of ${subject}?`
+    ]
+  };
+  const templates = templateSets[fact?.kind] || templateSets.fact;
+  return templates[index % templates.length];
 }
 
 function buildFlashcardFrontFromLine(line, index) {
-  const normalized = String(line || "").replace(/\s+/g, " ").trim();
-  if (!normalized) {
+  const fact = parseStudyFactLine(line);
+  if (!fact) {
     return `Card ${index}`;
   }
-  const words = normalized.split(" ").slice(0, 8).join(" ");
-  return `What should you remember about ${words}${words.endsWith("?") ? "" : "?"}`;
+  return buildFlashcardFrontFromFact(fact, index - 1);
 }
 
 function getRequestedFlashcardsCount() {
@@ -2762,34 +2919,81 @@ function getRequestedFlashcardsCount() {
 }
 
 function generateQuizQuestions(sourceLines) {
-  return ensureStringArray(sourceLines)
-    .map((line, index) => buildQuizQuestionString(line, index + 1))
-    .filter(Boolean)
-    .slice(0, 8);
+  const maxQuestions = 8;
+  const facts = buildStudyFacts(sourceLines);
+  const questions = [];
+
+  if (facts.length === 0) {
+    return [];
+  }
+
+  for (let index = 0; index < maxQuestions; index += 1) {
+    const fact = facts[index % facts.length];
+    const nextQuestion = buildQuizQuestionString(fact, index + 1);
+    if (nextQuestion) {
+      questions.push(nextQuestion);
+    }
+  }
+
+  return questions;
 }
 
-function buildQuizQuestionString(line, index) {
-  const normalized = decodeHtmlEntities(String(line || "")).replace(/\s+/g, " ").trim();
-  if (!normalized) {
+function buildQuizQuestionString(fact, index) {
+  if (!fact) {
     return "";
   }
 
   const answerMode = index % 3 === 0 ? "short-answer" : "multiple-choice";
-  const { front, back } = splitStudyLineForItem(normalized);
-  if (front && back && front !== back) {
-    const prompt =
-      answerMode === "multiple-choice"
-        ? `Which answer best explains "${front}"?`
-        : `In your own words, explain "${front}".`;
-    return `Type: ${answerMode} || Question: ${prompt} || Answer: ${back}`;
-  }
-
-  const clue = front.split(" ").slice(0, 6).join(" ");
-  const prompt =
+  const subject = formatStudySubject(fact.subject || `Concept ${index}`);
+  const questionTemplates =
     answerMode === "multiple-choice"
-      ? `Which note from your study set matches "${clue}${front.split(" ").length > 6 ? "..." : ""}"?`
-      : `Write a short answer for this note: "${front}"`;
-  return `Type: ${answerMode} || Question: ${prompt} || Answer: ${front}`;
+      ? {
+          definition: [
+            `Which statement best describes ${subject}?`,
+            `Which answer correctly defines ${subject}?`,
+            `What is ${subject}?`
+          ],
+          action: [
+            `Which statement best explains what ${subject} does?`,
+            `Which answer describes the role of ${subject}?`,
+            `How does ${subject} work?`
+          ],
+          examples: [
+            `Which answer shows what ${subject} includes?`,
+            `Which detail belongs to ${subject}?`,
+            `What is included in ${subject}?`
+          ],
+          fact: [
+            `Which statement is true about ${subject}?`,
+            `Which answer best explains ${subject}?`,
+            `What best matches ${subject}?`
+          ]
+        }
+      : {
+          definition: [
+            `Define ${subject}.`,
+            `What does ${subject} mean?`,
+            `Explain ${subject} in your own words.`
+          ],
+          action: [
+            `What does ${subject} do?`,
+            `Explain the role of ${subject}.`,
+            `How does ${subject} affect the system?`
+          ],
+          examples: [
+            `What does ${subject} include?`,
+            `Describe what belongs to ${subject}.`,
+            `Give the key details for ${subject}.`
+          ],
+          fact: [
+            `Explain ${subject}.`,
+            `What is true about ${subject}?`,
+            `Describe ${subject} in one or two sentences.`
+          ]
+        };
+  const templates = questionTemplates[fact.kind] || questionTemplates.fact;
+  const prompt = templates[(index - 1) % templates.length];
+  return `Type: ${answerMode} || Question: ${prompt} || Answer: ${fact.answer || fact.line}`;
 }
 
 function toggleTheme() {
@@ -2947,7 +3151,7 @@ function handleSummaryModeChange(mode) {
   if (isArticle) {
     statusText.textContent = "Article mode selected. Paste a link and generate your study pack.";
   } else if (isPhoto) {
-    statusText.textContent = "Notes photo mode selected. Upload or take a photo, then generate your study pack.";
+    statusText.textContent = "Notes photo mode selected. Upload an image or PDF, or take a photo, then generate your study pack.";
   } else {
     statusText.textContent = "Notes mode selected. Paste notes and generate your study pack.";
   }
@@ -2985,20 +3189,40 @@ function handleNotesPhotoSelected(event) {
     clearSelectedNotesPhoto();
     return;
   }
-  if (!file.type.startsWith("image/")) {
-    statusText.textContent = "Please choose an image file.";
+  const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name || "");
+  const maxSize = isPdf ? 15 * 1024 * 1024 : 10 * 1024 * 1024;
+  if (!isPdf && !file.type.startsWith("image/")) {
+    statusText.textContent = "Please choose an image or PDF file.";
     clearSelectedNotesPhoto();
     return;
   }
-  if (file.size > 10 * 1024 * 1024) {
-    statusText.textContent = "Photo is too large. Use an image under 10MB.";
+  if (file.size > maxSize) {
+    statusText.textContent = isPdf ? "PDF is too large. Use a PDF under 15MB." : "Photo is too large. Use an image under 10MB.";
     clearSelectedNotesPhoto();
+    return;
+  }
+
+  if (isPdf) {
+    statusText.textContent = "Rendering PDF pages for notes summary...";
+    renderPdfUploadAsImage(file)
+      .then((dataUrl) => {
+        setSelectedNotesPhotoDataUrl(dataUrl, {
+          readyMessage: "PDF ready. Click Generate Study Pack."
+        });
+      })
+      .catch((error) => {
+        console.error("Could not render PDF upload", error);
+        statusText.textContent = error?.message || "Could not read the selected PDF.";
+        clearSelectedNotesPhoto();
+      });
     return;
   }
 
   const reader = new FileReader();
   reader.onload = () => {
-    setSelectedNotesPhotoDataUrl(String(reader.result || ""));
+    setSelectedNotesPhotoDataUrl(String(reader.result || ""), {
+      readyMessage: "Photo ready. Click Generate Study Pack."
+    });
   };
   reader.onerror = () => {
     statusText.textContent = "Could not read the selected photo.";
@@ -3023,7 +3247,7 @@ function clearSelectedNotesPhoto() {
   }
 }
 
-function setSelectedNotesPhotoDataUrl(dataUrl) {
+function setSelectedNotesPhotoDataUrl(dataUrl, options = {}) {
   uploadedNotesPhotoDataUrl = String(dataUrl || "");
   if (notesPhotoPreview) {
     if (uploadedNotesPhotoDataUrl) {
@@ -3036,8 +3260,82 @@ function setSelectedNotesPhotoDataUrl(dataUrl) {
     photoPreviewWrap.classList.toggle("hidden", !uploadedNotesPhotoDataUrl);
   }
   if (uploadedNotesPhotoDataUrl) {
-    statusText.textContent = "Photo ready. Click Generate Study Pack.";
+    statusText.textContent = options.readyMessage || "File ready. Click Generate Study Pack.";
   }
+}
+
+async function loadPdfJsModule() {
+  if (!pdfJsModulePromise) {
+    pdfJsModulePromise = import("https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.394/build/pdf.min.mjs")
+      .then((module) => {
+        if (module?.GlobalWorkerOptions) {
+          module.GlobalWorkerOptions.workerSrc =
+            "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.394/build/pdf.worker.min.mjs";
+        }
+        return module;
+      });
+  }
+  return pdfJsModulePromise;
+}
+
+async function renderPdfUploadAsImage(file) {
+  const pdfjs = await loadPdfJsModule();
+  const arrayBuffer = await file.arrayBuffer();
+  const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+  const pdf = await loadingTask.promise;
+  const pageLimit = Math.min(pdf.numPages, 4);
+  const pageCanvases = [];
+  const gap = 18;
+  const sidePadding = 16;
+  const scale = 1.2;
+
+  for (let pageNumber = 1; pageNumber <= pageLimit; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    if (!context) {
+      throw new Error("Could not prepare PDF canvas.");
+    }
+    await page.render({ canvasContext: context, viewport }).promise;
+    pageCanvases.push(canvas);
+  }
+
+  if (pageCanvases.length === 0) {
+    throw new Error("Could not render any pages from that PDF.");
+  }
+
+  const totalWidth = Math.max(...pageCanvases.map((canvas) => canvas.width)) + sidePadding * 2;
+  const totalHeight =
+    pageCanvases.reduce((sum, canvas) => sum + canvas.height, 0) +
+    gap * (pageCanvases.length - 1) +
+    sidePadding * 2;
+
+  const combinedCanvas = document.createElement("canvas");
+  combinedCanvas.width = totalWidth;
+  combinedCanvas.height = totalHeight;
+  const combinedContext = combinedCanvas.getContext("2d");
+  if (!combinedContext) {
+    throw new Error("Could not build a preview image from that PDF.");
+  }
+
+  combinedContext.fillStyle = "#ffffff";
+  combinedContext.fillRect(0, 0, totalWidth, totalHeight);
+
+  let y = sidePadding;
+  pageCanvases.forEach((canvas) => {
+    const x = Math.round((totalWidth - canvas.width) / 2);
+    combinedContext.drawImage(canvas, x, y);
+    y += canvas.height + gap;
+  });
+
+  const dataUrl = combinedCanvas.toDataURL("image/png");
+  if (dataUrl.length > 11_500_000) {
+    throw new Error("That PDF renders too large right now. Please use a smaller PDF or fewer pages.");
+  }
+  return dataUrl;
 }
 
 function handleTakePhotoClick() {
@@ -3284,7 +3582,6 @@ function buildSimpleListPdfBlob(title, rawItems, ordered) {
       doc.addPage("letter", "portrait");
       y = marginTop;
     }
-    drawHighlightedPdfBlock(doc, wrapped, marginX, y, maxTextWidth, lineHeight, detectHighlightType(cleanItem));
     doc.text(wrapped, marginX, y);
     y += wrapped.length * lineHeight + 6;
   });
@@ -4391,13 +4688,6 @@ function initStudyQueueUiIfNeeded() {
   controls.appendChild(skipButton);
   controls.appendChild(knownButton);
 
-  const resetCardTilt = () => {
-    card.style.removeProperty("--flashcard-tilt-x");
-    card.style.removeProperty("--flashcard-tilt-y");
-    card.style.removeProperty("--flashcard-glow-x");
-    card.style.removeProperty("--flashcard-glow-y");
-  };
-
   card.addEventListener("click", flipStudyQueueCard);
   card.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") {
@@ -4405,23 +4695,6 @@ function initStudyQueueUiIfNeeded() {
       flipStudyQueueCard();
     }
   });
-  card.addEventListener("pointermove", (event) => {
-    if (event.pointerType === "touch") {
-      return;
-    }
-    const rect = card.getBoundingClientRect();
-    if (!rect.width || !rect.height) {
-      return;
-    }
-    const relativeX = (event.clientX - rect.left) / rect.width;
-    const relativeY = (event.clientY - rect.top) / rect.height;
-    card.style.setProperty("--flashcard-tilt-x", `${((0.5 - relativeY) * 8).toFixed(2)}deg`);
-    card.style.setProperty("--flashcard-tilt-y", `${((relativeX - 0.5) * 10).toFixed(2)}deg`);
-    card.style.setProperty("--flashcard-glow-x", `${(relativeX * 100).toFixed(1)}%`);
-    card.style.setProperty("--flashcard-glow-y", `${(relativeY * 100).toFixed(1)}%`);
-  });
-  card.addEventListener("pointerleave", resetCardTilt);
-  card.addEventListener("blur", resetCardTilt);
 
   flashcardsVisualGrid.appendChild(card);
   flashcardsVisualGrid.appendChild(meta);
@@ -4978,36 +5251,6 @@ function bindFlashcardCopyButton() {
   });
 }
 
-function getHighlightPatterns() {
-  return [
-    /\b(important|key|must know|critical|remember|focus|exam|test|quiz|deadline|due|formula|definition|theorem)\b/gi,
-    /\b\d+(?:\.\d+)?%?\b/g,
-    /\b(today|tomorrow|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi
-  ];
-}
-
-function hasHighlightMatch(text) {
-  const normalized = String(text || "");
-  if (!normalized.trim()) {
-    return false;
-  }
-  return getHighlightPatterns().some((pattern) => pattern.test(normalized));
-}
-
-function highlightImportantParts(text) {
-  const decoded = decodeHtmlEntities(String(text || ""));
-  const escaped = escapeHtml(decoded);
-  if (!escaped.trim()) {
-    return escaped;
-  }
-
-  let html = escaped;
-  getHighlightPatterns().forEach((pattern) => {
-    html = html.replace(pattern, (match) => `<mark class="important-chip">${match}</mark>`);
-  });
-  return html;
-}
-
 function decodeHtmlEntities(input) {
   const raw = String(input || "");
   if (!raw || !raw.includes("&")) {
@@ -5017,14 +5260,6 @@ function decodeHtmlEntities(input) {
   const parser = document.createElement("textarea");
   parser.innerHTML = raw;
   return parser.value;
-}
-
-function escapeHtml(input) {
-  return String(input)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
 }
 
 function hasCopyableItems(listElement) {
@@ -5095,65 +5330,6 @@ function refreshCopyButtonsFromContent() {
   }
   updateFlashcardStudyActions();
   updateQuizStudyActions();
-}
-
-function detectHighlightType(text) {
-  const normalized = String(text || "").trim();
-  if (!normalized) {
-    return "";
-  }
-
-  const shortText = normalized.length <= 220 ? normalized : normalized.slice(0, 220);
-  const definitionPattern =
-    /\b(is defined as|defined as|means|refers to|is called|is known as|can be defined as)\b/i;
-  const keyConceptPattern =
-    /\b(key concept|core idea|main idea|principle|theorem|formula)\b/i;
-  const importantFactPattern =
-    /\b(important|remember|must know|critical|key fact|exam tip)\b/i;
-
-  if (definitionPattern.test(shortText)) {
-    return "definition";
-  }
-  if (keyConceptPattern.test(shortText)) {
-    return "concept";
-  }
-  if (hasHighlightMatch(normalized)) {
-    return "fact";
-  }
-  if (normalized.length >= 280) {
-    return "complex";
-  }
-  if (importantFactPattern.test(shortText)) {
-    return "fact";
-  }
-  return "";
-}
-
-function getPdfHighlightFill(highlightType) {
-  if (highlightType === "concept") {
-    return [255, 246, 196];
-  }
-  if (highlightType === "fact") {
-    return [224, 245, 220];
-  }
-  if (highlightType === "complex") {
-    return [255, 228, 228];
-  }
-  if (highlightType === "definition") {
-    return [225, 238, 255];
-  }
-  return null;
-}
-
-function drawHighlightedPdfBlock(doc, lines, x, y, maxWidth, lineHeight, highlightType) {
-  const fill = getPdfHighlightFill(highlightType);
-  if (!fill || !Array.isArray(lines) || lines.length === 0) {
-    return;
-  }
-
-  doc.setFillColor(fill[0], fill[1], fill[2]);
-  const blockHeight = lines.length * lineHeight + 4;
-  doc.rect(x - 2, y - 11, maxWidth + 4, blockHeight, "F");
 }
 
 async function copyTextToClipboard(text) {
@@ -5931,6 +6107,7 @@ async function handleAuthSignedOut() {
   continueAsGuest(true);
   resetAuthGateGuestButton();
   isProMode = false;
+  isGodMode = false;
   clearPersistedStudyData();
   resetGuestStudySession();
   applyProModeUi();

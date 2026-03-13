@@ -41,7 +41,7 @@
       window.location.replace(target);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=39" />
+  <link rel="stylesheet" href="style.css?v=41" />
 </head>
 <body>
   <div class="bg-shape bg-shape-1" aria-hidden="true"></div>
@@ -168,13 +168,13 @@
         <button id="moreNotesCharsButton" class="secondary-btn more-flashcards-btn" type="button">Want more note space? <span class="mini-pro-badge" aria-hidden="true">&#9670;</span></button>
       </div>
       <div id="photoInputWrap" class="photo-row hidden">
-        <p class="input-label">Add notes photo</p>
+        <p class="input-label">Add notes photo or PDF</p>
         <div class="photo-source-actions">
-          <button id="uploadPhotoButton" class="secondary-btn" type="button">Upload Photo</button>
+          <button id="uploadPhotoButton" class="secondary-btn" type="button">Upload File</button>
           <span class="photo-or-text">or</span>
           <button id="takePhotoButton" class="secondary-btn" type="button">Take Photo</button>
         </div>
-        <input id="notesPhotoUploadInput" class="hidden" type="file" accept="image/*" />
+        <input id="notesPhotoUploadInput" class="hidden" type="file" accept="image/*,.pdf,application/pdf" />
         <input id="notesPhotoCameraInput" class="hidden" type="file" accept="image/*" capture="environment" />
         <div class="photo-preview-wrap hidden" id="photoPreviewWrap">
           <img id="notesPhotoPreview" alt="Selected notes photo preview" />
@@ -186,8 +186,7 @@
         <p id="statusText" class="status-text">Ready</p>
       </div>
       <div id="liveStreamWrap" class="live-stream-wrap hidden" aria-live="polite">
-        <p class="live-stream-label">Live AI Stream</p>
-        <pre id="liveStreamText" class="live-stream-text"></pre>
+        <p id="liveStreamText" class="live-stream-text"></p>
       </div>
     </section>
 
@@ -416,10 +415,11 @@
         <li>Up to 10 flashcards per generation (instead of 5).</li>
         <li>Up to 8000 notes characters (instead of 3000).</li>
         <li>Up to 5 study files (instead of 2).</li>
+        <li>God Mode code: up to 50 flashcards, 50000 notes characters, and 100 files.</li>
       </ul>
       <div id="proModeIntroActions" class="modal-actions">
         <button id="proModeCloseIntroButton" type="button" class="secondary-btn">Close</button>
-        <button id="proModeHaveCodeButton" type="button" class="primary-btn">View Pro Plan</button>
+        <button id="proModeHaveCodeButton" type="button" class="primary-btn">Use Pro Code</button>
       </div>
       <form id="proModeForm" class="modal-form hidden">
         <label for="proCodeInput" class="input-label">Enter Pro Code</label>
@@ -447,7 +447,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="main.js?v=50"></script>
+  <script src="main.js?v=53"></script>
 </body>
 </html>
 

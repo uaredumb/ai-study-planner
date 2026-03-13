@@ -113,10 +113,15 @@ export async function onRequestPost(context) {
 
   const systemPrompt =
     "You are a study assistant. Return strict JSON only with keys cleanNotes, studyTasks, studyOrder. " +
-    "Each key must be an array of concise strings.";
+    "Each key must be an array of concise strings. " +
+    "Write clear factual study content, not vague advice. " +
+    "For cleanNotes, prefer one concrete fact per line with a clear subject and explanation, often in 'Term: explanation' format when natural. " +
+    "Avoid filler like 'remember', 'important thing to know', 'know this', or generic reminders.";
 
   const userPrompt = [
     "Convert the notes into structured study help.",
+    "Make cleanNotes easy to turn into flashcards and quiz questions.",
+    "Each cleanNotes line should state one concrete concept, definition, process, cause/effect, comparison, or example.",
     "Return valid JSON only in this exact shape:",
     '{ "cleanNotes": ["..."], "studyTasks": ["..."], "studyOrder": ["..."] }',
     "Notes:",
@@ -127,6 +132,8 @@ export async function onRequestPost(context) {
     "Read the uploaded image of handwritten or typed notes.",
     "Transcribe and normalize the content, then convert it into structured study help.",
     "If a part of the image is unreadable, skip that part instead of guessing.",
+    "Make cleanNotes easy to turn into flashcards and quiz questions.",
+    "Each cleanNotes line should state one concrete concept, definition, process, cause/effect, comparison, or example.",
     "Return valid JSON only in this exact shape:",
     '{ "cleanNotes": ["..."], "studyTasks": ["..."], "studyOrder": ["..."] }'
   ].join("\n");
