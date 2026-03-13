@@ -127,15 +127,39 @@ body.auth-locked .app-shell {
 }
 
 .auth-gate-panel.card {
+  position: relative;
   width: min(620px, 96vw);
-  padding: 1.6rem;
+  padding: 1.8rem 1.6rem 1.45rem;
   border-radius: 24px;
   border: 1px solid rgba(92, 120, 220, 0.58);
-  background: linear-gradient(180deg, rgba(23, 34, 89, 0.97) 0%, rgba(18, 29, 79, 0.98) 100%);
+  background:
+    radial-gradient(circle at top right, rgba(125, 152, 255, 0.18), transparent 34%),
+    linear-gradient(180deg, rgba(23, 34, 89, 0.97) 0%, rgba(18, 29, 79, 0.98) 100%);
   box-shadow: 0 22px 58px rgba(0, 0, 0, 0.46);
   display: grid;
   justify-items: center;
-  row-gap: 0.95rem;
+  row-gap: 0.9rem;
+}
+
+.auth-gate-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.35rem;
+  height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-color: rgba(126, 148, 237, 0.42);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f3f6ff;
+  backdrop-filter: blur(12px);
+}
+
+.auth-gate-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(157, 177, 255, 0.62);
 }
 
 .auth-gate-panel.auth-island-animate-forward {
@@ -170,6 +194,7 @@ body.auth-locked .app-shell {
   font-size: 1.08rem;
   width: min(560px, 100%);
   text-align: center;
+  line-height: 1.6;
 }
 
 .auth-switch-row {
@@ -204,11 +229,14 @@ body.auth-locked .app-shell {
 .auth-welcome-island {
   width: min(560px, 100%);
   margin: 0 auto;
-  padding: 1.2rem;
+  padding: 1.25rem;
   border-radius: 18px;
   border: 1px solid rgba(80, 106, 203, 0.5);
-  background: linear-gradient(180deg, rgba(25, 39, 98, 0.92), rgba(21, 33, 89, 0.92));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 38%),
+    linear-gradient(180deg, rgba(25, 39, 98, 0.92), rgba(21, 33, 89, 0.92));
   text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .auth-welcome-island h3 {
@@ -246,11 +274,14 @@ body.auth-locked .app-shell {
   border: 1px solid rgba(74, 98, 192, 0.45);
   border-radius: 20px;
   padding: 1.35rem 1.15rem 1.2rem;
-  background: linear-gradient(180deg, rgba(21, 33, 89, 0.96), rgba(19, 29, 79, 0.96));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 20%),
+    linear-gradient(180deg, rgba(21, 33, 89, 0.96), rgba(19, 29, 79, 0.96));
   min-height: 450px;
   display: grid;
   justify-items: center;
   align-content: start;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .clerk-auth-stack {
@@ -258,6 +289,59 @@ body.auth-locked .app-shell {
   min-height: 450px;
   width: min(560px, 100%);
   margin: 0 auto;
+}
+
+.auth-form-shell {
+  width: min(560px, 100%);
+}
+
+.auth-form-shell.auth-form-shell-loading .auth-switch-row {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.auth-loading-state {
+  width: min(560px, 100%);
+  min-height: 450px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.65rem;
+  padding: 1.4rem 1.15rem;
+  border: 1px solid rgba(74, 98, 192, 0.45);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 20%),
+    linear-gradient(180deg, rgba(21, 33, 89, 0.96), rgba(19, 29, 79, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+
+.auth-loading-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  border: 3px solid rgba(144, 167, 255, 0.2);
+  border-top-color: #9ab0ff;
+  animation: authSpinner 0.9s linear infinite;
+}
+
+.auth-loading-title,
+.auth-loading-copy {
+  margin: 0;
+}
+
+.auth-loading-title {
+  color: #f0f4ff;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.auth-loading-copy {
+  color: #aebbe9;
+  font-size: 0.96rem;
+  line-height: 1.55;
+  max-width: 28ch;
 }
 
 .auth-pane {
@@ -296,6 +380,33 @@ body.auth-locked .app-shell {
 
 .clerk-auth-mount .cl-socialButtonsBlockButton {
   margin-bottom: 0.72rem;
+  border-radius: 16px;
+  min-height: 3.15rem;
+  box-shadow: 0 12px 24px rgba(8, 15, 47, 0.18);
+}
+
+.clerk-auth-mount .cl-socialButtonsBlockButton:hover {
+  transform: translateY(-1px);
+}
+
+.clerk-auth-mount .cl-socialButtonsBlockButtonText {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.clerk-auth-mount .cl-socialButtonsProviderIcon,
+.clerk-auth-mount .cl-socialButtonsProviderIcon svg,
+.clerk-auth-mount .cl-socialButtonsProviderIconBox {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+.clerk-auth-mount .cl-socialButtonsBlockButton[data-provider="apple"] .cl-socialButtonsProviderIcon,
+.clerk-auth-mount .cl-socialButtonsBlockButton[data-provider="apple"] .cl-socialButtonsProviderIcon svg,
+.clerk-auth-mount .cl-socialButtonsBlockButton[aria-label*="Apple"] .cl-socialButtonsProviderIcon,
+.clerk-auth-mount .cl-socialButtonsBlockButton[aria-label*="Apple"] .cl-socialButtonsProviderIcon svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
 }
 
 .clerk-auth-mount .cl-dividerRow {
@@ -308,6 +419,22 @@ body.auth-locked .app-shell {
 
 .clerk-auth-mount .cl-formButtonPrimary {
   margin-top: 0.45rem;
+  border-radius: 16px;
+  box-shadow: 0 16px 28px rgba(68, 98, 242, 0.32);
+}
+
+.clerk-auth-mount .cl-formFieldInput {
+  border-radius: 15px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.clerk-auth-mount .cl-formFieldLabel {
+  font-weight: 700;
+}
+
+.clerk-auth-mount .cl-footerActionLink,
+.clerk-auth-mount .cl-formResendCodeLink {
+  font-weight: 700;
 }
 
 .clerk-auth-mount .cl-footer {
@@ -338,6 +465,15 @@ body.auth-locked .app-shell {
   to {
     opacity: 1;
     transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes authSpinner {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -2686,12 +2822,21 @@ body.dark .pricing-plan-price {
     border-radius: 18px;
   }
 
+  .auth-gate-close {
+    top: 0.8rem;
+    right: 0.8rem;
+  }
+
   .clerk-auth-mount {
     min-height: 400px;
     padding: 1.05rem 0.9rem 0.95rem;
   }
 
   .clerk-auth-stack {
+    min-height: 400px;
+  }
+
+  .auth-loading-state {
     min-height: 400px;
   }
 
@@ -2765,6 +2910,11 @@ body.dark .pricing-plan-price {
     padding: 1rem 0.95rem 1.1rem;
   }
 
+  .auth-gate-close {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+
   .auth-gate-panel h2 {
     font-size: clamp(1.45rem, 6vw, 1.8rem);
   }
@@ -2793,6 +2943,11 @@ body.dark .pricing-plan-price {
 
   .clerk-auth-stack {
     min-height: 360px;
+  }
+
+  .auth-loading-state {
+    min-height: 360px;
+    padding: 1rem 0.85rem;
   }
 
   .auth-welcome-actions {

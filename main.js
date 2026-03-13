@@ -146,6 +146,7 @@ const photoModeButton = document.getElementById("photoModeButton");
 const summaryModeInputs = document.querySelectorAll('input[name="summaryMode"]');
 const authGate = document.getElementById("authGate");
 const authGatePanel = document.querySelector(".auth-gate-panel");
+const authGateCloseButton = document.getElementById("authGateCloseButton");
 const authGateTitle = document.getElementById("authGateTitle");
 const authGateText = document.getElementById("authGateText");
 const authWelcomeIsland = document.getElementById("authWelcomeIsland");
@@ -153,6 +154,7 @@ const authWelcomeSignIn = document.getElementById("authWelcomeSignIn");
 const authWelcomeSignUp = document.getElementById("authWelcomeSignUp");
 const authSkipButton = document.getElementById("authSkipButton");
 const authFormShell = document.getElementById("authFormShell");
+const authLoadingState = document.getElementById("authLoadingState");
 const authSignInTab = document.getElementById("authSignInTab");
 const authSignUpTab = document.getElementById("authSignUpTab");
 const clerkAuthStack = document.getElementById("clerkAuthStack");
@@ -217,6 +219,7 @@ let authView = "sign-in";
 let clerkLoaded = false;
 let authFormsMounted = false;
 let authFlowStarted = false;
+let authFlowLoading = false;
 let ENABLE_AUTH = Boolean(getClerkPublishableKey());
 let studyFiles = loadStudyFiles();
 let activeFileId = loadActiveFileId(studyFiles);
@@ -305,6 +308,12 @@ const authClerkAppearance = {
       border: "1px solid rgba(75, 101, 198, 0.5)",
       color: "#e6eeff"
     },
+    socialButtonsProviderIcon: {
+      color: "#ffffff"
+    },
+    socialButtonsProviderIconBox: {
+      color: "#ffffff"
+    },
     socialButtonsBlockButtonText: {
       color: "#e6eeff"
     },
@@ -348,10 +357,30 @@ function getFallbackAuthAppearance() {
       colorPrimary: "#4c6cff",
       colorBackground: "transparent",
       colorText: "#e7eeff",
+      colorTextSecondary: "#afbbe8",
       colorInputBackground: "#f2f4ff",
       colorInputText: "#18213f",
       borderRadius: "14px",
       fontFamily: "Outfit, sans-serif"
+    },
+    layout: {
+      socialButtonsVariant: "blockButton"
+    },
+    elements: {
+      socialButtonsBlockButton: {
+        background: "rgba(21, 31, 84, 0.95)",
+        border: "1px solid rgba(75, 101, 198, 0.5)",
+        color: "#e6eeff"
+      },
+      socialButtonsProviderIcon: {
+        color: "#ffffff"
+      },
+      socialButtonsProviderIconBox: {
+        color: "#ffffff"
+      },
+      socialButtonsBlockButtonText: {
+        color: "#e6eeff"
+      }
     }
   };
 }
@@ -381,7 +410,7 @@ const tutorialSteps = [
     waitForAction: "generate",
     hideExample: true,
     fillNotesText:
-      "Math test tmrw not ready need to practice fractions still dont get how to divide decimals lol. English read chapter 5 of Call of the Wild dont forget to summarize 3 lines only maybe write like gamer style. Science project omg need to finish volcano but dont have enough baking soda??? maybe ask mom for more. History quiz next week on egypt pharaohs and pyramids confusing af. Spelling words ugh too many cant remember them all. PE tomorrow run laps hope it doesnt rain. Art sketch still not done want to add more colors maybe neon?? also draw robot idea. Computer class test on coding syntax forgot loops how they work. Music need to practice piano scales last time my hand hurt so much. Lunch forgot sandwich at home had to buy chips rip."
+      "Biology Notes: Ecosystems, Energy Flow, and Biodiversity\n\nAn ecosystem is a community of living organisms interacting with each other and with the nonliving parts of their environment. The living parts are called biotic factors and include plants, animals, fungi, and microorganisms. The nonliving parts are abiotic factors and include sunlight, temperature, water, soil, air, and minerals. Ecosystems can be small, like a tide pool, or very large, like a rainforest.\n\nEnergy enters most ecosystems from the sun. Producers, also called autotrophs, capture sunlight through photosynthesis and convert it into chemical energy stored in glucose. Plants, algae, and some bacteria are producers. Consumers, also called heterotrophs, cannot make their own food, so they get energy by eating other organisms. Primary consumers eat producers. Secondary consumers eat primary consumers. Tertiary consumers eat other consumers. Decomposers, such as fungi and bacteria, break down dead organisms and waste, returning nutrients to the soil and water.\n\nA food chain shows one possible path of energy flow through an ecosystem, but most ecosystems are more complex than a single chain. A food web shows many feeding relationships at once. Because energy is lost as heat during life processes, only a small amount passes from one trophic level to the next. This is why ecosystems usually have more producers than top predators.\n\nThe water cycle, carbon cycle, and nitrogen cycle are important because matter is recycled even though energy is not. In the water cycle, water evaporates, condenses into clouds, and falls as precipitation. In the carbon cycle, carbon moves through the atmosphere, living things, soil, and oceans. In the nitrogen cycle, bacteria help convert nitrogen into forms plants can use.\n\nBiodiversity means the variety of life in an area. High biodiversity usually makes ecosystems more stable because there are more species performing different roles. If one species disappears, others may help keep the system functioning. Human activities can reduce biodiversity. Deforestation destroys habitats, pollution harms organisms, climate change shifts temperature and weather patterns, and invasive species can outcompete native species.\n\nEcologists study how populations change over time. Limiting factors such as food, water, shelter, disease, and predation affect population size. Carrying capacity is the largest population an environment can support over time without being damaged. When a population grows too quickly, it may use resources faster than they can be replaced.\n\nConservation efforts try to protect ecosystems and biodiversity. National parks, habitat restoration, pollution control, sustainable farming, and endangered species laws can all help. Protecting ecosystems matters because humans depend on them for clean air, fresh water, food, medicine, and climate regulation."
   },
   {
     title: "Done",
@@ -567,6 +596,10 @@ if (tutorialNextButton) {
   tutorialNextButton.addEventListener("click", goToNextTutorialStep);
 }
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && authGate && !authGate.classList.contains("hidden")) {
+    dismissAuthGate();
+    return;
+  }
   if (event.key === "Escape" && renameModal && !renameModal.classList.contains("hidden")) {
     closeRenameModal();
     return;
@@ -717,6 +750,9 @@ if (authWelcomeSignUp) {
 }
 if (authSkipButton) {
   authSkipButton.addEventListener("click", () => continueAsGuest(true));
+}
+if (authGateCloseButton) {
+  authGateCloseButton.addEventListener("click", dismissAuthGate);
 }
 if (authGate) {
   const blockAuthCopy = (event) => {
@@ -5475,9 +5511,22 @@ function continueAsGuest(explicit = false) {
       "Sign in to save progress across devices, generate outputs, and access personalized tools.";
   }
   setAuthFlowStarted(false);
+  setAuthFlowLoading(false);
   updateAuthTabs("sign-in");
   resetAuthGateGuestButton();
   applyAccountGatesUi();
+}
+
+function dismissAuthGate() {
+  if (hasAccount()) {
+    unlockAppAfterAuth();
+    return;
+  }
+  if (authGate) {
+    authGate.classList.add("hidden");
+  }
+  setAuthFlowStarted(false);
+  setAuthFlowLoading(false);
 }
 
 function promptAuthForFeature(featureLabel, options = {}) {
@@ -5495,6 +5544,7 @@ function promptAuthForFeature(featureLabel, options = {}) {
     authSkipButton.textContent = mustLogin ? "Account required" : "Continue as guest";
   }
   setAuthFlowStarted(false);
+  setAuthFlowLoading(false);
   updateAuthTabs("sign-in");
   if (authGate) {
     authGate.classList.remove("hidden");
@@ -5546,7 +5596,7 @@ async function openAccountLogin() {
     const recoveredKey = getClerkPublishableKey();
     if (recoveredKey) {
       ENABLE_AUTH = true;
-      await initializeAuthGate();
+      await initializeAuthGate({ preserveAuthGate: true });
     }
   }
   if (!ENABLE_AUTH) {
@@ -5679,13 +5729,37 @@ function setAuthFlowStarted(started) {
   }
 }
 
+function setAuthFlowLoading(loading) {
+  authFlowLoading = Boolean(loading);
+  if (authFormShell) {
+    authFormShell.classList.toggle("auth-form-shell-loading", authFlowLoading);
+  }
+  if (authLoadingState) {
+    authLoadingState.classList.toggle("hidden", !authFlowLoading);
+  }
+  if (clerkAuthStack) {
+    clerkAuthStack.classList.toggle("hidden", authFlowLoading);
+  }
+  if (authSignInTab) {
+    authSignInTab.disabled = authFlowLoading;
+  }
+  if (authSignUpTab) {
+    authSignUpTab.disabled = authFlowLoading;
+  }
+}
+
 async function startAuthFlow(view) {
   triggerAuthIslandSwitchAnimation(view === "sign-up" ? "forward" : "backward");
-  if (!authFormsMounted) {
-    await ensureAuthFormsMounted();
-  }
   setAuthFlowStarted(true);
-  await switchAuthView(view);
+  setAuthFlowLoading(true);
+  try {
+    if (!authFormsMounted) {
+      await ensureAuthFormsMounted();
+    }
+    await switchAuthView(view);
+  } finally {
+    setAuthFlowLoading(false);
+  }
 }
 
 function triggerAuthIslandSwitchAnimation(direction) {
@@ -5808,6 +5882,7 @@ async function handleAuthSignedOut() {
   applyProModeUi();
   applyAccountGatesUi();
   setAuthFlowStarted(false);
+  setAuthFlowLoading(false);
   if (!authFormsMounted) {
     await ensureAuthFormsMounted();
   }
@@ -5852,6 +5927,7 @@ async function initializeAuthGate(options = {}) {
     ENABLE_AUTH = true;
 
     if (window.Clerk.user) {
+      setAuthFlowLoading(false);
       if (clerkUserButton) {
         await window.Clerk.mountUserButton(clerkUserButton, {
           appearance: {
@@ -5865,6 +5941,7 @@ async function initializeAuthGate(options = {}) {
       handleAuthSignedIn();
     } else {
       setAuthFlowStarted(false);
+      setAuthFlowLoading(false);
       await ensureAuthFormsMounted().catch((error) => {
         console.error("Auth forms preload failed", error);
       });
