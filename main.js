@@ -4302,7 +4302,7 @@ function initStudyQueueUiIfNeeded() {
   const cardInner = document.createElement("div");
   cardInner.className = "flashcard-visual-inner";
 
-  const frontFaceUi = createStudyQueueFace("flashcard-visual-front", "");
+  const frontFaceUi = createStudyQueueFace("flashcard-visual-front", "Click to reveal answer");
   const backFaceUi = createStudyQueueFace("flashcard-visual-back", "Click to flip back");
 
   cardInner.appendChild(frontFaceUi.face);
@@ -4317,7 +4317,7 @@ function initStudyQueueUiIfNeeded() {
 
   const helper = document.createElement("p");
   helper.className = "flashcard-session-hint";
-  helper.textContent = "Use Left and Right to move through your cards.";
+  helper.textContent = "Tap the card to flip.";
 
   meta.appendChild(progress);
   meta.appendChild(helper);
@@ -4706,7 +4706,7 @@ function renderStudyQueueViewer() {
       ? `${kindLabel} back. Click to flip back.`
       : `${kindLabel} front. Click to reveal the answer.`
   );
-  studyQueueUi.helper.textContent = "Use Left and Right to move through your cards.";
+  studyQueueUi.helper.textContent = isStudyCardFlipped ? "Tap the card to flip back." : "Tap the card to reveal the answer.";
   if (isNewCard) {
     animateStudyQueueCardEntry(studyQueueUi.card);
   }
