@@ -328,12 +328,6 @@ const authClerkAppearance = {
       border: "1px solid rgba(75, 101, 198, 0.5)",
       color: "#e6eeff"
     },
-    socialButtonsProviderIcon: {
-      color: "#ffffff"
-    },
-    socialButtonsProviderIconBox: {
-      color: "#ffffff"
-    },
     socialButtonsBlockButtonText: {
       color: "#e6eeff"
     },
@@ -391,12 +385,6 @@ function getFallbackAuthAppearance() {
         background: "rgba(21, 31, 84, 0.95)",
         border: "1px solid rgba(75, 101, 198, 0.5)",
         color: "#e6eeff"
-      },
-      socialButtonsProviderIcon: {
-        color: "#ffffff"
-      },
-      socialButtonsProviderIconBox: {
-        color: "#ffffff"
       },
       socialButtonsBlockButtonText: {
         color: "#e6eeff"
