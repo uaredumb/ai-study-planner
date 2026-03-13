@@ -116,7 +116,8 @@ export async function onRequestPost(context) {
     "Each key must be an array of concise strings. " +
     "Write clear factual study content, not vague advice. " +
     "For cleanNotes, prefer one concrete fact per line with a clear subject and explanation, often in 'Term: explanation' format when natural. " +
-    "Avoid filler like 'remember', 'important thing to know', 'know this', or generic reminders.";
+    "Avoid filler like 'remember', 'important thing to know', 'know this', or generic reminders. " +
+    "If the source does not contain enough readable study material, return empty arrays instead of guessing.";
 
   const userPrompt = [
     "Convert the notes into structured study help.",

@@ -2,9 +2,12 @@ const notesInput = document.getElementById("notesInput");
 const notesInputWrap = document.getElementById("notesInputWrap");
 const inputCard = document.querySelector(".input-card");
 const cleanButton = document.getElementById("cleanButton");
+const cancelGenerationButton = document.getElementById("cancelGenerationButton");
 const statusText = document.getElementById("statusText");
 const liveStreamWrap = document.getElementById("liveStreamWrap");
 const liveStreamText = document.getElementById("liveStreamText");
+const liveStreamFullText = document.getElementById("liveStreamFullText");
+const toggleLiveStreamButton = document.getElementById("toggleLiveStreamButton");
 const resultsSection = document.getElementById("resultsSection");
 const cleanNotesList = document.getElementById("cleanNotesList");
 const studyTasksList = document.getElementById("studyTasksList");
@@ -220,6 +223,8 @@ const GOD_MODE_HASHES = [
 ];
 const NON_NOTES_MESSAGE =
   "I can only generate from real study notes or learning material. Please add notes, class content, or an educational article.";
+const NOT_ENOUGH_TEXT_MESSAGE =
+  "There is not enough readable study text to generate a study pack yet. Add more notes or a longer source.";
 
 let isUserAuthenticated = false;
 let isGuestMode = false;
@@ -259,6 +264,11 @@ let fileOpenAnimationFrameB = 0;
 let slowGenerationToastTimer = 0;
 let guestGenerationCount = 0;
 let pdfJsModulePromise = null;
+let latestLiveStreamFullText = "";
+let isLiveStreamExpanded = false;
+let generationAbortController = null;
+let quizPanelAnimationTimer = 0;
+let flashcardActionAnimationTimer = 0;
 
 enforceFileLimitForCurrentMode();
 
@@ -446,6 +456,14 @@ window.setTimeout(() => {
 }, 700);
 
 cleanButton.addEventListener("click", handleCleanNotes);
+if (cancelGenerationButton) {
+  cancelGenerationButton.addEventListener("click", () => {
+    cancelCurrentGeneration("Generation cancelled. Existing results were kept.");
+  });
+}
+if (toggleLiveStreamButton) {
+  toggleLiveStreamButton.addEventListener("click", toggleLiveStreamExpanded);
+}
 themeToggle.addEventListener("click", toggleTheme);
 if (proModeButton) {
   proModeButton.addEventListener("click", () => openPricingPage("top-bar"));
@@ -894,8 +912,9 @@ async function handleCleanNotes() {
     return;
   }
 
-  if (!isLikelyStudyMaterial(rawNotes)) {
-    statusText.textContent = NON_NOTES_MESSAGE;
+  const notesIssue = getStudyMaterialIssue(rawNotes);
+  if (notesIssue) {
+    statusText.textContent = notesIssue;
     return;
   }
 
@@ -904,13 +923,14 @@ async function handleCleanNotes() {
   }
 
   triggerSummarizeClickAnimation(cleanButton);
+  const signal = beginGenerationSession();
   setLoadingState(true, "clean");
   scheduleSlowGenerationToast();
   statusText.textContent = "AI is streaming";
   statusText.classList.add("is-streaming");
 
   try {
-    const result = await generateStudyPack(rawNotes, getSelectedOutputs());
+    const result = await generateStudyPack(rawNotes, getSelectedOutputs(), signal);
     saveActiveFileResults(result);
     await renderResultsWithTyping(result);
 
@@ -918,8 +938,11 @@ async function handleCleanNotes() {
     recordGenerationSuccess();
     handleTutorialGenerationCompleted();
   } catch (error) {
-    statusText.textContent = error.message;
+    if (error?.name !== "AbortError") {
+      statusText.textContent = error.message;
+    }
   } finally {
+    clearGenerationSession();
     cancelSlowGenerationToast();
     setLoadingState(false);
   }
@@ -955,19 +978,22 @@ async function summarizeArticleFromLink() {
   }
 
   triggerSummarizeClickAnimation(summarizeLinkButton);
+  const signal = beginGenerationSession();
   setLoadingState(true, "article");
   scheduleSlowGenerationToast();
   statusText.textContent = "AI is streaming";
   statusText.classList.add("is-streaming");
 
   try {
-    const articleText = await fetchArticleTextFromUrl(articleUrl);
-    if (!isLikelyStudyMaterial(articleText)) {
-      throw new Error(NON_NOTES_MESSAGE);
+    const articleText = await fetchArticleTextFromUrl(articleUrl, signal);
+    const articleIssue = getStudyMaterialIssue(articleText);
+    if (articleIssue) {
+      throw new Error(articleIssue);
     }
     const result = await generateStudyPack(
       `Article URL: ${articleUrl}\n\nArticle content:\n${articleText}`,
-      getSelectedOutputs()
+      getSelectedOutputs(),
+      signal
     );
 
     saveActiveFileResults(result);
@@ -977,8 +1003,11 @@ async function summarizeArticleFromLink() {
     recordGenerationSuccess();
     handleTutorialGenerationCompleted();
   } catch (error) {
-    statusText.textContent = error.message;
+    if (error?.name !== "AbortError") {
+      statusText.textContent = error.message;
+    }
   } finally {
+    clearGenerationSession();
     cancelSlowGenerationToast();
     setLoadingState(false);
   }
@@ -1034,10 +1063,11 @@ function applySelectedOutputs(selectedOutputs) {
   updateGenerateActionState();
 }
 
-async function generateStudyPack(text, selectedOutputs) {
+async function generateStudyPack(text, selectedOutputs, signal) {
   const base = await cleanNotesWithOpenRouter(text, (chunk, fullText) => {
     updateStreamingStatus(chunk, fullText);
-  });
+  }, signal);
+  ensureUsableStudyPackBase(base);
   const studyPlan = buildEnhancedStudyPlan(base.studyOrder, base.studyTasks, base.cleanNotes);
   const sourceLines =
     base.cleanNotes.length > 0
@@ -1145,21 +1175,23 @@ async function summarizeFromPhoto() {
   }
 
   triggerSummarizeClickAnimation(cleanButton);
+  const signal = beginGenerationSession();
   setLoadingState(true, "clean");
   scheduleSlowGenerationToast();
   statusText.textContent = "AI is reading text from your photo";
   statusText.classList.add("is-streaming");
 
   try {
-    const extractedText = await extractTextFromPhotoWithVision(uploadedNotesPhotoDataUrl);
+    const extractedText = await extractTextFromPhotoWithVision(uploadedNotesPhotoDataUrl, signal);
     if (!extractedText) {
       throw new Error("Could not extract readable text from that photo.");
     }
-    if (!isLikelyStudyMaterial(extractedText)) {
-      throw new Error(NON_NOTES_MESSAGE);
+    const extractedIssue = getStudyMaterialIssue(extractedText);
+    if (extractedIssue) {
+      throw new Error(extractedIssue);
     }
     statusText.textContent = "Text extracted. Building your study pack...";
-    const result = await generateStudyPack(extractedText, getSelectedOutputs());
+    const result = await generateStudyPack(extractedText, getSelectedOutputs(), signal);
     saveActiveFileResults(result);
     await renderResultsWithTyping(result);
 
@@ -1167,8 +1199,11 @@ async function summarizeFromPhoto() {
     recordGenerationSuccess();
     handleTutorialGenerationCompleted();
   } catch (error) {
-    statusText.textContent = error.message;
+    if (error?.name !== "AbortError") {
+      statusText.textContent = error.message;
+    }
   } finally {
+    clearGenerationSession();
     cancelSlowGenerationToast();
     setLoadingState(false);
   }
@@ -1201,35 +1236,62 @@ function updateStreamingStatus(_chunk, fullText) {
   statusText.textContent = `AI is streaming: ${preview.slice(-90)}`;
 }
 
+function refreshLiveStreamUi() {
+  if (!liveStreamWrap || !liveStreamText || !liveStreamFullText || !toggleLiveStreamButton) {
+    return;
+  }
+
+  const raw = latestLiveStreamFullText;
+  const latestLine = raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .pop();
+  const preview = latestLine || raw.replace(/\s+/g, " ").trim();
+  const hasFullContent = raw.length > 120 || /\r?\n/.test(raw);
+
+  liveStreamWrap.classList.remove("hidden");
+  liveStreamText.textContent = preview || "Waiting for model response...";
+  toggleLiveStreamButton.classList.toggle("hidden", !hasFullContent);
+  toggleLiveStreamButton.textContent = isLiveStreamExpanded ? "Hide Full Stream" : "Show Full Stream";
+  liveStreamFullText.textContent = raw || "Waiting for model response...";
+  liveStreamFullText.classList.toggle("hidden", !isLiveStreamExpanded);
+}
+
+function toggleLiveStreamExpanded() {
+  isLiveStreamExpanded = !isLiveStreamExpanded;
+  refreshLiveStreamUi();
+}
+
 function showLiveStreamPreview(initialText = "") {
   if (!liveStreamWrap || !liveStreamText) {
     return;
   }
-  liveStreamWrap.classList.remove("hidden");
-  liveStreamText.textContent = initialText;
+  latestLiveStreamFullText = String(initialText || "");
+  isLiveStreamExpanded = false;
+  refreshLiveStreamUi();
 }
 
 function hideLiveStreamPreview() {
-  if (!liveStreamWrap || !liveStreamText) {
+  if (!liveStreamWrap || !liveStreamText || !liveStreamFullText || !toggleLiveStreamButton) {
     return;
   }
+  latestLiveStreamFullText = "";
+  isLiveStreamExpanded = false;
   liveStreamWrap.classList.add("hidden");
   liveStreamText.textContent = "";
+  liveStreamFullText.textContent = "";
+  liveStreamFullText.classList.add("hidden");
+  toggleLiveStreamButton.classList.add("hidden");
+  toggleLiveStreamButton.textContent = "Show Full Stream";
 }
 
 function updateLiveStreamPreview(fullText) {
   if (!liveStreamWrap || !liveStreamText) {
     return;
   }
-  const raw = String(fullText || "");
-  const latestLine = raw
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .pop();
-  const clipped = latestLine || raw.replace(/\s+/g, " ").trim();
-  liveStreamWrap.classList.remove("hidden");
-  liveStreamText.textContent = clipped || "Waiting for model response...";
+  latestLiveStreamFullText = String(fullText || "");
+  refreshLiveStreamUi();
 }
 
 function initStatusNotificationRouter() {
@@ -1320,9 +1382,13 @@ function scheduleToastRemoval(toast, stack) {
 }
 
 function isLikelyStudyMaterial(text) {
+  return !getStudyMaterialIssue(text);
+}
+
+function getStudyMaterialIssue(text) {
   const normalized = String(text || "").trim().toLowerCase();
   if (normalized.length < 28) {
-    return false;
+    return NOT_ENOUGH_TEXT_MESSAGE;
   }
 
   const studyKeywords = [
@@ -1349,10 +1415,33 @@ function isLikelyStudyMaterial(text) {
   if (wordCount >= 35) score += 1;
   if (sentenceLikeCount >= 2) score += 1;
 
-  return score >= 2;
+  if (wordCount < 10 || sentenceLikeCount === 0 && !hasStructure) {
+    return NOT_ENOUGH_TEXT_MESSAGE;
+  }
+
+  if (score < 2) {
+    return NON_NOTES_MESSAGE;
+  }
+
+  return "";
 }
 
-async function cleanNotesWithOpenRouter(rawNotes, onChunk) {
+function ensureUsableStudyPackBase(base) {
+  const cleanNotesCount = ensureStringArray(base?.cleanNotes).length;
+  const studyOrderCount = ensureStringArray(base?.studyOrder).length;
+  const studyTasksCount = ensureStringArray(base?.studyTasks).length;
+  const totalCount = cleanNotesCount + studyOrderCount + studyTasksCount;
+
+  if (cleanNotesCount >= 2 || totalCount >= 3) {
+    return;
+  }
+
+  throw new Error(
+    "I could not turn that into a solid study pack. Try adding clearer notes, more readable text, or a longer source."
+  );
+}
+
+async function cleanNotesWithOpenRouter(rawNotes, onChunk, signal) {
   const workerUrl = "/api/chat";
   const authHeaders = await getApiAuthHeaders();
 
@@ -1362,6 +1451,7 @@ async function cleanNotesWithOpenRouter(rawNotes, onChunk) {
       "Content-Type": "application/json",
       ...authHeaders
     },
+    signal,
     body: JSON.stringify({
       notes: rawNotes,
       stream: true
@@ -1394,7 +1484,7 @@ async function cleanNotesWithOpenRouter(rawNotes, onChunk) {
   }
 
   if (!response.body) {
-    throw new Error("Streaming response unavailable. Try again.");
+    throw new Error("The AI response did not stream correctly. Please try again.");
   }
 
   const reader = response.body.getReader();
@@ -1419,7 +1509,7 @@ async function cleanNotesWithOpenRouter(rawNotes, onChunk) {
   statusText.classList.remove("is-streaming");
   const parsed = extractJsonObject(fullText);
   if (!parsed) {
-    throw new Error("Model response was not valid JSON. Try again.");
+    throw new Error("The AI returned an invalid response, so Lumi could not build your study pack. Please try again.");
   }
 
   return {
@@ -1429,7 +1519,7 @@ async function cleanNotesWithOpenRouter(rawNotes, onChunk) {
   };
 }
 
-async function extractTextFromPhotoWithVision(imageDataUrl) {
+async function extractTextFromPhotoWithVision(imageDataUrl, signal) {
   const workerUrl = "/api/chat";
   const authHeaders = await getApiAuthHeaders();
 
@@ -1439,6 +1529,7 @@ async function extractTextFromPhotoWithVision(imageDataUrl) {
       "Content-Type": "application/json",
       ...authHeaders
     },
+    signal,
     body: JSON.stringify({
       mode: "ocr",
       imageDataUrl,
@@ -1741,6 +1832,9 @@ function getProPlanPriceLabel() {
 }
 
 function openPricingPage(source = "general") {
+  if (!maybeCancelGenerationBeforeNavigation("open the Pro page")) {
+    return;
+  }
   const target = new URL(getPricingPagePath(), window.location.href);
   target.searchParams.set("source", source);
   target.searchParams.set("returnTo", "index.html");
@@ -2432,6 +2526,10 @@ function setLoadingState(isLoading, mode = "clean") {
   }
   updateGenerateActionState();
   cleanButton.classList.toggle("is-loading", isLoading && mode === "clean");
+  if (cancelGenerationButton) {
+    cancelGenerationButton.classList.toggle("hidden", !isLoading);
+    cancelGenerationButton.disabled = !isLoading;
+  }
   if (summarizeLinkButton) {
     summarizeLinkButton.classList.toggle("is-loading", isLoading && mode === "article");
   }
@@ -2450,6 +2548,53 @@ function setLoadingState(isLoading, mode = "clean") {
   if (isLoading) {
     statusText.textContent = "AI is organizing your notes...";
   }
+}
+
+function beginGenerationSession() {
+  generationAbortController = new AbortController();
+  return generationAbortController.signal;
+}
+
+function clearGenerationSession() {
+  generationAbortController = null;
+}
+
+function cancelCurrentGeneration(message = "Generation cancelled. Existing results were kept.") {
+  if (!generationAbortController) {
+    return false;
+  }
+
+  generationAbortController.abort();
+  clearGenerationSession();
+  cancelSlowGenerationToast();
+  setLoadingState(false);
+
+  if (statusText) {
+    statusText.textContent = message;
+    statusText.classList.remove("is-streaming");
+  }
+
+  return true;
+}
+
+function maybeCancelGenerationBeforeNavigation(destinationLabel) {
+  if (!isGenerating) {
+    return true;
+  }
+
+  const shouldCancel = window.confirm(
+    `Lumi is still generating your study pack. Cancel generation before you ${destinationLabel}?`
+  );
+
+  if (!shouldCancel) {
+    if (statusText) {
+      statusText.textContent = "Still generating. Wait until it finishes or cancel generation to do something else.";
+    }
+    return false;
+  }
+
+  cancelCurrentGeneration("Generation cancelled so you can keep browsing.");
+  return true;
 }
 
 function triggerSummarizeClickAnimation(button) {
@@ -3009,52 +3154,52 @@ function buildQuizQuestionString(fact, index) {
     return "";
   }
 
-  const answerMode = index % 3 === 0 ? "short-answer" : "multiple-choice";
+  const answerMode = index % 2 === 0 ? "short-answer" : "multiple-choice";
   const subject = formatStudySubject(fact.subject || `Concept ${index}`);
   const questionTemplates =
     answerMode === "multiple-choice"
       ? {
           definition: [
-            `Which statement best describes ${subject}?`,
-            `Which answer correctly defines ${subject}?`,
-            `What is ${subject}?`
+            `Which statement about ${subject} is most accurate?`,
+            `Which choice best matches the meaning of ${subject}?`,
+            `Which description fits ${subject} best?`
           ],
           action: [
-            `Which statement best explains what ${subject} does?`,
-            `Which answer describes the role of ${subject}?`,
-            `How does ${subject} work?`
+            `Which choice best explains the role of ${subject}?`,
+            `Which statement shows how ${subject} affects the system?`,
+            `Which option best describes what ${subject} does?`
           ],
           examples: [
-            `Which answer shows what ${subject} includes?`,
-            `Which detail belongs to ${subject}?`,
-            `What is included in ${subject}?`
+            `Which option belongs under ${subject}?`,
+            `Which choice is an example of ${subject}?`,
+            `Which detail correctly fits ${subject}?`
           ],
           fact: [
-            `Which statement is true about ${subject}?`,
-            `Which answer best explains ${subject}?`,
-            `What best matches ${subject}?`
+            `Which statement is supported by the notes about ${subject}?`,
+            `Which choice best matches the idea of ${subject}?`,
+            `Which option is correct about ${subject}?`
           ]
         }
       : {
           definition: [
-            `Define ${subject}.`,
-            `What does ${subject} mean?`,
-            `Explain ${subject} in your own words.`
+            `In your own words, what does ${subject} mean?`,
+            `How would you explain ${subject} to a classmate?`,
+            `Why does ${subject} matter in these notes?`
           ],
           action: [
-            `What does ${subject} do?`,
-            `Explain the role of ${subject}.`,
-            `How does ${subject} affect the system?`
+            `What role does ${subject} play?`,
+            `Why is ${subject} important in this process?`,
+            `How does ${subject} change or affect the system?`
           ],
           examples: [
-            `What does ${subject} include?`,
-            `Describe what belongs to ${subject}.`,
-            `Give the key details for ${subject}.`
+            `What belongs under ${subject}?`,
+            `Name one key detail that fits ${subject}.`,
+            `How would you describe the main parts of ${subject}?`
           ],
           fact: [
-            `Explain ${subject}.`,
-            `What is true about ${subject}?`,
-            `Describe ${subject} in one or two sentences.`
+            `What is one important thing the notes say about ${subject}?`,
+            `How would you summarize ${subject} in one or two sentences?`,
+            `What should someone understand about ${subject} after reading these notes?`
           ]
         };
   const templates = questionTemplates[fact.kind] || questionTemplates.fact;
@@ -3488,21 +3633,80 @@ function isValidHttpUrl(value) {
   }
 }
 
-async function fetchArticleTextFromUrl(articleUrl) {
+async function fetchArticleTextFromUrl(articleUrl, signal) {
   const normalized = articleUrl.replace(/^https?:\/\//i, "");
   const readerUrl = `https://r.jina.ai/http://${normalized}`;
-  const response = await fetch(readerUrl);
+  const response = await fetch(readerUrl, { signal });
   const text = (await response.text()).trim();
 
   if (!response.ok) {
-    throw new Error("Could not read article URL.");
+    throw new Error(describeArticleFetchFailure(articleUrl, text, response.status));
+  }
+
+  const articleFailure = detectArticleContentFailure(articleUrl, text);
+  if (articleFailure) {
+    throw new Error(articleFailure);
   }
 
   if (text.length < 180) {
-    throw new Error("Article text was too short to summarize.");
+    throw new Error("The article did not provide enough readable text to summarize.");
   }
 
   return text.slice(0, 14000);
+}
+
+function describeArticleFetchFailure(articleUrl, responseText, status) {
+  const lower = String(responseText || "").toLowerCase();
+  const host = getReadableHostname(articleUrl);
+
+  if (status === 401 || status === 403 || lower.includes("permission") || lower.includes("access denied")) {
+    return `${host} blocked access to that page. If it is a private or locked document, make it public or paste the text instead.`;
+  }
+  if (status === 404 || lower.includes("not found")) {
+    return `That link could not be found on ${host}. Check the URL and try again.`;
+  }
+
+  return `Lumi could not read that page from ${host} (error ${status}). Try a public article link or paste the text directly.`;
+}
+
+function detectArticleContentFailure(articleUrl, text) {
+  const lower = String(text || "").toLowerCase();
+  const host = getReadableHostname(articleUrl);
+
+  if (!lower) {
+    return `Lumi could not read any text from ${host}. Try a public article or paste the text directly.`;
+  }
+
+  if (
+    lower.includes("you need permission") ||
+    lower.includes("request access") ||
+    lower.includes("sign in to continue") ||
+    lower.includes("sign in with google") ||
+    lower.includes("access denied") ||
+    lower.includes("private document") ||
+    lower.includes("this document is not publicly accessible")
+  ) {
+    return `${host} looks locked or private, so Lumi could not read it. Make the doc public or paste the text instead.`;
+  }
+
+  if (
+    lower.includes("enable javascript") ||
+    lower.includes("please turn javascript on") ||
+    lower.includes("captcha") ||
+    lower.includes("verify you are human")
+  ) {
+    return `${host} blocked automated reading for that page. Try a different public source or paste the text instead.`;
+  }
+
+  return "";
+}
+
+function getReadableHostname(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./i, "");
+  } catch (_error) {
+    return "that site";
+  }
 }
 
 function bindCopyButtons() {
@@ -4440,11 +4644,13 @@ function renderQuizStudyPanel() {
       const firstIncorrectIndex = findFirstIncorrectQuizIndex(items, state);
       state.currentIndex = firstIncorrectIndex >= 0 ? firstIncorrectIndex : 0;
       state.view = "question";
+      animateQuizPanelTransition("is-question-advancing");
       renderQuizStudyPanel();
     });
 
     const restartButton = createStudyQueueButton("Restart Quiz", () => {
       resetQuizSessionState(file);
+      animateQuizPanelTransition("is-quiz-restarting");
       renderQuizStudyPanel();
     });
 
@@ -4567,6 +4773,7 @@ function renderQuizStudyPanel() {
 
   const prevButton = createStudyQueueButton("Previous", () => {
     state.currentIndex = Math.max(0, state.currentIndex - 1);
+    animateQuizPanelTransition("is-question-advancing");
     renderQuizStudyPanel();
   });
   prevButton.disabled = state.currentIndex === 0;
@@ -4585,6 +4792,7 @@ function renderQuizStudyPanel() {
 
   const restartButton = createStudyQueueButton("Restart Quiz", () => {
     resetQuizSessionState(file);
+    animateQuizPanelTransition("is-quiz-restarting");
     renderQuizStudyPanel();
   });
 
@@ -4624,6 +4832,7 @@ function submitCurrentQuizAnswer(items, state) {
     state.completed = true;
   }
 
+  animateQuizPanelTransition("is-answer-checking");
   renderQuizStudyPanel();
   statusText.textContent = response.correct
     ? "Nice work. That answer checks out."
@@ -4634,6 +4843,7 @@ function advanceQuizQuestion(items, state) {
   if (state.currentIndex >= items.length - 1) {
     state.completed = true;
     state.view = "results";
+    animateQuizPanelTransition("is-results-revealing");
     renderQuizStudyPanel();
     const score = getQuizScoreSummary(state, items);
     statusText.textContent = `Quiz complete. Score: ${score.correctCount} / ${score.total}.`;
@@ -4641,6 +4851,7 @@ function advanceQuizQuestion(items, state) {
   }
   state.currentIndex += 1;
   state.view = "question";
+  animateQuizPanelTransition("is-question-advancing");
   renderQuizStudyPanel();
 }
 
@@ -4752,6 +4963,7 @@ function initStudyQueueUiIfNeeded() {
   card.classList.add("flashcard-virtual");
   card.dataset.face = "front";
   card.dataset.kind = "flashcard";
+  card.dataset.overlay = "";
 
   const cardInner = document.createElement("div");
   cardInner.className = "flashcard-visual-inner";
@@ -5175,6 +5387,74 @@ function animateStudyQueueCardEntry(card) {
   card.classList.add("is-card-entering");
 }
 
+function animateStudyQueueCardAction(actionName) {
+  if (!studyQueueUi?.card) {
+    return;
+  }
+
+  if (flashcardActionAnimationTimer) {
+    clearTimeout(flashcardActionAnimationTimer);
+    flashcardActionAnimationTimer = 0;
+  }
+
+  studyQueueUi.card.classList.remove(
+    "is-moving-next",
+    "is-moving-prev",
+    "is-skipping",
+    "is-shuffling",
+    "is-marking-known"
+  );
+  studyQueueUi.card.dataset.overlay = actionName === "is-marking-known" ? "✓ Known" : "";
+  void studyQueueUi.card.offsetWidth;
+  studyQueueUi.card.classList.add(actionName);
+
+  flashcardActionAnimationTimer = window.setTimeout(() => {
+    if (studyQueueUi?.card) {
+      studyQueueUi.card.classList.remove(
+        "is-moving-next",
+        "is-moving-prev",
+        "is-skipping",
+        "is-shuffling",
+        "is-marking-known"
+      );
+      studyQueueUi.card.dataset.overlay = "";
+    }
+    flashcardActionAnimationTimer = 0;
+  }, 520);
+}
+
+function animateQuizPanelTransition(animationName) {
+  if (!quizStudyPanel) {
+    return;
+  }
+
+  if (quizPanelAnimationTimer) {
+    clearTimeout(quizPanelAnimationTimer);
+    quizPanelAnimationTimer = 0;
+  }
+
+  quizStudyPanel.classList.remove(
+    "is-question-advancing",
+    "is-answer-checking",
+    "is-quiz-restarting",
+    "is-results-revealing"
+  );
+  void quizStudyPanel.offsetWidth;
+  quizStudyPanel.classList.add(animationName);
+
+  quizPanelAnimationTimer = window.setTimeout(() => {
+    if (quizStudyPanel) {
+      quizStudyPanel.classList.remove(
+        "is-question-advancing",
+        "is-answer-checking",
+        "is-quiz-restarting",
+        "is-results-revealing"
+      );
+    }
+    quizPanelAnimationTimer = 0;
+  }, 520);
+}
+
 function updateStudyQueueProgress(queue, index) {
   if (!studyQueueUi) {
     return;
@@ -5241,6 +5521,7 @@ function moveStudyQueueIndex(delta) {
   if (nextIndex === file.studyQueueIndex) {
     return;
   }
+  animateStudyQueueCardAction(delta > 0 ? "is-moving-next" : "is-moving-prev");
   file.studyQueueIndex = nextIndex;
   isStudyCardFlipped = false;
   persistFiles();
@@ -5257,6 +5538,7 @@ function skipCurrentStudyItem() {
     return;
   }
   const index = Math.min(Math.max(file.studyQueueIndex || 0, 0), queue.length - 1);
+  animateStudyQueueCardAction("is-skipping");
   const [item] = queue.splice(index, 1);
   if (!item) {
     return;
@@ -5284,6 +5566,7 @@ function markCurrentStudyItemKnown() {
     return;
   }
   const index = Math.min(Math.max(file.studyQueueIndex || 0, 0), queue.length - 1);
+  animateStudyQueueCardAction("is-marking-known");
   const [item] = queue.splice(index, 1);
   if (!item) {
     return;
@@ -5326,6 +5609,7 @@ function shuffleStudyQueue() {
   if (queue.length <= 1) {
     return;
   }
+  animateStudyQueueCardAction("is-shuffling");
   for (let i = queue.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [queue[i], queue[j]] = [queue[j], queue[i]];
