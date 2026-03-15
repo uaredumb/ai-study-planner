@@ -3,3 +3,6 @@ OPENROUTER_MODEL=stepfun/step-3.5-flash
 OPENROUTER_VISION_MODEL=openrouter/healer-alpha
 OPENROUTER_SITE_URL=https://ai-study-planner.pages.dev
 OPENROUTER_APP_NAME=AI Study Pal
+PRO_CODE_HASHES=sha256_hash_1,sha256_hash_2
+GOD_MODE_CODE_HASHES=optional_single_sha256_hash
+GOD_MODE_EMAILS=maverick.blackburn@gmail.com

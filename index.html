@@ -11,22 +11,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <meta name="clerk-publishable-key" content="pk_test_c2luZ3VsYXItYXBoaWQtMjcuY2xlcmsuYWNjb3VudHMuZGV2JA" />
   <script>
     window.APP_CONFIG = window.APP_CONFIG || {
       CANONICAL_HOST: "",
-      CLERK_PUBLISHABLE_KEY:
-        document.querySelector('meta[name="clerk-publishable-key"]')?.getAttribute("content") || ""
+      CLERK_PUBLISHABLE_KEY: ""
     };
   </script>
   <script src="config.js"></script>
-  <script
-    async
-    crossorigin="anonymous"
-    data-clerk-publishable-key="pk_test_c2luZ3VsYXItYXBoaWQtMjcuY2xlcmsuYWNjb3VudHMuZGV2JA"
-    src="https://singular-aphid-27.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
-    type="text/javascript">
-  </script>
   <script>
     (function redirectDevHostname() {
       const canonicalHost = window.APP_CONFIG && window.APP_CONFIG.CANONICAL_HOST;
@@ -66,11 +57,6 @@
         <button id="proModeButton" class="theme-btn hidden" type="button" aria-label="Open Pro plans">
           <span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span>
           <span class="btn-label">Upgrade</span>
-          <span class="beta-pill">Beta</span>
-        </button>
-        <button id="performanceToggle" class="theme-btn" aria-label="Toggle performance mode">
-          <img class="btn-icon" src="icons/performance-off.svg" alt="" aria-hidden="true" />
-          <span class="btn-label">Performance Mode: Off</span>
         </button>
         <button id="themeToggle" class="theme-btn" aria-label="Toggle color theme">
           <img class="btn-icon" src="icons/theme-dark.svg" alt="" aria-hidden="true" />
@@ -189,9 +175,7 @@
       <div id="liveStreamWrap" class="live-stream-wrap hidden" aria-live="polite">
         <div class="live-stream-head">
           <p id="liveStreamText" class="live-stream-text"></p>
-          <button id="toggleLiveStreamButton" class="secondary-btn live-stream-toggle hidden" type="button">Show Full Stream</button>
         </div>
-        <pre id="liveStreamFullText" class="live-stream-full hidden"></pre>
       </div>
     </section>
 
@@ -396,13 +380,6 @@
         <button id="tutorialSkipCancelButton" type="button" class="secondary-btn">Stay in Tutorial</button>
         <button id="tutorialSkipConfirmButton" type="button" class="secondary-btn danger-btn">Skip Tutorial</button>
       </div>
-    </div>
-  </div>
-
-  <div id="performanceLoader" class="performance-loader hidden" aria-live="polite">
-    <div class="performance-loader-card">
-      <div class="performance-spinner" aria-hidden="true"></div>
-      <p id="performanceLoaderText">Applying performance mode...</p>
     </div>
   </div>
 

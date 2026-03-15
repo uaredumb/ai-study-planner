@@ -6,8 +6,6 @@ const cancelGenerationButton = document.getElementById("cancelGenerationButton")
 const statusText = document.getElementById("statusText");
 const liveStreamWrap = document.getElementById("liveStreamWrap");
 const liveStreamText = document.getElementById("liveStreamText");
-const liveStreamFullText = document.getElementById("liveStreamFullText");
-const toggleLiveStreamButton = document.getElementById("toggleLiveStreamButton");
 const resultsSection = document.getElementById("resultsSection");
 const cleanNotesList = document.getElementById("cleanNotesList");
 const studyTasksList = document.getElementById("studyTasksList");
@@ -93,9 +91,9 @@ const downloadTargets = [
 ];
 const themeToggle = document.getElementById("themeToggle");
 const proModeButton = document.getElementById("proModeButton");
-const performanceToggle = document.getElementById("performanceToggle");
-const performanceLoader = document.getElementById("performanceLoader");
-const performanceLoaderText = document.getElementById("performanceLoaderText");
+const performanceToggle = null;
+const performanceLoader = null;
+const performanceLoaderText = null;
 const appLogo = document.getElementById("appLogo");
 
 const filesList = document.getElementById("filesList");
@@ -193,40 +191,6 @@ const GOD_MODE_FLASHCARDS_LIMIT = 50;
 const DEFAULT_PRICING_PAGE_PATH = "pricing.html";
 const DEFAULT_PRO_PLAN_SLUG = "pro";
 const DEFAULT_PRO_PLAN_PRICE = "$1.50 / month";
-const PRO_CODE_HASHES = [
-  "ea978dc49d8765817c29a92ea3e8512299ebd8c2606053505740a10311bfcdae",
-  "b0d40f314074c7e22b0feda853c5cae72ef87916d353939a1c0ec6005f6007f1",
-  "fd833754f31e65d3512ee3c871f40309c22c7e6c48beb03623491b81abb74df6",
-  "b271b453005e2ccd95e29abfa0c236ed907ea49d53788f9f993425d2ae1a9f55",
-  "cdf68a59a4191dcabd4f1c1de75a2635d90018ecec0bb82aab37e8afd19b5ba6",
-  "55ef3a07198bea753d0f78fcdd231e51822708d1c60ed160513f4a8366e8df3d",
-  "8acf9dfb2c36cd048e4240f0f3820d5c2f1359291376787e7fe9de8e164d0944",
-  "61d8ade8642a4799972136efdaffaa8f65d6620ded7fc3e1fa6d76baa9acf29b",
-  "1904c62185d5aaa14ecd4151732e9e4d1292da16375be7a3ef0a9562a40aabe3",
-  "cfb9febb2e8203d431b7c11b3518166223377abf5e0cfdd640c324e483beb13b",
-  "c93103bd95a5c6f11a58fafbb47e1a4c187a4903044bce22db5ca5fa551f3dcb",
-  "e914e834999c91d9fdb8c50341074d226ebfa2aaf1e97d75db7a5c46fb0f39cc",
-  "9ecdf25d0252c93077886c44dff7a41f1f8b4a065e5f83edf0f65a97da14dc2c",
-  "2cf43d0cb6301253b1760186355430549a8ffa992acdf4238f4c10f468ac14a0",
-  "de64ae7c62fe25bb0b95767e4bab4805244909eec38ce1cf23ed64a21036f120",
-  "b1023958e822625cfa19f3cc3f000a44cc15e574e415a502e51330cdb0a4cafd",
-  "ce2a7b19b67dfc2f22ea57f8e933e0dd8bb551e671647e4aa47a1b65af62df9f",
-  "168a331b752ab122adaa734f5462a73fb199ba4bacd74c2294e87d41a75948d4",
-  "c0ab67b8a8fa9511e3056c61e7a596a357f97be8b88384f20040f2483bb72929",
-  "1c55bdd9b3a2d38f17c23d9ba19ae94db66ba2c388a3079ed311d038045f9023",
-  "473c487a4139834542f2d71f57e3ea376e5760fcf3addd854fcf631b8ab6bece",
-  "9ed73988aaf6fd978cfb2182803f4168e8209ac44753cf971a9702a14b4792c3",
-  "79df72ec8f22ed871d11dd687df45ec733bd454c4b62bfcd454c51ec9de447c0",
-  "f76b83cea9f9a9fd6244722d35a61f222b54f6e3af74301c4f22904419cf2a02",
-  "ceab09beda29b3e7cf28de00b0c0ce456661f35b35a5a8e04d21c95550ca1ab6",
-  "ac10e4ac583a3458c623b25e374636b1f41f2e90313940dcf264e89c7b033e4c",
-  "975dd98d7fa5aeeba33209ab09162a04cb7253a909245a5c163124d9311cfdb1",
-  "1b2f0f3bb4bcc59c6e3bca6330987c6b162af44941aa75c29d8a460841c3dd52",
-  "491d52f03896238e96b10fdae8e8788f89e74028c69b2651012ae14f05b93073"
-];
-const GOD_MODE_HASHES = [
-  "6759ef91165e45070b43130b3bf70ba732ee1b43aa7d39c700509dc72acc59ec"
-];
 const NON_NOTES_MESSAGE =
   "I can only generate from real study notes or learning material. Please add notes, class content, or an educational article.";
 const NOT_ENOUGH_TEXT_MESSAGE =
@@ -248,7 +212,6 @@ let isGenerating = false;
 let createdFileIdForAnimation = "";
 let tutorialStepIndex = 0;
 let allowNativeCopyOnce = false;
-let isPerformanceToggleBusy = false;
 let tutorialPendingAction = "";
 let tutorialDynamicStep = null;
 let tutorialScrollAdjustTimer = 0;
@@ -258,6 +221,8 @@ let flashcardsFrontsPreviewUrl = "";
 let flashcardsBacksPreviewUrl = "";
 let studyQueueUi = null;
 let isStudyCardFlipped = false;
+let godModeEntitlementCheckPromise = null;
+let isPerformanceToggleBusy = false;
 let isStudyCardAnimating = false;
 let flashcardStudyStateByFileId = new Map();
 let quizSessionStateByFileId = new Map();
@@ -271,7 +236,6 @@ let slowGenerationToastTimer = 0;
 let guestGenerationCount = 0;
 let pdfJsModulePromise = null;
 let latestLiveStreamFullText = "";
-let isLiveStreamExpanded = false;
 let generationAbortController = null;
 let quizPanelAnimationTimer = 0;
 let flashcardActionAnimationTimer = 0;
@@ -441,7 +405,6 @@ applyIosAnimationProfile();
 loadTheme();
 applyProModeUi();
 initStudyQueueUiIfNeeded();
-loadPerformanceMode();
 renderFiles();
 loadActiveFileIntoEditor();
 initStatusNotificationRouter();
@@ -455,15 +418,9 @@ if (cancelGenerationButton) {
     cancelCurrentGeneration("Generation cancelled. Existing results were kept.");
   });
 }
-if (toggleLiveStreamButton) {
-  toggleLiveStreamButton.addEventListener("click", toggleLiveStreamExpanded);
-}
 themeToggle.addEventListener("click", toggleTheme);
 if (proModeButton) {
   proModeButton.addEventListener("click", () => openPricingPage("top-bar"));
-}
-if (performanceToggle) {
-  performanceToggle.addEventListener("click", togglePerformanceMode);
 }
 if (accountLoginButton) {
   accountLoginButton.addEventListener("click", openAccountLogin);
@@ -920,8 +877,9 @@ async function handleCleanNotes() {
   const signal = beginGenerationSession();
   setLoadingState(true, "clean");
   scheduleSlowGenerationToast();
-  statusText.textContent = "AI is streaming";
+  statusText.textContent = "Lumi is reading your notes and getting started.";
   statusText.classList.add("is-streaming");
+  showLiveStreamPreview("Reading your notes and organizing the main ideas.");
 
   try {
     const result = await generateStudyPack(rawNotes, getSelectedOutputs(), signal);
@@ -975,8 +933,9 @@ async function summarizeArticleFromLink() {
   const signal = beginGenerationSession();
   setLoadingState(true, "article");
   scheduleSlowGenerationToast();
-  statusText.textContent = "AI is streaming";
+  statusText.textContent = "Lumi is reading your article and getting started.";
   statusText.classList.add("is-streaming");
+  showLiveStreamPreview("Reading the article and pulling out the key study points.");
 
   try {
     const articleText = await fetchArticleTextFromUrl(articleUrl, signal);
@@ -1172,8 +1131,9 @@ async function summarizeFromPhoto() {
   const signal = beginGenerationSession();
   setLoadingState(true, "clean");
   scheduleSlowGenerationToast();
-  statusText.textContent = "AI is reading text from your photo";
+  statusText.textContent = "Lumi is reading text from your photo.";
   statusText.classList.add("is-streaming");
+  showLiveStreamPreview("Reading the text in your photo.");
 
   try {
     const extractedText = await extractTextFromPhotoWithVision(uploadedNotesPhotoDataUrl, signal);
@@ -1184,7 +1144,8 @@ async function summarizeFromPhoto() {
     if (extractedIssue) {
       throw new Error(extractedIssue);
     }
-    statusText.textContent = "Text extracted. Building your study pack...";
+    statusText.textContent = "Lumi is turning that photo into your study pack.";
+    showLiveStreamPreview("Turning the extracted text into clean notes, flashcards, and quiz practice.");
     const result = await generateStudyPack(extractedText, getSelectedOutputs(), signal);
     saveActiveFileResults(result);
     await renderResultsWithTyping(result);
@@ -1220,41 +1181,33 @@ function cancelSlowGenerationToast() {
 }
 
 function updateStreamingStatus(_chunk, fullText) {
-  const preview = String(fullText || "").replace(/\s+/g, " ").trim();
+  const activity = describeLiveGenerationActivity(fullText);
   statusText.classList.add("is-streaming");
   updateLiveStreamPreview(fullText);
+  statusText.textContent = activity;
+}
+
+function describeLiveGenerationActivity(fullText) {
+  const preview = String(fullText || "").replace(/\s+/g, " ").trim();
   if (!preview) {
-    statusText.textContent = "AI is streaming";
-    return;
+    return "Lumi is reading your notes and getting started.";
   }
-  statusText.textContent = `AI is streaming: ${preview.slice(-90)}`;
+  if (preview.length < 120) {
+    return "Lumi is reading your notes and pulling out the key ideas.";
+  }
+  if (preview.length < 280) {
+    return "Lumi is organizing your notes into clean study points.";
+  }
+  return "Lumi is building your study pack and checking the final details.";
 }
 
 function refreshLiveStreamUi() {
-  if (!liveStreamWrap || !liveStreamText || !liveStreamFullText || !toggleLiveStreamButton) {
+  if (!liveStreamWrap || !liveStreamText) {
     return;
   }
 
-  const raw = latestLiveStreamFullText;
-  const latestLine = raw
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .pop();
-  const preview = latestLine || raw.replace(/\s+/g, " ").trim();
-  const hasFullContent = raw.length > 120 || /\r?\n/.test(raw);
-
   liveStreamWrap.classList.remove("hidden");
-  liveStreamText.textContent = preview || "Waiting for model response...";
-  toggleLiveStreamButton.classList.toggle("hidden", !hasFullContent);
-  toggleLiveStreamButton.textContent = isLiveStreamExpanded ? "Hide Full Stream" : "Show Full Stream";
-  liveStreamFullText.textContent = raw || "Waiting for model response...";
-  liveStreamFullText.classList.toggle("hidden", !isLiveStreamExpanded);
-}
-
-function toggleLiveStreamExpanded() {
-  isLiveStreamExpanded = !isLiveStreamExpanded;
-  refreshLiveStreamUi();
+  liveStreamText.textContent = describeLiveGenerationActivity(latestLiveStreamFullText);
 }
 
 function showLiveStreamPreview(initialText = "") {
@@ -1262,22 +1215,16 @@ function showLiveStreamPreview(initialText = "") {
     return;
   }
   latestLiveStreamFullText = String(initialText || "");
-  isLiveStreamExpanded = false;
   refreshLiveStreamUi();
 }
 
 function hideLiveStreamPreview() {
-  if (!liveStreamWrap || !liveStreamText || !liveStreamFullText || !toggleLiveStreamButton) {
+  if (!liveStreamWrap || !liveStreamText) {
     return;
   }
   latestLiveStreamFullText = "";
-  isLiveStreamExpanded = false;
   liveStreamWrap.classList.add("hidden");
   liveStreamText.textContent = "";
-  liveStreamFullText.textContent = "";
-  liveStreamFullText.classList.add("hidden");
-  toggleLiveStreamButton.classList.add("hidden");
-  toggleLiveStreamButton.textContent = "Show Full Stream";
 }
 
 function updateLiveStreamPreview(fullText) {
@@ -1307,7 +1254,7 @@ function routeStatusToToastIfNeeded() {
   if (!message) {
     return;
   }
-  if (statusText.classList.contains("is-streaming") || message.startsWith("AI is typing") || message.startsWith("AI is streaming")) {
+  if (statusText.classList.contains("is-streaming") || message.startsWith("AI is typing") || message.startsWith("AI is streaming") || message.startsWith("Lumi is ")) {
     return;
   }
   if (message === "Ready") {
@@ -1868,6 +1815,23 @@ function getAccountUnsafeMetadata() {
   return metadata && typeof metadata === "object" ? metadata : {};
 }
 
+function getAccountPrimaryEmail() {
+  const user = window.Clerk?.user;
+  if (!user) {
+    return "";
+  }
+  const primaryEmailId = user.primaryEmailAddressId || "";
+  const primaryFromList = Array.isArray(user.emailAddresses)
+    ? user.emailAddresses.find((entry) => entry && entry.id === primaryEmailId)
+    : null;
+  const email =
+    primaryFromList?.emailAddress ||
+    user.primaryEmailAddress?.emailAddress ||
+    (Array.isArray(user.emailAddresses) ? user.emailAddresses[0]?.emailAddress : "") ||
+    "";
+  return String(email || "").trim().toLowerCase();
+}
+
 function getAccountUsedProCodeHashes() {
   const metadata = getAccountUnsafeMetadata();
   const hashes = metadata.usedProCodeHashes;
@@ -1920,6 +1884,65 @@ async function persistGodModeUsage(codeHash) {
   await window.Clerk.user.update({ unsafeMetadata });
 }
 
+async function ensureGodModeForAllowlistedAccount() {
+  if (!hasAccount()) {
+    return false;
+  }
+  const email = getAccountPrimaryEmail();
+  if (!email) {
+    return false;
+  }
+  try {
+    const response = await fetch("/api/pro/access", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email })
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || !result?.ok || !result.godMode) {
+      return false;
+    }
+
+    const metadata = getAccountUnsafeMetadata();
+    if (!metadata.godMode && window.Clerk?.user && typeof window.Clerk.user.update === "function") {
+      await window.Clerk.user.update({
+        unsafeMetadata: {
+          ...metadata,
+          proUnlocked: true,
+          proUnlockedAt: metadata.proUnlockedAt || new Date().toISOString(),
+          godMode: true,
+          godModeUnlockedAt: metadata.godModeUnlockedAt || new Date().toISOString()
+        }
+      });
+    }
+
+    isGodMode = true;
+    isProMode = true;
+    if (canPersistStudyData()) {
+      localStorage.setItem(GOD_MODE_STORAGE, "on");
+      localStorage.setItem(PRO_MODE_STORAGE, "on");
+    }
+    applyProModeUi();
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function queueGodModeEntitlementCheck() {
+  if (godModeEntitlementCheckPromise) {
+    return godModeEntitlementCheckPromise;
+  }
+  godModeEntitlementCheckPromise = ensureGodModeForAllowlistedAccount()
+    .catch(() => false)
+    .finally(() => {
+      godModeEntitlementCheckPromise = null;
+    });
+  return godModeEntitlementCheckPromise;
+}
+
 function hasActiveClerkProPlan() {
   const session = window.Clerk?.session;
   const planSlug = getProPlanSlug();
@@ -1958,6 +1981,9 @@ function syncProModeFromAccount() {
     localStorage.setItem(PRO_MODE_STORAGE, "on");
   }
   applyProModeUi();
+  if (!isGodMode) {
+    queueGodModeEntitlementCheck();
+  }
 }
 
 function getMaxFilesAllowed() {
@@ -1989,8 +2015,8 @@ function updateProModeButtonLabel() {
     return;
   }
   proModeButton.innerHTML = isProMode
-    ? `<span class="btn-glyph pro-badge-icon" aria-hidden="true">&#9670;</span><span class="btn-label">${isGodMode ? "God Mode" : "Pro Active"}</span><span class="beta-pill">Beta</span>`
-    : '<span class="btn-glyph pro-badge-icon" aria-hidden="true">&#9670;</span><span class="btn-label">Upgrade</span><span class="beta-pill">Beta</span>';
+    ? `<span class="btn-glyph pro-badge-icon" aria-hidden="true">&#9670;</span><span class="btn-label">${isGodMode ? "God Mode" : "Pro Active"}</span>`
+    : '<span class="btn-glyph pro-badge-icon" aria-hidden="true">&#9670;</span><span class="btn-label">Upgrade</span>';
   proModeButton.classList.toggle("hidden", !hasAccount());
 }
 
@@ -2130,41 +2156,38 @@ function clearProCodeError() {
   }
 }
 
-async function hashTextSha256(text) {
-  if (!window.crypto || !window.crypto.subtle) {
-    throw new Error("Secure crypto not available in this browser context.");
-  }
-  const encoded = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest("SHA-256", encoded);
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 async function submitProCode(event) {
   event.preventDefault();
   if (!requireAccount("redeem a Pro code")) {
     return;
   }
-  clearProCodeError();
   const inputCode = proCodeInput?.value?.trim() || "";
+  clearProCodeError();
   if (!inputCode) {
     showProCodeError("Enter a Pro code first.");
     return;
   }
-  let codeHash = "";
+
+  let redeemResult = null;
   try {
-    codeHash = await hashTextSha256(inputCode);
+    const response = await fetch("/api/pro/redeem", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ code: inputCode })
+    });
+    redeemResult = await response.json().catch(() => null);
+    if (!response.ok || !redeemResult?.ok) {
+      showProCodeError(redeemResult?.error || "Invalid Pro code.");
+      return;
+    }
   } catch (_error) {
-    showProCodeError("Pro unlock is unavailable in this context. Use the hosted app.");
+    showProCodeError("Could not verify that Pro code right now. Try again.");
     return;
   }
-  const isGodModeCode = GOD_MODE_HASHES.includes(codeHash);
-  const isProCode = PRO_CODE_HASHES.includes(codeHash);
-  if (!isGodModeCode && !isProCode) {
-    showProCodeError("Invalid Pro code.");
-    return;
-  }
+  const codeHash = typeof redeemResult.codeHash === "string" ? redeemResult.codeHash : "";
+  const isGodModeCode = redeemResult.mode === "god";
   if (loadUsedProCodeHashes().includes(codeHash)) {
     showProCodeError("This Pro code was already used. Enter a new code.");
     return;
@@ -6579,6 +6602,7 @@ function handleAuthSignedIn() {
 
 async function handleAuthSignedOut() {
   isUserAuthenticated = false;
+  godModeEntitlementCheckPromise = null;
   if (clerkUserButton) {
     clerkUserButton.classList.add("hidden");
   }

@@ -12,14 +12,23 @@ const pricingFallback = document.getElementById("pricingFallback");
 const pricingAuthNotice = document.getElementById("pricingAuthNotice");
 const pricingPlanName = document.getElementById("pricingPlanName");
 const pricingPlanPrice = document.getElementById("pricingPlanPrice");
+const pricingMonthlyPrice = document.getElementById("pricingMonthlyPrice");
+const pricingYearlyPrice = document.getElementById("pricingYearlyPrice");
+const pricingTrialDays = document.getElementById("pricingTrialDays");
 const pricingPlanSlug = document.getElementById("pricingPlanSlug");
 const pricingPlanPriceInline = document.getElementById("pricingPlanPriceInline");
 const pricingPlanSlugDisplay = document.getElementById("pricingPlanSlugDisplay");
+const ultimatePlanName = document.getElementById("ultimatePlanName");
+const ultimatePlanPrice = document.getElementById("ultimatePlanPrice");
 
 const DEFAULT_RETURN_TO = "index.html";
 const DEFAULT_PRO_PLAN_NAME = "Pro";
 const DEFAULT_PRO_PLAN_SLUG = "pro";
 const DEFAULT_PRO_PLAN_PRICE = "$1.50 / month";
+const DEFAULT_PRO_PLAN_YEARLY_PRICE = "$12.00 / year";
+const DEFAULT_PRO_TRIAL_DAYS = "14 days";
+const DEFAULT_ULTIMATE_PLAN_NAME = "Ultimate";
+const DEFAULT_ULTIMATE_PLAN_PRICE = "$4.99 / month planned";
 const THEME_KEY = "ai-study-planner-theme";
 
 let clerkReady = false;
@@ -78,6 +87,38 @@ function getPricingPlanPriceLabel() {
   return DEFAULT_PRO_PLAN_PRICE;
 }
 
+function getPricingPlanYearlyPriceLabel() {
+  const configured = window.APP_CONFIG?.PRO_PLAN_YEARLY_PRICE;
+  if (typeof configured === "string" && configured.trim()) {
+    return configured.trim();
+  }
+  return DEFAULT_PRO_PLAN_YEARLY_PRICE;
+}
+
+function getPricingTrialDaysLabel() {
+  const configured = window.APP_CONFIG?.PRO_PLAN_TRIAL_DAYS;
+  if (typeof configured === "string" && configured.trim()) {
+    return configured.trim();
+  }
+  return DEFAULT_PRO_TRIAL_DAYS;
+}
+
+function getUltimatePlanName() {
+  const configured = window.APP_CONFIG?.ULTIMATE_PLAN_NAME;
+  if (typeof configured === "string" && configured.trim()) {
+    return configured.trim();
+  }
+  return DEFAULT_ULTIMATE_PLAN_NAME;
+}
+
+function getUltimatePlanPriceLabel() {
+  const configured = window.APP_CONFIG?.ULTIMATE_PLAN_PRICE;
+  if (typeof configured === "string" && configured.trim()) {
+    return configured.trim();
+  }
+  return DEFAULT_ULTIMATE_PLAN_PRICE;
+}
+
 function applyPricingTheme() {
   try {
     const savedTheme = localStorage.getItem(THEME_KEY);
@@ -111,10 +152,15 @@ function splitPriceLabel(label) {
 }
 
 function applyStaticPlanContent() {
-  const priceLabel = getPricingPlanPriceLabel();
-  const priceParts = splitPriceLabel(priceLabel);
+  const monthlyPriceLabel = getPricingPlanPriceLabel();
+  const yearlyPriceLabel = getPricingPlanYearlyPriceLabel();
+  const trialDaysLabel = getPricingTrialDaysLabel();
+  const priceParts = splitPriceLabel(monthlyPriceLabel);
   const planSlug = getPricingPlanSlug();
   const planName = getPricingPlanName();
+  const ultimateName = getUltimatePlanName();
+  const ultimatePriceLabel = getUltimatePlanPriceLabel();
+  const ultimatePriceParts = splitPriceLabel(ultimatePriceLabel);
 
   if (pricingPlanName) {
     pricingPlanName.textContent = planName;
@@ -132,8 +178,27 @@ function applyStaticPlanContent() {
   if (pricingPlanSlugDisplay) {
     pricingPlanSlugDisplay.textContent = planSlug;
   }
+  if (pricingMonthlyPrice) {
+    pricingMonthlyPrice.textContent = monthlyPriceLabel;
+  }
+  if (pricingYearlyPrice) {
+    pricingYearlyPrice.textContent = yearlyPriceLabel;
+  }
+  if (pricingTrialDays) {
+    pricingTrialDays.textContent = trialDaysLabel;
+  }
   if (pricingPlanPriceInline) {
-    pricingPlanPriceInline.textContent = priceLabel;
+    pricingPlanPriceInline.textContent = `${monthlyPriceLabel} and ${yearlyPriceLabel}`;
+  }
+  if (ultimatePlanName) {
+    ultimatePlanName.textContent = ultimateName;
+  }
+  if (ultimatePlanPrice) {
+    ultimatePlanPrice.textContent = ultimatePriceParts.primary;
+    const ultimateCycle = ultimatePlanPrice.parentElement?.querySelector(".pricing-plan-cycle");
+    if (ultimateCycle) {
+      ultimateCycle.textContent = ultimatePriceParts.cycle;
+    }
   }
 }
 
@@ -453,11 +518,11 @@ async function updatePricingView() {
   setPricingState({
     chip: "Upgrade ready",
     status: tableReady
-      ? "Clerk checkout is live below. Complete checkout there to activate Pro."
-      : `This page is ready, but Clerk billing still needs a live "${getPricingPlanSlug()}" plan at ${getPricingPlanPriceLabel()}.`,
+      ? `Clerk checkout is live below with monthly, yearly, and trial options for ${getPricingPlanName()}.`
+      : `This page is ready, but Clerk billing still needs a live "${getPricingPlanSlug()}" plan with monthly and yearly pricing.`,
     primaryLabel: tableReady ? "Go to secure checkout" : "Refresh billing setup",
     primaryHint: tableReady
-      ? "The embedded Clerk pricing table below handles the actual subscription checkout."
+      ? "The embedded Clerk pricing table below handles the real Pro subscription checkout."
       : "Once Stripe and the Pro plan are configured in Clerk, secure checkout will appear here automatically.",
     inlineStatus: tableReady ? "Checkout ready" : "Waiting on Stripe",
     showAuthNotice: false,
@@ -544,7 +609,7 @@ async function handlePricingPrimaryClick() {
 
   setPricingState({
     chip: "Upgrade ready",
-    status: `Finish the Clerk setup by creating a "${getPricingPlanSlug()}" plan at ${getPricingPlanPriceLabel()}, then refresh this page.`,
+    status: `Finish the Clerk setup by creating a "${getPricingPlanSlug()}" plan with monthly and yearly pricing, then refresh this page.`,
     primaryLabel: "Refresh billing setup",
     primaryHint: "This page is already wired to Clerk. It only needs the live billing plan.",
     inlineStatus: "Waiting on Stripe",

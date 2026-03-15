@@ -82,6 +82,25 @@ Frontend now calls `POST /api/chat` and never sends an API key from client code.
 
 Local Pages dev:
 - Copy `.dev.vars.example` to `.dev.vars` and set real values.
+- Keep Pro redemption hashes in `.dev.vars` or Cloudflare Pages env vars, not in client code.
+
+### Hidden Pro codes
+
+To keep Pro codes secret:
+
+1. Put only SHA-256 hashes in `.dev.vars` locally:
+
+```env
+PRO_CODE_HASHES=hash_one,hash_two,hash_three
+GOD_MODE_CODE_HASHES=optional_god_mode_hash
+GOD_MODE_EMAILS=owner@example.com
+```
+
+2. In Cloudflare Pages production, add the same variables in Project Settings -> Environment variables.
+
+3. Do not store raw Pro codes in `main.js`, `index.html`, PDFs, or committed files.
+
+`GOD_MODE_EMAILS` is for accounts that should automatically receive God Mode after sign-in.
 
 ## Deploying the backend to GitHub
 
