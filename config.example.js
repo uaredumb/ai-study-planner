@@ -3,7 +3,7 @@ window.APP_CONFIG = {
   // Example: "lumistudy.com"
   CANONICAL_HOST: "",
   // Optional: Clerk publishable key for in-page auth.
-  CLERK_PUBLISHABLE_KEY: "pk_live_Y2xlcmsubHVtaXN0dWR5Lm9yZyQ",
+  CLERK_PUBLISHABLE_KEY: "",
   // Billing page used for Pro upgrades.
   PRICING_PAGE_PATH: "pricing.html",
   // Clerk plan slug for Lumi Pro.
