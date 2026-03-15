@@ -271,10 +271,14 @@ function getClerkScriptCandidates(publishableKey) {
   return candidates;
 }
 
-function loadScript(src) {
+function loadScript(src, publishableKey = "") {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${src}"]`);
     if (existing) {
+      if (publishableKey) {
+        existing.setAttribute("data-clerk-publishable-key", publishableKey);
+        existing.setAttribute("data-clerk-publishableKey", publishableKey);
+      }
       if (existing.dataset.loaded === "true") {
         resolve();
         return;
@@ -287,7 +291,17 @@ function loadScript(src) {
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
+    script.crossOrigin = "anonymous";
+    script.type = "text/javascript";
     script.dataset.loaded = "false";
+    if (publishableKey) {
+      script.setAttribute("data-clerk-publishable-key", publishableKey);
+      script.setAttribute("data-clerk-publishableKey", publishableKey);
+      window.__clerk_publishable_key = publishableKey;
+      window.__clerk_publishable_key__ = publishableKey;
+      window.__CLERK_PUBLISHABLE_KEY__ = publishableKey;
+      window.__clerkPublishableKey = publishableKey;
+    }
     script.onload = () => {
       script.dataset.loaded = "true";
       resolve();
@@ -305,7 +319,7 @@ async function ensureClerkLoaded(publishableKey) {
   const candidates = getClerkScriptCandidates(publishableKey);
   for (const src of candidates) {
     try {
-      await loadScript(src);
+      await loadScript(src, publishableKey);
       if (window.Clerk) {
         return true;
       }
