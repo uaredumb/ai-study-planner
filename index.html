@@ -239,16 +239,25 @@
         <div class="result-card-head">
           <h2>Flashcards</h2>
           <div class="result-card-actions">
-            <button id="beginFlashcardsButton" class="secondary-btn copy-btn" type="button">Begin Flashcard Study</button>
+            <button id="beginFlashcardsButton" class="secondary-btn copy-btn" type="button">Start Flashcards</button>
             <button id="copyFlashcardsButton" class="secondary-btn copy-btn" type="button">Copy</button>
             <button id="downloadFlashcardsButton" class="secondary-btn copy-btn" type="button">Download Flashcard Sheets</button>
             <button id="printFlashcardsButton" class="secondary-btn copy-btn" type="button">Print Flashcard Sheets</button>
           </div>
         </div>
-        <p id="flashcardsExportHint" class="flashcards-export-hint">Downloads the full flashcard set, not just the card on screen.</p>
-        <ul id="flashcardsList" class="result-list">
-          <li>No items generated yet.</li>
-        </ul>
+        <div class="study-output-stage">
+          <div id="flashcardsPreviewStage" class="study-output-preview">
+            <p id="flashcardsExportHint" class="flashcards-export-hint">Downloads the full flashcard set, not just the card on screen.</p>
+            <ul id="flashcardsList" class="result-list">
+              <li>No items generated yet.</li>
+            </ul>
+          </div>
+          <div id="flashcardsLaunchPanel" class="study-launch-panel hidden">
+            <p class="study-launch-kicker">Flashcards Ready</p>
+            <p class="study-launch-copy">Your flashcards are loaded. Start when you are ready.</p>
+            <button id="flashcardsLaunchButton" class="primary-btn study-launch-button" type="button">Start Flashcards</button>
+          </div>
+        </div>
         <div id="flashcardsVisualGrid" class="flashcards-visual-grid hidden"></div>
         <div id="flashcardsPdfPreviewWrap" class="flashcards-preview-wrap hidden">
           <div class="flashcards-preview-head">
@@ -266,14 +275,23 @@
         <div class="result-card-head">
           <h2>Quiz Questions</h2>
           <div class="result-card-actions">
-            <button id="beginQuizButton" class="secondary-btn copy-btn" type="button">Begin Quiz</button>
+            <button id="beginQuizButton" class="secondary-btn copy-btn" type="button">Start Quiz</button>
             <button id="copyQuizButton" class="secondary-btn copy-btn" type="button">Copy</button>
             <button id="downloadQuizButton" class="secondary-btn copy-btn" type="button">Download PDF</button>
           </div>
         </div>
-        <ol id="quizQuestionsList" class="result-list ordered-list">
-          <li>No items generated yet.</li>
-        </ol>
+        <div class="study-output-stage">
+          <div id="quizPreviewStage" class="study-output-preview">
+            <ol id="quizQuestionsList" class="result-list ordered-list">
+              <li>No items generated yet.</li>
+            </ol>
+          </div>
+          <div id="quizLaunchPanel" class="study-launch-panel hidden">
+            <p class="study-launch-kicker">Quiz Ready</p>
+            <p class="study-launch-copy">Jump straight into your quiz whenever you are ready.</p>
+            <button id="quizLaunchButton" class="primary-btn study-launch-button" type="button">Start Quiz</button>
+          </div>
+        </div>
         <div id="quizStudyPanel" class="quiz-study-panel hidden"></div>
       </article>
     </section>

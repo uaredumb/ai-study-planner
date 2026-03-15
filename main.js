@@ -26,6 +26,9 @@ const beginFlashcardsButton = document.getElementById("beginFlashcardsButton");
 const flashcardsExportHint = document.getElementById("flashcardsExportHint");
 const flashcardsPdfPreviewWrap = document.getElementById("flashcardsPdfPreviewWrap");
 const flashcardsPdfPreview = document.getElementById("flashcardsPdfPreview");
+const flashcardsPreviewStage = document.getElementById("flashcardsPreviewStage");
+const flashcardsLaunchPanel = document.getElementById("flashcardsLaunchPanel");
+const flashcardsLaunchButton = document.getElementById("flashcardsLaunchButton");
 const previewFrontsButton = document.getElementById("previewFrontsButton");
 const previewBacksButton = document.getElementById("previewBacksButton");
 const moreFlashcardsModal = document.getElementById("moreFlashcardsModal");
@@ -54,6 +57,9 @@ const flashcardsList = document.getElementById("flashcardsList");
 const flashcardsVisualGrid = document.getElementById("flashcardsVisualGrid");
 const quizQuestionsList = document.getElementById("quizQuestionsList");
 const beginQuizButton = document.getElementById("beginQuizButton");
+const quizPreviewStage = document.getElementById("quizPreviewStage");
+const quizLaunchPanel = document.getElementById("quizLaunchPanel");
+const quizLaunchButton = document.getElementById("quizLaunchButton");
 const quizStudyPanel = document.getElementById("quizStudyPanel");
 const cleanNotesCard = document.getElementById("cleanNotesCard");
 const flashcardsCard = document.getElementById("flashcardsCard");
@@ -2785,6 +2791,7 @@ function renderFileResults(file) {
     updateFlashcardStudyActions(null);
     updateQuizStudyActions(null);
     updateOptionalOutputCards();
+    updateStudyLaunchStates(null);
     refreshCopyButtonsFromContent();
     return;
   }
@@ -2809,6 +2816,7 @@ function renderFileResults(file) {
   setCardVisibility(studyPlanCard, file.studyOrder.length > 0 || Boolean(outputStudyPlan?.checked));
   setCardVisibility(flashcardsCard, hasStudyQueueItems(file) || Boolean(outputFlashcards?.checked));
   setCardVisibility(quizQuestionsCard, file.quizQuestions.length > 0 || Boolean(outputQuizQuestions?.checked));
+  updateStudyLaunchStates(file);
   refreshCopyButtonsFromContent();
 }
 
@@ -2823,6 +2831,7 @@ function updateOptionalOutputCards() {
   if (flashcardsCountWrap) {
     flashcardsCountWrap.classList.toggle("hidden", !Boolean(outputFlashcards?.checked));
   }
+  updateStudyLaunchStates(file);
   updateGenerateActionState();
 }
 
@@ -3715,10 +3724,9 @@ function bindCopyButtons() {
 }
 
 function bindFlashcardStudyButton() {
-  if (!beginFlashcardsButton) {
-    return;
-  }
-  beginFlashcardsButton.addEventListener("click", toggleFlashcardStudy);
+  [beginFlashcardsButton, flashcardsLaunchButton].filter(Boolean).forEach((button) => {
+    button.addEventListener("click", () => toggleFlashcardStudy(button));
+  });
 }
 
 function bindDownloadFlashcardsButton() {
@@ -3778,10 +3786,9 @@ function bindPrintFlashcardsButton() {
 }
 
 function bindQuizStudyButton() {
-  if (!beginQuizButton) {
-    return;
-  }
-  beginQuizButton.addEventListener("click", toggleQuizStudy);
+  [beginQuizButton, quizLaunchButton].filter(Boolean).forEach((button) => {
+    button.addEventListener("click", () => toggleQuizStudy(button));
+  });
 }
 
 
@@ -4259,11 +4266,13 @@ function renderFlashcardsVisuals(cards) {
   }
   if (!file || !isFlashcardStudyStarted(file)) {
     flashcardsVisualGrid.classList.add("hidden");
+    updateStudyLaunchStates(file);
     return;
   }
 
   initStudyQueueUiIfNeeded();
   renderStudyQueueViewer();
+  updateStudyLaunchStates(file);
 }
 
 function renderFlashcardsVisualsWithTyping(cards) {
@@ -4284,11 +4293,90 @@ function setFlashcardStudyStarted(started, file = getActiveFile()) {
   flashcardStudyStateByFileId.set(file.id, Boolean(started));
 }
 
+function updateStudyLaunchStates(file = getActiveFile()) {
+  updateFlashcardLaunchState(file);
+  updateQuizLaunchState(file);
+}
+
+function updateFlashcardLaunchState(file = getActiveFile()) {
+  const hasItems = getStudyQueueItemsCount(file) > 0;
+  const started = isFlashcardStudyStarted(file);
+  const shouldShowLaunch = hasItems && !started;
+  if (flashcardsPreviewStage) {
+    flashcardsPreviewStage.classList.toggle("hidden", hasItems && started);
+    flashcardsPreviewStage.classList.toggle("is-blurred", shouldShowLaunch);
+  }
+  if (flashcardsLaunchPanel) {
+    flashcardsLaunchPanel.classList.toggle("hidden", !shouldShowLaunch);
+  }
+  if (flashcardsLaunchButton) {
+    flashcardsLaunchButton.disabled = !hasItems;
+  }
+}
+
+function updateQuizLaunchState(file = getActiveFile()) {
+  const hasItems = getQuizItemsForFile(file).length > 0;
+  const started = Boolean(getQuizSessionState(file)?.started);
+  const shouldShowLaunch = hasItems && !started;
+  if (quizPreviewStage) {
+    quizPreviewStage.classList.toggle("hidden", hasItems && started);
+    quizPreviewStage.classList.toggle("is-blurred", shouldShowLaunch);
+  }
+  if (quizLaunchPanel) {
+    quizLaunchPanel.classList.toggle("hidden", !shouldShowLaunch);
+  }
+  if (quizLaunchButton) {
+    quizLaunchButton.disabled = !hasItems;
+  }
+}
+
+function endFlashcardStudy(file = getActiveFile(), options = {}) {
+  if (!file) {
+    return;
+  }
+  setFlashcardStudyStarted(false, file);
+  isStudyCardFlipped = false;
+  renderFlashcardsVisuals(file.flashcards);
+  refreshCopyButtonsFromContent();
+  if (!options.silent) {
+    statusText.textContent = "Flashcard study ended. Start again whenever you are ready.";
+  }
+}
+
+function endQuizStudy(file = getActiveFile(), options = {}) {
+  if (!file) {
+    return;
+  }
+  const state = getQuizSessionState(file);
+  if (!state) {
+    return;
+  }
+  state.started = false;
+  state.completed = false;
+  state.view = "question";
+  renderQuizStudyPanel();
+  if (!options.silent) {
+    statusText.textContent = "Quiz ended. Start again whenever you are ready.";
+  }
+}
+
+function stopOtherStudyMode(activeMode, file = getActiveFile()) {
+  if (!file) {
+    return;
+  }
+  if (activeMode !== "flashcards" && isFlashcardStudyStarted(file)) {
+    endFlashcardStudy(file, { silent: true });
+  }
+  if (activeMode !== "quiz" && getQuizSessionState(file)?.started) {
+    endQuizStudy(file, { silent: true });
+  }
+}
+
 function updateFlashcardStudyActions(file = getActiveFile()) {
   const hasItems = getStudyQueueItemsCount(file) > 0;
   if (beginFlashcardsButton) {
     beginFlashcardsButton.disabled = !hasItems;
-    beginFlashcardsButton.textContent = isFlashcardStudyStarted(file) ? "Hide Flashcard Study" : "Begin Flashcard Study";
+    beginFlashcardsButton.textContent = isFlashcardStudyStarted(file) ? "End Flashcards" : "Start Flashcards";
   }
   if (flashcardsExportHint) {
     const count = getStudyQueueItemsCount(file);
@@ -4299,10 +4387,11 @@ function updateFlashcardStudyActions(file = getActiveFile()) {
   if (printFlashcardsButton) {
     printFlashcardsButton.disabled = !hasItems;
   }
+  updateFlashcardLaunchState(file);
 }
 
-function toggleFlashcardStudy() {
-  triggerSummarizeClickAnimation(beginFlashcardsButton);
+function toggleFlashcardStudy(triggerButton = beginFlashcardsButton) {
+  triggerSummarizeClickAnimation(triggerButton);
   const file = getActiveFile();
   if (!file) {
     return;
@@ -4313,15 +4402,19 @@ function toggleFlashcardStudy() {
     updateFlashcardStudyActions(file);
     return;
   }
-  const nextState = !isFlashcardStudyStarted(file);
-  setFlashcardStudyStarted(nextState, file);
+
+  if (isFlashcardStudyStarted(file)) {
+    endFlashcardStudy(file);
+    return;
+  }
+
+  stopOtherStudyMode("flashcards", file);
+  setFlashcardStudyStarted(true, file);
   renderFlashcardsVisuals(file.flashcards);
   refreshCopyButtonsFromContent();
-  if (nextState) {
-    animateStudyPanelReveal(flashcardsVisualGrid);
-    scrollStudyPanelIntoView(flashcardsVisualGrid, "center");
-    statusText.textContent = "Flashcard study started. Click a card to flip it.";
-  }
+  animateStudyPanelReveal(flashcardsVisualGrid);
+  scrollStudyPanelIntoView(flashcardsVisualGrid, "center");
+  statusText.textContent = "Flashcard study started. Click a card to flip it.";
 }
 
 function getStudyQueueItemsCount(file = getActiveFile()) {
@@ -4376,12 +4469,13 @@ function updateQuizStudyActions(file = getActiveFile()) {
   const state = getQuizSessionState(file);
   if (beginQuizButton) {
     beginQuizButton.disabled = items.length === 0;
-    beginQuizButton.textContent = state?.started ? "Hide Quiz" : "Begin Quiz";
+    beginQuizButton.textContent = state?.started ? "End Quiz" : "Start Quiz";
   }
+  updateQuizLaunchState(file);
 }
 
-function toggleQuizStudy() {
-  triggerSummarizeClickAnimation(beginQuizButton);
+function toggleQuizStudy(triggerButton = beginQuizButton) {
+  triggerSummarizeClickAnimation(triggerButton);
   const file = getActiveFile();
   if (!file) {
     return;
@@ -4394,19 +4488,18 @@ function toggleQuizStudy() {
   }
 
   const state = getQuizSessionState(file);
-  if (!state || !state.started) {
-    resetQuizSessionState(file);
-    renderQuizStudyPanel();
-    animateStudyPanelReveal(quizStudyPanel);
-    scrollStudyPanelIntoView(quizStudyPanel, "end");
-    statusText.textContent = "Quiz started. Answer the question and check your work.";
+
+  if (state?.started) {
+    endQuizStudy(file);
     return;
   }
 
-  state.started = false;
-  state.completed = false;
-  state.view = "question";
+  stopOtherStudyMode("quiz", file);
+  resetQuizSessionState(file);
   renderQuizStudyPanel();
+  animateStudyPanelReveal(quizStudyPanel);
+  scrollStudyPanelIntoView(quizStudyPanel, "end");
+  statusText.textContent = "Quiz started. Answer the question and check your work.";
 }
 
 function ensureQuizResponseEntry(state, itemId) {
@@ -4617,6 +4710,7 @@ function renderQuizStudyPanel() {
 
   if (!file || !state?.started || items.length === 0) {
     quizStudyPanel.classList.add("hidden");
+    updateStudyLaunchStates(file);
     return;
   }
 
@@ -4641,11 +4735,14 @@ function renderQuizStudyPanel() {
       animateQuizPanelTransition("is-quiz-restarting");
       renderQuizStudyPanel();
     });
+    const endButton = createStudyQueueButton("End Quiz", () => endQuizStudy(file));
 
     controls.appendChild(reviewButton);
     controls.appendChild(restartButton);
+    controls.appendChild(endButton);
     quizStudyPanel.appendChild(buildQuizResultsView(items, state, file));
     quizStudyPanel.appendChild(controls);
+    updateStudyLaunchStates(file);
     return;
   }
 
@@ -4783,14 +4880,17 @@ function renderQuizStudyPanel() {
     animateQuizPanelTransition("is-quiz-restarting");
     renderQuizStudyPanel();
   });
+  const endButton = createStudyQueueButton("End Quiz", () => endQuizStudy(file));
 
   controls.appendChild(prevButton);
   controls.appendChild(checkButton);
   controls.appendChild(nextButton);
   controls.appendChild(restartButton);
+  controls.appendChild(endButton);
 
   quizStudyPanel.appendChild(card);
   quizStudyPanel.appendChild(controls);
+  updateStudyLaunchStates(file);
 }
 
 function submitCurrentQuizAnswer(items, state) {
@@ -4984,12 +5084,14 @@ function initStudyQueueUiIfNeeded() {
   const shuffleButton = createStudyQueueButton("Shuffle", shuffleStudyQueue);
   const skipButton = createStudyQueueButton("Skip", skipCurrentStudyItem);
   const knownButton = createStudyQueueButton("Know It", markCurrentStudyItemKnown);
+  const endButton = createStudyQueueButton("End Flashcards", () => endFlashcardStudy());
 
   controls.appendChild(prevButton);
   controls.appendChild(nextButton);
   controls.appendChild(shuffleButton);
   controls.appendChild(skipButton);
   controls.appendChild(knownButton);
+  controls.appendChild(endButton);
 
   card.addEventListener("click", flipStudyQueueCard);
   card.addEventListener("keydown", (event) => {
@@ -5020,7 +5122,8 @@ function initStudyQueueUiIfNeeded() {
       next: nextButton,
       shuffle: shuffleButton,
       skip: skipButton,
-      known: knownButton
+      known: knownButton,
+      end: endButton
     },
     currentItemId: ""
   };
