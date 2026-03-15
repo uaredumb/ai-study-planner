@@ -11,23 +11,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <meta name="clerk-publishable-key" content="pk_live_Y2xlcmsubHVtaXN0dWR5Lm9yZyQ" />
   <script>
     window.APP_CONFIG = window.APP_CONFIG || {
       CANONICAL_HOST: "",
-      CLERK_PUBLISHABLE_KEY:
-        document.querySelector('meta[name="clerk-publishable-key"]')?.getAttribute("content") || ""
+      CLERK_PUBLISHABLE_KEY: ""
     };
   </script>
   <script src="config.js"></script>
   <script src="/runtime-config.js" onerror="this.remove()"></script>
-  <script
-    async
-    crossorigin="anonymous"
-    data-clerk-publishable-key="pk_live_Y2xlcmsubHVtaXN0dWR5Lm9yZyQ"
-    src="https://clerk.lumistudy.org/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
-    type="text/javascript">
-  </script>
   <script>
     (function redirectDevHostname() {
       const canonicalHost = window.APP_CONFIG && window.APP_CONFIG.CANONICAL_HOST;
