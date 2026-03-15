@@ -20,6 +20,42 @@
   <script src="config.js"></script>
   <script src="/runtime-config" onerror="this.remove()"></script>
   <script>
+    (function preloadClerk() {
+      const key = String(window.APP_CONFIG?.CLERK_PUBLISHABLE_KEY || "").trim().replace(/^['"]|['"]$/g, "");
+      if (!/^pk_(test|live)_/.test(key)) return;
+
+      window.__clerk_publishable_key = key;
+      window.__clerk_publishable_key__ = key;
+      window.__CLERK_PUBLISHABLE_KEY__ = key;
+      window.__clerkPublishableKey = key;
+
+      let meta = document.querySelector('meta[name="clerk-publishable-key"]');
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.setAttribute("name", "clerk-publishable-key");
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute("content", key);
+
+      const existingScript = document.querySelector('script[data-clerk-loader="app"]');
+      if (existingScript) {
+        existingScript.setAttribute("data-clerk-publishable-key", key);
+        existingScript.setAttribute("data-clerk-publishableKey", key);
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.async = true;
+      script.crossOrigin = "anonymous";
+      script.type = "text/javascript";
+      script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
+      script.setAttribute("data-clerk-loader", "app");
+      script.setAttribute("data-clerk-publishable-key", key);
+      script.setAttribute("data-clerk-publishableKey", key);
+      document.head.appendChild(script);
+    })();
+  </script>
+  <script>
     (function redirectDevHostname() {
       const canonicalHost = window.APP_CONFIG && window.APP_CONFIG.CANONICAL_HOST;
       if (!canonicalHost) return;
