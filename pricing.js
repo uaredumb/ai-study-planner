@@ -9,6 +9,8 @@ const pricingInlineStatus = document.getElementById("pricingInlineStatus");
 const pricingTableWrap = document.getElementById("pricingTableWrap");
 const pricingTableMount = document.getElementById("pricingTableMount");
 const pricingFallback = document.getElementById("pricingFallback");
+const pricingFallbackTitle = document.getElementById("pricingFallbackTitle");
+const pricingFallbackText = document.getElementById("pricingFallbackText");
 const pricingAuthNotice = document.getElementById("pricingAuthNotice");
 const pricingPlanName = document.getElementById("pricingPlanName");
 const pricingPlanPrice = document.getElementById("pricingPlanPrice");
@@ -56,11 +58,13 @@ if (pricingPrimaryButton) {
 initializePricingPage().catch((error) => {
   console.error("Failed to initialize pricing page", error);
   setPricingState({
-    chip: "Setup needed",
-    status: "Could not load Clerk billing right now. You can still connect Stripe later and refresh this page.",
+    chip: "Please retry",
+    status: "Pricing is taking longer than expected to load right now.",
     primaryLabel: "Back to app",
-    primaryHint: "This page is ready for Clerk billing once your auth and billing setup are live.",
-    inlineStatus: "Unavailable",
+    primaryHint: "You can return to Lumi now and try pricing again in a moment.",
+    inlineStatus: "Temporarily unavailable",
+    fallbackTitle: "Secure checkout is temporarily unavailable.",
+    fallbackText: "Refresh this page in a moment and your upgrade options should appear here.",
     showAuthNotice: false,
     showPricingTable: false,
     showFallback: true
@@ -335,11 +339,13 @@ async function initializePricingPage() {
   const clerkPublishableKey = getClerkPublishableKey();
   if (!clerkPublishableKey) {
     setPricingState({
-      chip: "Setup needed",
-      status: "Add your Clerk publishable key to load secure billing on this page.",
+      chip: "Almost ready",
+      status: "Secure checkout is being finished right now.",
       primaryLabel: "Back to app",
-      primaryHint: "Once Clerk is configured here, this page can load sign-in and billing automatically.",
-      inlineStatus: "Missing Clerk key",
+      primaryHint: "You can keep using Lumi and come back once upgrades are live.",
+      inlineStatus: "Coming soon",
+      fallbackTitle: "Checkout is almost ready.",
+      fallbackText: "Plan details are available now, and secure billing will appear here as soon as it finishes loading.",
       showAuthNotice: false,
       showPricingTable: false,
       showFallback: true
@@ -350,11 +356,13 @@ async function initializePricingPage() {
   const hasClerk = await ensureClerkLoaded(clerkPublishableKey);
   if (!hasClerk || !window.Clerk) {
     setPricingState({
-      chip: "Setup needed",
-      status: "Clerk could not load from the CDN. Disable blockers or refresh once your network allows it.",
+      chip: "Please retry",
+      status: "We couldn't open secure checkout right now.",
       primaryLabel: "Back to app",
-      primaryHint: "The page still keeps your Pro plan slug and pricing config ready for later.",
-      inlineStatus: "Clerk unavailable",
+      primaryHint: "Refresh this page in a moment, or return to the app for now.",
+      inlineStatus: "Reload to try again",
+      fallbackTitle: "Secure checkout could not load.",
+      fallbackText: "A quick refresh usually fixes this and brings the live pricing options back.",
       showAuthNotice: false,
       showPricingTable: false,
       showFallback: true
@@ -497,10 +505,12 @@ async function updatePricingView() {
     clearPricingTable();
     setPricingState({
       chip: "Free",
-      status: "Sign in to load secure checkout and attach Pro to your account.",
-      primaryLabel: "Create account to continue",
-      primaryHint: "Clerk billing needs a signed-in user before it can open checkout.",
-      inlineStatus: "Account required",
+      status: "Sign in to start your Pro upgrade and keep your study packs tied to your account.",
+      primaryLabel: "Sign in to upgrade",
+      primaryHint: "Your secure checkout opens right here after sign-in.",
+      inlineStatus: "Sign in first",
+      fallbackTitle: "Checkout appears here after sign-in.",
+      fallbackText: "Sign in first, then choose the monthly or yearly option that fits your study routine.",
       showAuthNotice: true,
       showPricingTable: false,
       showFallback: true
@@ -517,10 +527,12 @@ async function updatePricingView() {
     clearPricingTable();
     setPricingState({
       chip: "Pro active",
-      status: "This account already has Pro access. You can head back to the app whenever you're ready.",
+      status: "This account already has Pro access, so you're all set.",
       primaryLabel: "Back to app",
-      primaryHint: "Your Pro limits should unlock automatically when you return to Lumi.",
+      primaryHint: "Your upgraded limits should be ready as soon as you return to Lumi.",
       inlineStatus: "Subscribed",
+      fallbackTitle: "You're already on Pro.",
+      fallbackText: "Head back to the app whenever you're ready and your upgraded limits should already be there.",
       showAuthNotice: false,
       showPricingTable: false,
       showFallback: false
@@ -532,13 +544,17 @@ async function updatePricingView() {
   setPricingState({
     chip: "Upgrade ready",
     status: tableReady
-      ? `Clerk checkout is live below with monthly, yearly, and trial options for ${getPricingPlanName()}.`
-      : `This page is ready, but Clerk billing still needs a live "${getPricingPlanSlug()}" plan with monthly and yearly pricing.`,
-    primaryLabel: tableReady ? "Go to secure checkout" : "Refresh billing setup",
+      ? `Choose your ${getPricingPlanName()} billing option below and start whenever you're ready.`
+      : "Your account is ready. Secure checkout is still loading.",
+    primaryLabel: tableReady ? "Go to checkout" : "Refresh pricing",
     primaryHint: tableReady
-      ? "The embedded Clerk pricing table below handles the real Pro subscription checkout."
-      : "Once Stripe and the Pro plan are configured in Clerk, secure checkout will appear here automatically.",
-    inlineStatus: tableReady ? "Checkout ready" : "Waiting on Stripe",
+      ? "The checkout area below handles your secure plan upgrade."
+      : "Try again in a moment and the checkout section should appear here.",
+    inlineStatus: tableReady ? "Checkout live" : "Loading pricing",
+    fallbackTitle: tableReady ? "Checkout is ready below." : "Secure checkout is still loading.",
+    fallbackText: tableReady
+      ? "Your billing options are available below whenever you're ready to continue."
+      : "Your account is ready. This section will show the live plan choices as soon as billing finishes loading.",
     showAuthNotice: false,
     showPricingTable: tableReady,
     showFallback: !tableReady
@@ -560,6 +576,12 @@ function setPricingState(state) {
   }
   if (pricingInlineStatus) {
     pricingInlineStatus.textContent = state.inlineStatus;
+  }
+  if (pricingFallbackTitle && typeof state.fallbackTitle === "string") {
+    pricingFallbackTitle.textContent = state.fallbackTitle;
+  }
+  if (pricingFallbackText && typeof state.fallbackText === "string") {
+    pricingFallbackText.textContent = state.fallbackText;
   }
   if (pricingAuthNotice) {
     pricingAuthNotice.classList.toggle("hidden", !state.showAuthNotice);
@@ -623,10 +645,12 @@ async function handlePricingPrimaryClick() {
 
   setPricingState({
     chip: "Upgrade ready",
-    status: `Finish the Clerk setup by creating a "${getPricingPlanSlug()}" plan with monthly and yearly pricing, then refresh this page.`,
-    primaryLabel: "Refresh billing setup",
-    primaryHint: "This page is already wired to Clerk. It only needs the live billing plan.",
-    inlineStatus: "Waiting on Stripe",
+    status: "Your account is ready. Secure checkout is still loading.",
+    primaryLabel: "Refresh pricing",
+    primaryHint: "Try again in a moment and the checkout section should appear here.",
+    inlineStatus: "Loading pricing",
+    fallbackTitle: "Secure checkout is still loading.",
+    fallbackText: "Your account is ready. This section will show your live billing options as soon as they finish loading.",
     showAuthNotice: false,
     showPricingTable: false,
     showFallback: true

@@ -69,7 +69,7 @@
       window.location.replace(target);
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=53" />
+  <link rel="stylesheet" href="style.css?v=54" />
 </head>
 <body>
   <div class="bg-shape bg-shape-1" aria-hidden="true"></div>
@@ -93,63 +93,68 @@
     <section class="card pricing-hero-card">
       <div class="pricing-hero-copy">
         <p class="eyebrow">Lumi Pricing</p>
-        <h1>Simple Pro now. Bigger options later.</h1>
+        <h1>Choose the study plan that keeps you moving.</h1>
         <p class="pricing-hero-text">
-          Pro is live with monthly, yearly, and free-trial billing. Ultimate is mapped out next so you can show the roadmap without releasing it yet.
+          Start free, upgrade when you want more room, and keep every study pack tied to your account across devices.
         </p>
         <div class="pricing-chip-row">
-          <span class="pricing-chip">Monthly + yearly</span>
-          <span class="pricing-chip">14-day trial</span>
-          <span class="pricing-chip">Ultimate coming soon</span>
+          <span class="pricing-chip">Monthly or yearly</span>
+          <span class="pricing-chip">Free trial available</span>
+          <span class="pricing-chip">Secure account billing</span>
         </div>
       </div>
       <div class="pricing-hero-status">
-        <p class="pricing-small-label">Current access</p>
+        <p class="pricing-small-label">Your plan</p>
         <p id="pricingStatusChip" class="pricing-status-chip">Free</p>
-        <p id="pricingStatusText" class="modal-message">Sign in to load secure checkout.</p>
+        <p id="pricingStatusText" class="modal-message">Sign in to unlock secure checkout and manage your plan.</p>
+        <div class="pricing-status-points">
+          <p>Save study packs across devices</p>
+          <p>Upgrade without leaving Lumi</p>
+          <p>Keep access tied to your account</p>
+        </div>
       </div>
     </section>
 
     <section class="pricing-grid">
-      <article class="card pricing-plan-card">
+      <article class="card pricing-plan-card pricing-plan-card-featured">
         <div class="pricing-plan-head">
           <div>
-            <p class="pricing-small-label">Subscription</p>
+            <p class="pricing-small-label">Most popular</p>
             <h2 id="pricingPlanName">Pro</h2>
           </div>
-          <span class="pricing-inline-status">Live</span>
+          <span class="pricing-inline-status">Best value</span>
         </div>
-        <p class="pricing-plan-subtitle">Built for students who want higher limits without extra clutter.</p>
+        <p class="pricing-plan-subtitle">More space, more outputs, and a smoother study workflow for everyday use.</p>
         <div class="pricing-plan-price">
           <span id="pricingPlanPrice">$1.50</span>
           <span class="pricing-plan-cycle">/ month</span>
         </div>
         <div class="pricing-billing-facts">
-          <p><strong>Monthly:</strong> <span id="pricingMonthlyPrice">$1.50 / month</span></p>
-          <p><strong>Yearly:</strong> <span id="pricingYearlyPrice">$12.00 / year</span></p>
-          <p><strong>Free trial:</strong> <span id="pricingTrialDays">14 days</span></p>
+          <p><strong>Monthly</strong><span id="pricingMonthlyPrice">$1.50 / month</span></p>
+          <p><strong>Yearly</strong><span id="pricingYearlyPrice">$12.00 / year</span></p>
+          <p><strong>Trial</strong><span id="pricingTrialDays">14 days</span></p>
         </div>
         <ul class="pricing-feature-list">
-          <li>Up to 10 flashcards per generation instead of 5.</li>
-          <li>Up to 8000 note characters instead of 3000.</li>
-          <li>Up to 5 study files instead of 2.</li>
-          <li>Choose monthly or yearly billing inside Clerk checkout.</li>
+          <li>Up to 10 flashcards per generation.</li>
+          <li>Up to 8000 note characters for larger study sessions.</li>
+          <li>Up to 5 saved study files tied to your account.</li>
+          <li>Fast account-based upgrades and billing management.</li>
         </ul>
-        <button id="pricingPrimaryButton" class="primary-btn" type="button">Create account to continue</button>
-        <p id="pricingPrimaryHint" class="tutorial-label">Secure checkout appears here after account login.</p>
+        <button id="pricingPrimaryButton" class="primary-btn" type="button">Sign in to upgrade</button>
+        <p id="pricingPrimaryHint" class="tutorial-label">Your secure checkout opens after sign-in.</p>
       </article>
 
       <article id="pricingCheckoutCard" class="card pricing-checkout-card">
         <div class="pricing-section-head">
           <div>
-            <p class="pricing-small-label">Secure Checkout</p>
-            <h2>Clerk billing</h2>
+            <p class="pricing-small-label">Checkout</p>
+            <h2>Secure upgrade</h2>
           </div>
-          <span id="pricingInlineStatus" class="pricing-inline-status">Waiting on setup</span>
+          <span id="pricingInlineStatus" class="pricing-inline-status">Ready when you are</span>
         </div>
 
         <div id="pricingAuthNotice" class="pricing-inline-notice">
-          <p>You need a Lumi account before Clerk can show the checkout flow.</p>
+          <p>Sign in first, then choose the billing option that fits your study routine.</p>
         </div>
 
         <div id="pricingTableWrap" class="pricing-table-wrap hidden">
@@ -157,57 +162,59 @@
         </div>
 
         <div id="pricingFallback" class="pricing-fallback">
-          <p class="pricing-fallback-title">Billing is wired, but your Stripe-backed plan is not live yet.</p>
-          <ol class="pricing-setup-list">
-            <li>Connect Stripe inside Clerk billing.</li>
-            <li>Create the live Clerk plan with slug <code id="pricingPlanSlug">pro</code>.</li>
-            <li>Add both monthly and yearly prices, plus the free trial.</li>
-            <li>Match the public Pro pricing to <span id="pricingPlanPriceInline">$1.50 / month and $12.00 / year</span>.</li>
-            <li>Refresh this page and Clerk's pricing table should appear here automatically.</li>
-          </ol>
+          <p id="pricingFallbackTitle" class="pricing-fallback-title">Checkout appears here after sign-in.</p>
+          <p id="pricingFallbackText">
+            Once your account is ready, this section will open secure checkout so you can start Pro in just a few clicks.
+          </p>
+          <ul class="pricing-fallback-list">
+            <li>Pick monthly or yearly billing</li>
+            <li>Start a trial when available</li>
+            <li>Manage everything from your Lumi account</li>
+          </ul>
         </div>
       </article>
     </section>
 
     <section class="pricing-meta-grid">
+      <article class="card pricing-meta-card">
+        <p class="pricing-small-label">Why upgrade</p>
+        <h2>Keep your study flow fast.</h2>
+        <p>
+          Pro is designed for students who want more room to generate, save, and revisit their study packs without hitting the free limits too quickly.
+        </p>
+      </article>
+
+      <article class="card pricing-meta-card">
+        <p class="pricing-small-label">What you get</p>
+        <h2>More capacity, same simple workflow.</h2>
+        <p>
+          Everything stays in the same Lumi experience. You just unlock bigger limits, more saved work, and a smoother path for regular studying.
+        </p>
+      </article>
+
       <article class="card pricing-meta-card pricing-ultimate-card">
         <div class="pricing-plan-head">
           <div>
-            <p class="pricing-small-label">Next Tier</p>
+            <p class="pricing-small-label">Coming later</p>
             <h2 id="ultimatePlanName">Ultimate</h2>
           </div>
           <span class="pricing-coming-soon">Coming soon</span>
         </div>
-        <p class="pricing-plan-subtitle">For power users who want the biggest limits and future premium tools.</p>
+        <p class="pricing-plan-subtitle">For heavier study loads, bigger limits, and future premium tools.</p>
         <div class="pricing-plan-price pricing-plan-price-muted">
           <span id="ultimatePlanPrice">$4.99</span>
           <span class="pricing-plan-cycle">/ month planned</span>
         </div>
         <ul class="pricing-feature-list">
-          <li>Up to 50 flashcards per generation.</li>
-          <li>Up to 50000 note characters.</li>
-          <li>Up to 100 saved study files.</li>
-          <li>Priority access to future advanced study features.</li>
+          <li>Higher flashcard, file, and note limits.</li>
+          <li>Built for power users who study more often.</li>
+          <li>Future premium features in one plan.</li>
         </ul>
         <button class="secondary-btn" type="button" disabled>Coming Soon</button>
-      </article>
-
-      <article class="card pricing-meta-card">
-        <p class="pricing-small-label">What Happens Next</p>
-        <h2>Billing is live-ready</h2>
-        <p>
-          This page is set up to use Clerk's embedded checkout for the live Pro plan, including the monthly option, yearly option, and free trial.
-        </p>
-      </article>
-
-      <article class="card pricing-meta-card">
-        <p class="pricing-small-label">Plan Slug</p>
-        <h2><code id="pricingPlanSlugDisplay">pro</code></h2>
-        <p>Keep the Clerk plan slug as <code>pro</code> so the app can detect paid access without another UI rewrite.</p>
       </article>
     </section>
   </main>
 
-  <script src="pricing.js?v=2"></script>
+  <script src="pricing.js?v=3"></script>
 </body>
 </html>
