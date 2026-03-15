@@ -3,7 +3,8 @@ window.APP_CONFIG = window.APP_CONFIG || {};
 // Example: "lumistudy.com"
 window.APP_CONFIG.CANONICAL_HOST = window.APP_CONFIG.CANONICAL_HOST || "";
 // Optional: Clerk publishable key for in-page auth.
-window.APP_CONFIG.CLERK_PUBLISHABLE_KEY = window.APP_CONFIG.CLERK_PUBLISHABLE_KEY || "";
+window.APP_CONFIG.CLERK_PUBLISHABLE_KEY =
+  window.APP_CONFIG.CLERK_PUBLISHABLE_KEY || "pk_live_Y2xlcmsubHVtaXN0dWR5Lm9yZyQ";
 // Billing page used for Pro upgrades.
 window.APP_CONFIG.PRICING_PAGE_PATH = window.APP_CONFIG.PRICING_PAGE_PATH || "pricing.html";
 // Clerk plan slug for Lumi Pro.
