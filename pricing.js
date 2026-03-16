@@ -32,10 +32,13 @@ const DEFAULT_PRO_TRIAL_DAYS = "14 days";
 const DEFAULT_ULTIMATE_PLAN_NAME = "Ultimate";
 const DEFAULT_ULTIMATE_PLAN_PRICE = "$4.99 / month planned";
 const THEME_KEY = "ai-study-planner-theme";
+const CLERK_DNS_PENDING_STORAGE = "clerk_dns_pending_until_v1";
+const CLERK_DNS_BACKOFF_MS = 5 * 60 * 1000;
 
 let clerkReady = false;
 let pricingTableMounted = false;
 let userButtonMounted = false;
+let pricingClerkListenerBound = false;
 
 const searchParams = new URLSearchParams(window.location.search);
 const returnTo = normalizeReturnTo(searchParams.get("returnTo"));
@@ -129,6 +132,41 @@ function applyPricingTheme() {
     document.body.classList.toggle("dark", savedTheme === "dark");
   } catch (_error) {
     document.body.classList.remove("dark");
+  }
+}
+
+function markClerkDnsPending() {
+  try {
+    sessionStorage.setItem(
+      CLERK_DNS_PENDING_STORAGE,
+      String(Date.now() + CLERK_DNS_BACKOFF_MS),
+    );
+  } catch (_error) {
+    // Ignore storage issues and keep the page usable.
+  }
+}
+
+function clearClerkDnsPending() {
+  try {
+    sessionStorage.removeItem(CLERK_DNS_PENDING_STORAGE);
+  } catch (_error) {
+    // Ignore storage issues and keep the page usable.
+  }
+}
+
+function isClerkDnsPending() {
+  try {
+    const raw = Number(sessionStorage.getItem(CLERK_DNS_PENDING_STORAGE) || 0);
+    if (!raw) {
+      return false;
+    }
+    if (raw <= Date.now()) {
+      clearClerkDnsPending();
+      return false;
+    }
+    return true;
+  } catch (_error) {
+    return false;
   }
 }
 
@@ -335,7 +373,8 @@ async function ensureClerkLoaded(publishableKey) {
   return Boolean(window.Clerk);
 }
 
-async function initializePricingPage() {
+async function initializePricingPage(options = {}) {
+  const { forceRetry = false } = options;
   const clerkPublishableKey = getClerkPublishableKey();
   if (!clerkPublishableKey) {
     setPricingState({
@@ -346,6 +385,24 @@ async function initializePricingPage() {
       inlineStatus: "Coming soon",
       fallbackTitle: "Checkout is almost ready.",
       fallbackText: "Plan details are available now, and secure billing will appear here as soon as it finishes loading.",
+      showAuthNotice: false,
+      showPricingTable: false,
+      showFallback: true
+    });
+    return;
+  }
+
+  if (forceRetry) {
+    clearClerkDnsPending();
+  } else if (isClerkDnsPending()) {
+    setPricingState({
+      chip: "Waiting on Clerk",
+      status: "Clerk is still finishing domain verification for secure checkout.",
+      primaryLabel: "Back to app",
+      primaryHint: "Try again in a few minutes. Pricing will start working automatically once the remaining DNS records verify.",
+      inlineStatus: "Verification in progress",
+      fallbackTitle: "Secure checkout is waiting on domain verification.",
+      fallbackText: "Your Clerk custom domain is still propagating. Once verification finishes, this page will be able to load sign-in and billing normally.",
       showAuthNotice: false,
       showPricingTable: false,
       showFallback: true
@@ -370,16 +427,38 @@ async function initializePricingPage() {
     return;
   }
 
-  await window.Clerk.load({ publishableKey: clerkPublishableKey });
+  try {
+    await window.Clerk.load({ publishableKey: clerkPublishableKey });
+    clearClerkDnsPending();
+  } catch (error) {
+    markClerkDnsPending();
+    console.warn("Clerk pricing load failed while custom domain is still verifying", error);
+    setPricingState({
+      chip: "Waiting on Clerk",
+      status: "Clerk is still finishing domain verification for secure checkout.",
+      primaryLabel: "Back to app",
+      primaryHint: "Try again in a few minutes. Pricing will start working automatically once the remaining DNS records verify.",
+      inlineStatus: "Verification in progress",
+      fallbackTitle: "Secure checkout is waiting on domain verification.",
+      fallbackText: "Your Clerk custom domain is still propagating. Once verification finishes, this page will be able to load sign-in and billing normally.",
+      showAuthNotice: false,
+      showPricingTable: false,
+      showFallback: true
+    });
+    return;
+  }
   clerkReady = true;
   await updatePricingView();
 
-  window.Clerk.addListener(async ({ user }) => {
-    if (!user) {
-      clearPricingUserButton();
-    }
-    await updatePricingView();
-  });
+  if (!pricingClerkListenerBound && typeof window.Clerk.addListener === "function") {
+    window.Clerk.addListener(async ({ user }) => {
+      if (!user) {
+        clearPricingUserButton();
+      }
+      await updatePricingView();
+    });
+    pricingClerkListenerBound = true;
+  }
 }
 
 function isSignedIn() {
@@ -605,7 +684,7 @@ async function handlePricingSignInClick() {
   }
 
   if (!clerkReady || !window.Clerk) {
-    await initializePricingPage();
+    await initializePricingPage({ forceRetry: true });
     if (!clerkReady || !window.Clerk) {
       return;
     }
@@ -613,8 +692,8 @@ async function handlePricingSignInClick() {
 
   if (typeof window.Clerk.openSignIn === "function") {
     window.Clerk.openSignIn({
-      afterSignInUrl: window.location.href,
-      afterSignUpUrl: window.location.href
+      signInFallbackRedirectUrl: window.location.href,
+      signUpFallbackRedirectUrl: window.location.href
     });
     return;
   }

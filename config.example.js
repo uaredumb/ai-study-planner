@@ -16,5 +16,7 @@ window.APP_CONFIG = {
   PRO_PLAN_TRIAL_DAYS: "14 days",
   // Optional: coming-soon plan copy for the pricing page.
   ULTIMATE_PLAN_NAME: "Ultimate",
-  ULTIMATE_PLAN_PRICE: "$4.99 / month planned"
+  ULTIMATE_PLAN_PRICE: "$4.99 / month planned",
+  // Optional: temporary guest God Mode code for emergency local unlocks.
+  GUEST_GOD_MODE_CODE: ""
 };

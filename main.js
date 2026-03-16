@@ -191,6 +191,8 @@ const GOD_MODE_FLASHCARDS_LIMIT = 50;
 const DEFAULT_PRICING_PAGE_PATH = "pricing.html";
 const DEFAULT_PRO_PLAN_SLUG = "pro";
 const DEFAULT_PRO_PLAN_PRICE = "$1.50 / month";
+const CLERK_DNS_PENDING_STORAGE = "clerk_dns_pending_until_v1";
+const CLERK_DNS_BACKOFF_MS = 5 * 60 * 1000;
 const NON_NOTES_MESSAGE =
   "I can only generate from real study notes or learning material. Please add notes, class content, or an educational article.";
 const NOT_ENOUGH_TEXT_MESSAGE =
@@ -204,10 +206,11 @@ let authFormsMounted = false;
 let authFlowStarted = false;
 let authFlowLoading = false;
 let ENABLE_AUTH = Boolean(getClerkPublishableKey());
+let clerkListenerBound = false;
 let studyFiles = loadStudyFiles();
 let activeFileId = loadActiveFileId(studyFiles);
 let isProMode = loadProModeState();
-let isGodMode = false;
+let isGodMode = hasLocalGodModeStorage();
 let isGenerating = false;
 let createdFileIdForAnimation = "";
 let tutorialStepIndex = 0;
@@ -1782,32 +1785,60 @@ function openPricingPage(source = "general") {
   window.location.href = target.toString();
 }
 
-function loadProModeState() {
-  if (!hasAccount()) {
-    return false;
-  }
+function getGuestGodModeCode() {
+  const configured = window.APP_CONFIG?.GUEST_GOD_MODE_CODE;
+  return typeof configured === "string" ? configured.trim() : "";
+}
+
+function hasLocalProModeStorage() {
   return localStorage.getItem(PRO_MODE_STORAGE) === "on";
+}
+
+function hasLocalGodModeStorage() {
+  return localStorage.getItem(GOD_MODE_STORAGE) === "on";
+}
+
+function hasUnlockedGuestAccess() {
+  return !hasAccount() && (hasLocalProModeStorage() || hasLocalGodModeStorage());
+}
+
+function persistLocalUnlockState({ pro = false, god = false } = {}) {
+  if (pro) {
+    localStorage.setItem(PRO_MODE_STORAGE, "on");
+  }
+  if (god) {
+    localStorage.setItem(GOD_MODE_STORAGE, "on");
+  }
+}
+
+function loadProModeState() {
+  return hasAccount() ? localStorage.getItem(PRO_MODE_STORAGE) === "on" : hasLocalProModeStorage();
 }
 
 function loadUsedProCodeHashes() {
   if (hasAccount()) {
     return getAccountUsedProCodeHashes();
   }
-  return [];
+  try {
+    const stored = JSON.parse(localStorage.getItem(USED_PRO_CODE_HASHES_STORAGE) || "[]");
+    return Array.isArray(stored) ? stored.filter((item) => typeof item === "string") : [];
+  } catch (_error) {
+    return [];
+  }
 }
 
 function markProCodeHashAsUsed(codeHash) {
   if (!codeHash) {
     return;
   }
-  if (canPersistStudyData()) {
-    const used = loadUsedProCodeHashes();
-    if (!used.includes(codeHash)) {
-      used.push(codeHash);
-      localStorage.setItem(USED_PRO_CODE_HASHES_STORAGE, JSON.stringify(used));
-    }
+  const used = loadUsedProCodeHashes();
+  if (!used.includes(codeHash)) {
+    used.push(codeHash);
+    localStorage.setItem(USED_PRO_CODE_HASHES_STORAGE, JSON.stringify(used));
   }
-  persistProCodeUsage(codeHash).catch(() => {});
+  if (hasAccount()) {
+    persistProCodeUsage(codeHash).catch(() => {});
+  }
 }
 
 function getAccountUnsafeMetadata() {
@@ -1846,7 +1877,7 @@ function hasGodModeAccess() {
   return Boolean(
     metadata.godMode ||
       metadata.isAdmin ||
-      (hasAccount() && localStorage.getItem(GOD_MODE_STORAGE) === "on")
+      hasLocalGodModeStorage()
   );
 }
 
@@ -1987,13 +2018,16 @@ function syncProModeFromAccount() {
 }
 
 function getMaxFilesAllowed() {
-  if (!hasAccount()) {
-    return 1;
-  }
   if (isGodMode) {
     return GOD_MODE_FILE_LIMIT;
   }
-  return isProMode ? PRO_FILE_LIMIT : FREE_FILE_LIMIT;
+  if (isProMode) {
+    return PRO_FILE_LIMIT;
+  }
+  if (!hasAccount()) {
+    return 1;
+  }
+  return FREE_FILE_LIMIT;
 }
 
 function getMaxFlashcardsAllowed() {
@@ -2017,7 +2051,7 @@ function updateProModeButtonLabel() {
   proModeButton.innerHTML = isProMode
     ? `<span class="btn-glyph pro-badge-icon" aria-hidden="true">&#9670;</span><span class="btn-label">${isGodMode ? "God Mode" : "Pro Active"}</span>`
     : '<span class="btn-glyph pro-badge-icon" aria-hidden="true">&#9670;</span><span class="btn-label">Upgrade</span>';
-  proModeButton.classList.toggle("hidden", !hasAccount());
+  proModeButton.classList.remove("hidden");
 }
 
 function updateFlashcardsLimitUi() {
@@ -2069,12 +2103,8 @@ function applyProModeUi() {
 }
 
 function openProModeModal(source = "general") {
-  if (!hasAccount()) {
-    promptAuthForFeature(`unlock ${getProPlanPriceLabel()} Pro`, { mustLogin: true });
-    return;
-  }
   if (isProMode) {
-    statusText.textContent = isGodMode ? "God Mode is already active on your account." : "Pro is already active on your account.";
+    statusText.textContent = isGodMode ? "God Mode is already active." : "Pro is already active.";
     return;
   }
   if (!proModeModal) {
@@ -2082,12 +2112,13 @@ function openProModeModal(source = "general") {
   }
   proModeModal.dataset.source = source;
   if (proModeMessage) {
+    const guestCodeReady = Boolean(getGuestGodModeCode());
     proModeMessage.textContent =
       source === "flashcards"
-        ? `Pro increases your flashcard limit, and a God Mode code unlocks the highest limits instantly.`
+        ? `Pro increases your flashcard limit, and a God Mode code unlocks the highest limits instantly${guestCodeReady ? " even while guest mode is active." : "."}`
         : source === "notes"
-          ? `Pro gives you much more note space, and a God Mode code unlocks the highest limits instantly.`
-          : `Unlock Pro with a plan or code, or use a God Mode code for the highest limits.`;
+          ? `Pro gives you much more note space, and a God Mode code unlocks the highest limits instantly${guestCodeReady ? " even without signing in first." : "."}`
+          : `Unlock Pro with a plan or code, or use a God Mode code for the highest limits${guestCodeReady ? " even while account sign-in is down." : "."}`;
   }
   showProIntroScreen();
   proModeModal.classList.remove("hidden");
@@ -2116,9 +2147,6 @@ function showProIntroScreen() {
 }
 
 function showProCodeForm() {
-  if (!requireAccount("unlock Pro Mode")) {
-    return;
-  }
   if (proModeForm) {
     proModeForm.classList.remove("hidden");
   }
@@ -2158,55 +2186,63 @@ function clearProCodeError() {
 
 async function submitProCode(event) {
   event.preventDefault();
-  if (!requireAccount("redeem a Pro code")) {
-    return;
-  }
   const inputCode = proCodeInput?.value?.trim() || "";
   clearProCodeError();
   if (!inputCode) {
-    showProCodeError("Enter a Pro code first.");
+    showProCodeError("Enter an unlock code first.");
     return;
   }
 
   let redeemResult = null;
-  try {
-    const response = await fetch("/api/pro/redeem", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ code: inputCode })
-    });
-    redeemResult = await response.json().catch(() => null);
-    if (!response.ok || !redeemResult?.ok) {
-      showProCodeError(redeemResult?.error || "Invalid Pro code.");
+  const guestGodModeCode = getGuestGodModeCode();
+  if (guestGodModeCode && inputCode === guestGodModeCode) {
+    redeemResult = { ok: true, mode: "god", codeHash: "guest-god-mode-code" };
+  } else {
+    try {
+      const response = await fetch("/api/pro/redeem", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ code: inputCode })
+      });
+      redeemResult = await response.json().catch(() => null);
+      if (!response.ok || !redeemResult?.ok) {
+        showProCodeError(redeemResult?.error || "Invalid unlock code.");
+        return;
+      }
+    } catch (_error) {
+      showProCodeError("Could not verify that unlock code right now. Try again.");
       return;
     }
-  } catch (_error) {
-    showProCodeError("Could not verify that Pro code right now. Try again.");
-    return;
   }
   const codeHash = typeof redeemResult.codeHash === "string" ? redeemResult.codeHash : "";
   const isGodModeCode = redeemResult.mode === "god";
-  if (loadUsedProCodeHashes().includes(codeHash)) {
-    showProCodeError("This Pro code was already used. Enter a new code.");
+  if (codeHash && codeHash !== "guest-god-mode-code" && loadUsedProCodeHashes().includes(codeHash)) {
+    showProCodeError("This unlock code was already used. Enter a new code.");
     return;
   }
-  markProCodeHashAsUsed(codeHash);
+  if (codeHash && codeHash !== "guest-god-mode-code") {
+    markProCodeHashAsUsed(codeHash);
+  }
   isProMode = true;
   if (isGodModeCode) {
     isGodMode = true;
-    if (canPersistStudyData()) {
-      localStorage.setItem(GOD_MODE_STORAGE, "on");
+    persistLocalUnlockState({ pro: true, god: true });
+    if (codeHash && codeHash !== "guest-god-mode-code") {
+      await persistGodModeUsage(codeHash).catch(() => {});
     }
-    await persistGodModeUsage(codeHash).catch(() => {});
+  } else {
+    persistLocalUnlockState({ pro: true, god: false });
   }
-  if (canPersistStudyData()) {
-    localStorage.setItem(PRO_MODE_STORAGE, "on");
+  if (!isGodModeCode && codeHash) {
+    await persistProCodeUsage(codeHash).catch(() => {});
   }
   applyProModeUi();
   closeProModeModal();
-  statusText.textContent = isGodModeCode ? "God Mode unlocked." : "Pro Mode unlocked.";
+  statusText.textContent = isGodModeCode
+    ? "God Mode unlocked. Ultimate limits are now active on this device."
+    : "Pro Mode unlocked.";
 }
 
 function createFile() {
@@ -6213,6 +6249,51 @@ async function ensureClerkLoaded(publishableKey) {
   return Boolean(window.Clerk);
 }
 
+function markClerkDnsPending() {
+  try {
+    sessionStorage.setItem(
+      CLERK_DNS_PENDING_STORAGE,
+      String(Date.now() + CLERK_DNS_BACKOFF_MS)
+    );
+  } catch (_error) {
+    // Ignore storage issues and keep guest mode available.
+  }
+}
+
+function clearClerkDnsPending() {
+  try {
+    sessionStorage.removeItem(CLERK_DNS_PENDING_STORAGE);
+  } catch (_error) {
+    // Ignore storage issues and keep guest mode available.
+  }
+}
+
+function isClerkDnsPending() {
+  try {
+    const raw = Number(sessionStorage.getItem(CLERK_DNS_PENDING_STORAGE) || 0);
+    if (!raw) {
+      return false;
+    }
+    if (raw <= Date.now()) {
+      clearClerkDnsPending();
+      return false;
+    }
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function setClerkDnsPendingUi() {
+  if (authGateTitle) {
+    authGateTitle.textContent = "Clerk verification is still finishing";
+  }
+  if (authGateText) {
+    authGateText.textContent =
+      "Some Clerk DNS records are still propagating. Try sign-in again in a few minutes. Once verification finishes, this site will start using Clerk normally.";
+  }
+}
+
 function lockAppForAuth() {
   if (authGate) {
     authGate.classList.remove("hidden");
@@ -6280,9 +6361,14 @@ function promptAuthForFeature(featureLabel, options = {}) {
     authGateTitle.textContent = `Sign in to ${featureLabel}`;
   }
   if (authGateText) {
-    authGateText.textContent = mustLogin
-      ? "An account is required for this feature. Guest access is disabled."
-      : "You can continue as a guest, but this feature requires an account.";
+    if (mustLogin && isClerkDnsPending()) {
+      authGateText.textContent =
+        "Clerk is still finishing domain verification. Try again in a few minutes, or keep using the guest unlock code for now.";
+    } else {
+      authGateText.textContent = mustLogin
+        ? "An account is required for this feature. Guest access is disabled."
+        : "You can continue as a guest, but this feature requires an account.";
+    }
   }
   if (authSkipButton) {
     authSkipButton.disabled = mustLogin;
@@ -6352,7 +6438,7 @@ async function openAccountLogin() {
   }
 
   if (!clerkLoaded) {
-    await initializeAuthGate({ preserveAuthGate: true });
+    await initializeAuthGate({ preserveAuthGate: true, forceRetry: true });
   }
 
   if (!clerkLoaded) {
@@ -6376,16 +6462,16 @@ function hasAccount() {
 }
 
 function canPersistStudyData() {
-  return hasAccount();
+  return hasAccount() || hasLocalProModeStorage() || hasLocalGodModeStorage();
 }
 
 function requireAccount(featureLabel) {
-  if (hasAccount()) {
+  if (hasAccount() || hasUnlockedGuestAccess()) {
     return true;
   }
   if (!ENABLE_AUTH) {
     if (statusText) {
-      statusText.textContent = `Account required to ${featureLabel}. Login is unavailable.`;
+      statusText.textContent = `Unlock code or account required to ${featureLabel}. Login is unavailable right now.`;
     }
     return false;
   }
@@ -6401,7 +6487,7 @@ function resetAuthGateGuestButton() {
 }
 
 function canGenerateStudyPack() {
-  if (hasAccount()) {
+  if (hasAccount() || hasUnlockedGuestAccess()) {
     return true;
   }
   if (guestGenerationCount >= 1) {
@@ -6415,7 +6501,7 @@ function canGenerateStudyPack() {
 }
 
 function recordGenerationSuccess() {
-  if (!hasAccount()) {
+  if (!hasAccount() && !hasUnlockedGuestAccess()) {
     guestGenerationCount += 1;
   }
 }
@@ -6637,7 +6723,7 @@ async function handleAuthSignedOut() {
 }
 
 async function initializeAuthGate(options = {}) {
-  const { preserveAuthGate = false } = options;
+  const { preserveAuthGate = false, forceRetry = false } = options;
   const clerkPublishableKey = getClerkPublishableKey();
   if (!preserveAuthGate) {
     continueAsGuest();
@@ -6652,6 +6738,13 @@ async function initializeAuthGate(options = {}) {
         "Set a Clerk publishable key in config.js, the clerk-publishable-key meta tag, or your Clerk JS snippet.";
     }
     console.warn("Missing Clerk key. Auth-required actions cannot complete sign-in.");
+    return;
+  }
+
+  if (forceRetry) {
+    clearClerkDnsPending();
+  } else if (isClerkDnsPending()) {
+    setClerkDnsPendingUi();
     return;
   }
 
@@ -6672,6 +6765,7 @@ async function initializeAuthGate(options = {}) {
     await window.Clerk.load({ publishableKey: clerkPublishableKey });
     clerkLoaded = true;
     ENABLE_AUTH = true;
+    clearClerkDnsPending();
 
     if (window.Clerk.user) {
       setAuthFlowLoading(false);
@@ -6694,16 +6788,22 @@ async function initializeAuthGate(options = {}) {
       });
     }
 
-    window.Clerk.addListener(({ user }) => {
-      if (user) {
-        handleAuthSignedIn();
-      } else {
-        handleAuthSignedOut().catch((error) => {
-          console.error("Auth sign-out handler failed", error);
-        });
-      }
-    });
+    if (!clerkListenerBound && typeof window.Clerk.addListener === "function") {
+      window.Clerk.addListener(({ user }) => {
+        if (user) {
+          handleAuthSignedIn();
+        } else {
+          handleAuthSignedOut().catch((error) => {
+            console.error("Auth sign-out handler failed", error);
+          });
+        }
+      });
+      clerkListenerBound = true;
+    }
   } catch (error) {
+    markClerkDnsPending();
+    clerkLoaded = false;
+    setClerkDnsPendingUi();
     console.error("Could not initialize auth", error);
   }
 }

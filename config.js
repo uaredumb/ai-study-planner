@@ -17,3 +17,5 @@ window.APP_CONFIG.PRO_PLAN_TRIAL_DAYS = window.APP_CONFIG.PRO_PLAN_TRIAL_DAYS ||
 // Optional: coming-soon plan copy for the pricing page.
 window.APP_CONFIG.ULTIMATE_PLAN_NAME = window.APP_CONFIG.ULTIMATE_PLAN_NAME || "Ultimate";
 window.APP_CONFIG.ULTIMATE_PLAN_PRICE = window.APP_CONFIG.ULTIMATE_PLAN_PRICE || "$4.99 / month planned";
+// Temporary emergency guest God Mode code while account auth is unavailable.
+window.APP_CONFIG.GUEST_GOD_MODE_CODE = window.APP_CONFIG.GUEST_GOD_MODE_CODE || "LUMI-ULTIMATE-031526";
