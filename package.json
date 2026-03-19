@@ -1,0 +1,13 @@
+{
+  "name": "ai-study-planner-pages",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Local Cloudflare Pages dev setup for AI Study Planner",
+  "scripts": {
+    "dev": "wrangler pages dev .",
+    "deploy": "wrangler pages deploy ."
+  },
+  "devDependencies": {
+    "wrangler": "^4.7.1"
+  }
+}

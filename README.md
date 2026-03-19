@@ -14,8 +14,8 @@ A beginner-friendly website that turns messy student notes into a clear study pl
 ## Tech stack
 
 - Frontend: HTML, CSS, JavaScript
-- Backend: Node.js + Express
-- AI: OpenRouter (default) or OpenAI
+- Runtime for API routes: Cloudflare Pages Functions
+- AI: OpenRouter
 
 ## Project structure
 
@@ -24,16 +24,14 @@ A beginner-friendly website that turns messy student notes into a clear study pl
 |- index.html              # UI
 |- style.css               # Styling (light/dark + responsive)
 |- main.js                 # Frontend logic
-|- server.js               # Express server
-|- routes/
-|  |- ai.js                # API route: /api/clean-notes
-|- services/
-|  |- openaiService.js     # AI logic (easy to extend)
-|- .env.example            # Example env variables
+|- functions/
+|  |- api/
+|     |- chat.js           # API route: POST /api/chat
+|- .dev.vars.example       # Example local Pages env variables
 |- package.json
 ```
 
-## Setup (beginner-friendly)
+## Local setup
 
 1. Install Node.js (LTS version).
 2. Open terminal in this folder.
@@ -43,29 +41,28 @@ A beginner-friendly website that turns messy student notes into a clear study pl
 npm install
 ```
 
-4. Create a `.env` file from `.env.example`.
-5. In `.env`, set your API key and model (OpenRouter example):
+4. Create a `.dev.vars` file from `.dev.vars.example`.
+5. In `.dev.vars`, set your real OpenRouter key:
 
 ```env
 OPENROUTER_API_KEY=your_real_key_here
 OPENROUTER_MODEL=stepfun/step-3.5-flash
 OPENROUTER_VISION_MODEL=openrouter/healer-alpha
-OPENROUTER_SITE_URL=http://localhost:3000
+OPENROUTER_SITE_URL=http://localhost:8788
 OPENROUTER_APP_NAME=AI Study Planner
-PORT=3000
 ```
 
-6. Start the app:
+6. Start Cloudflare Pages dev:
 
 ```powershell
-npm start
+npm run dev
 ```
 
-7. Open: `http://localhost:3000`
+7. Open the local URL Wrangler shows in the terminal, usually `http://localhost:8788`
 
-## Authentication
-
-Clerk has been removed from this project. The app runs without login and saves data locally in the browser.
+Important:
+- Do not open `index.html` directly in the browser if you want AI features to work.
+- The frontend calls `/api/chat`, so it must run through Cloudflare Pages dev or a deployed Pages site with the `functions/` folder active.
 
 ## Cloudflare Pages Functions (Secure API Key)
 
@@ -129,12 +126,13 @@ Repository links
 
 ## API route
 
-- `POST /api/clean-notes`
+- `POST /api/chat`
 - Request body:
 
 ```json
 {
-  "notes": "my messy notes here"
+  "notes": "my messy notes here",
+  "stream": true
 }
 ```
 

@@ -71,7 +71,10 @@ export async function onRequestPost(context) {
   const apiKey = env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return jsonResponse(
-      { error: "Missing OPENROUTER_API_KEY in Cloudflare Pages environment variables." },
+      {
+        error:
+          "Missing OPENROUTER_API_KEY. Add it to Cloudflare Pages environment variables in production, or create a local .dev.vars file from .dev.vars.example when running Pages dev."
+      },
       500
     );
   }
