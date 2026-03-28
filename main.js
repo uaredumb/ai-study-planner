@@ -191,6 +191,8 @@ const GOD_MODE_FLASHCARDS_LIMIT = 50;
 const DEFAULT_PRICING_PAGE_PATH = "pricing.html";
 const DEFAULT_PRO_PLAN_SLUG = "pro";
 const DEFAULT_PRO_PLAN_PRICE = "$1.50 / month";
+const FREE_DAILY_DOWNLOAD_LIMIT = 3;
+const FREE_DAILY_DOWNLOAD_USAGE_STORAGE = "free_daily_download_usage_v1";
 const CLERK_DNS_PENDING_STORAGE = "clerk_dns_pending_until_v1";
 const CLERK_DNS_BACKOFF_MS = 5 * 60 * 1000;
 const NON_NOTES_MESSAGE =
@@ -704,10 +706,20 @@ if (moreNotesCharsButton) {
   });
 }
 if (uploadPhotoButton && notesPhotoUploadInput) {
-  uploadPhotoButton.addEventListener("click", () => notesPhotoUploadInput.click());
+  uploadPhotoButton.addEventListener("click", () => {
+    if (!canUploadStudySource()) {
+      return;
+    }
+    notesPhotoUploadInput.click();
+  });
 }
 if (takePhotoButton && notesPhotoCameraInput) {
-  takePhotoButton.addEventListener("click", handleTakePhotoClick);
+  takePhotoButton.addEventListener("click", () => {
+    if (!canUploadStudySource()) {
+      return;
+    }
+    handleTakePhotoClick();
+  });
 }
 if (notesPhotoUploadInput) {
   notesPhotoUploadInput.addEventListener("change", handleNotesPhotoSelected);
@@ -2037,6 +2049,86 @@ function getMaxFlashcardsAllowed() {
   return isProMode ? PRO_FLASHCARDS_LIMIT : FREE_FLASHCARDS_LIMIT;
 }
 
+function isFreeModeActive() {
+  return !isProMode && !isGodMode;
+}
+
+function canUploadStudySource() {
+  if (!isFreeModeActive()) {
+    return true;
+  }
+  statusText.textContent =
+    "Free mode can browse the marketplace, but uploads are only available on Pro or God Mode.";
+  openPricingPage("upload");
+  return false;
+}
+
+function getTodayUsageKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function loadFreeDailyDownloadUsage() {
+  try {
+    const raw = localStorage.getItem(FREE_DAILY_DOWNLOAD_USAGE_STORAGE);
+    if (!raw) {
+      return { dateKey: getTodayUsageKey(), count: 0 };
+    }
+    const parsed = JSON.parse(raw);
+    const dateKey = typeof parsed?.dateKey === "string" ? parsed.dateKey : "";
+    const count = Number(parsed?.count || 0);
+    if (dateKey !== getTodayUsageKey()) {
+      return { dateKey: getTodayUsageKey(), count: 0 };
+    }
+    return {
+      dateKey,
+      count: Number.isFinite(count) && count > 0 ? Math.floor(count) : 0
+    };
+  } catch (_error) {
+    return { dateKey: getTodayUsageKey(), count: 0 };
+  }
+}
+
+function saveFreeDailyDownloadUsage(usage) {
+  try {
+    localStorage.setItem(FREE_DAILY_DOWNLOAD_USAGE_STORAGE, JSON.stringify(usage));
+  } catch (_error) {
+    // Ignore storage errors and keep app usable.
+  }
+}
+
+function getFreeDailyDownloadsRemaining() {
+  const usage = loadFreeDailyDownloadUsage();
+  return Math.max(0, FREE_DAILY_DOWNLOAD_LIMIT - usage.count);
+}
+
+function canDownloadFile() {
+  if (!isFreeModeActive()) {
+    return true;
+  }
+  const remaining = getFreeDailyDownloadsRemaining();
+  if (remaining > 0) {
+    return true;
+  }
+  statusText.textContent =
+    "Free mode download limit reached (3 files/day). You can still browse the marketplace or upgrade for more.";
+  openPricingPage("download-limit");
+  return false;
+}
+
+function recordDownloadUsage() {
+  if (!isFreeModeActive()) {
+    return;
+  }
+  const usage = loadFreeDailyDownloadUsage();
+  usage.count += 1;
+  usage.dateKey = getTodayUsageKey();
+  saveFreeDailyDownloadUsage(usage);
+}
+
 function getNotesCharLimit() {
   if (isGodMode) {
     return GOD_MODE_NOTES_CHAR_LIMIT;
@@ -2296,16 +2388,11 @@ function exportActiveFile() {
 
   const content = lines.join("\n");
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-  const link = document.createElement("a");
   const safeName = slugifyFileName(activeFile.name) || "study-notes";
-
-  link.href = URL.createObjectURL(blob);
-  link.download = `${safeName}.txt`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(link.href), 0);
-
+  const downloaded = downloadBlob(blob, `${safeName}.txt`);
+  if (!downloaded) {
+    return;
+  }
   statusText.textContent = `Saved file: ${activeFile.name}.txt`;
 }
 
@@ -3450,6 +3537,10 @@ function getCurrentSummaryMode() {
 }
 
 function handleNotesPhotoSelected(event) {
+  if (!canUploadStudySource()) {
+    clearSelectedNotesPhoto();
+    return;
+  }
   const input = event.target;
   const file = input && input.files ? input.files[0] : null;
   if (!file) {
@@ -3810,13 +3901,23 @@ function bindDownloadFlashcardsButton() {
     const { frontsBlob, backsBlob, combinedBlob } = buildCuttableFlashcardsPdfs(rawCards);
     showFlashcardsPdfPreview(frontsBlob, backsBlob);
     const safeNameBase = slugifyFileName(activeFile?.name || "study-notes");
-    downloadBlob(combinedBlob, `${safeNameBase}-flashcards-fronts-and-backs.pdf`);
-    setTimeout(() => {
-      downloadBlob(frontsBlob, `${safeNameBase}-flashcards-fronts.pdf`);
-      downloadBlob(backsBlob, `${safeNameBase}-flashcards-backs.pdf`);
-    }, 120);
-
-    statusText.textContent = `Downloaded the full flashcard set: ${rawCards.length} cards with fronts, backs, and a combined print file.`;
+    let downloadedCount = 0;
+    if (downloadBlob(combinedBlob, `${safeNameBase}-flashcards-fronts-and-backs.pdf`)) {
+      downloadedCount += 1;
+    }
+    if (downloadBlob(frontsBlob, `${safeNameBase}-flashcards-fronts.pdf`)) {
+      downloadedCount += 1;
+    }
+    if (downloadBlob(backsBlob, `${safeNameBase}-flashcards-backs.pdf`)) {
+      downloadedCount += 1;
+    }
+    if (downloadedCount === 0) {
+      return;
+    }
+    statusText.textContent =
+      downloadedCount === 3
+        ? `Downloaded the full flashcard set: ${rawCards.length} cards with fronts, backs, and a combined print file.`
+        : `Downloaded ${downloadedCount} flashcard PDF file${downloadedCount === 1 ? "" : "s"} before hitting today's free limit.`;
   });
 }
 
@@ -3870,7 +3971,10 @@ function bindDownloadListPdfButton(button, title, listElement, ordered, fileSuff
     const activeFile = getActiveFile();
     const pdfBlob = buildSimpleListPdfBlob(title, rawItems, ordered);
     const safeNameBase = slugifyFileName(activeFile?.name || "study-notes");
-    downloadBlob(pdfBlob, `${safeNameBase}-${fileSuffix}.pdf`);
+    const downloaded = downloadBlob(pdfBlob, `${safeNameBase}-${fileSuffix}.pdf`);
+    if (!downloaded) {
+      return;
+    }
     statusText.textContent = `Downloaded ${title.toLowerCase()} PDF.`;
   });
 }
@@ -3932,7 +4036,10 @@ function bindDownloadQuizButton() {
 
     const pdfBlob = buildQuizPdfBlob(quizItems);
     const safeNameBase = slugifyFileName(activeFile?.name || "study-notes");
-    downloadBlob(pdfBlob, `${safeNameBase}-quiz-with-answer-sheet.pdf`);
+    const downloaded = downloadBlob(pdfBlob, `${safeNameBase}-quiz-with-answer-sheet.pdf`);
+    if (!downloaded) {
+      return;
+    }
     statusText.textContent = "Downloaded quiz PDF with answer sheet.";
   });
 }
@@ -4197,6 +4304,9 @@ function refreshFlashcardsPdfPreview(rawCards) {
 }
 
 function downloadBlob(blob, fileName) {
+  if (!canDownloadFile()) {
+    return false;
+  }
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = fileName;
@@ -4204,6 +4314,8 @@ function downloadBlob(blob, fileName) {
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(link.href), 0);
+  recordDownloadUsage();
+  return true;
 }
 
 function printPdfBlob(blob) {
