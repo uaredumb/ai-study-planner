@@ -46,11 +46,11 @@ npm install
 
 ```env
 OPENROUTER_API_KEY=your_real_key_here
-OPENROUTER_MODEL=stepfun/step-3.5-flash
-OPENROUTER_VISION_MODEL=openrouter/healer-alpha
 OPENROUTER_SITE_URL=http://localhost:8788
 OPENROUTER_APP_NAME=AI Study Planner
 ```
+
+> The AI model is hardcoded in `functions/api/chat.js` (`google/gemini-2.5-flash`). `OPENROUTER_MODEL` / `OPENROUTER_VISION_MODEL` are no longer read — change the model by editing `chat.js`.
 
 6. Start Cloudflare Pages dev:
 
@@ -71,10 +71,9 @@ Frontend now calls `POST /api/chat` and never sends an API key from client code.
 1. In Cloudflare Pages project settings, add environment variable:
    - `OPENROUTER_API_KEY` (required)
 2. Optional env vars:
-   - `OPENROUTER_MODEL`
-   - `OPENROUTER_VISION_MODEL`
    - `OPENROUTER_SITE_URL`
    - `OPENROUTER_APP_NAME`
+   - (The AI model is hardcoded in `functions/api/chat.js` — no model env var needed.)
 3. Deploy with the `functions/` directory included.
 
 Local Pages dev:

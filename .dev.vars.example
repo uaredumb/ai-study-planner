@@ -1,6 +1,6 @@
 OPENROUTER_API_KEY=your_openrouter_api_key
-OPENROUTER_MODEL=stepfun/step-3.5-flash
-OPENROUTER_VISION_MODEL=openrouter/healer-alpha
+# NOTE: the AI model is now hardcoded in functions/api/chat.js (google/gemini-2.5-flash).
+# OPENROUTER_MODEL / OPENROUTER_VISION_MODEL env vars are no longer read. Edit chat.js to change the model.
 OPENROUTER_SITE_URL=https://ai-study-planner.pages.dev
 OPENROUTER_APP_NAME=AI Study Pal
 PRO_CODE_HASHES=sha256_hash_1,sha256_hash_2

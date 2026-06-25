@@ -105,11 +105,15 @@ export async function onRequestPost(context) {
     }
   }
 
-  const textModel = env.OPENROUTER_MODEL || "stepfun/step-3.5-flash";
-  const visionModel = env.OPENROUTER_VISION_MODEL || "openrouter/healer-alpha";
+  // AI models are hardcoded on purpose (NOT read from env vars) so a stale or wrong
+  // Cloudflare env var can never override them and silently break generation again.
+  // gemini-2.5-flash handles both text and vision and returns reliable JSON.
+  // To change the model, edit it here.
+  const textModel = "google/gemini-2.5-flash";
+  const visionModel = "google/gemini-2.5-flash";
   const model = requestMode === "vision" || requestMode === "ocr" ? visionModel : textModel;
-  const textMaxTokens = Number(env.OPENROUTER_TEXT_MAX_TOKENS || 1200);
-  const visionMaxTokens = Number(env.OPENROUTER_VISION_MAX_TOKENS || 900);
+  const textMaxTokens = 2000;
+  const visionMaxTokens = 1200;
   const maxTokens = requestMode === "vision" || requestMode === "ocr" ? visionMaxTokens : textMaxTokens;
   const siteUrl = env.OPENROUTER_SITE_URL || "https://ai-study-planner.pages.dev";
   const appName = env.OPENROUTER_APP_NAME || "Lumi Study";
