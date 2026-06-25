@@ -24,9 +24,11 @@ That's it — `index.html` is now the redesign.
 - `favicon-32.png`, `favicon-512.png`, `LumiStudy logo with glowing orb (1).png`
 - `pricing.html` / `pricing.js` — the Clerk checkout/billing page the "Upgrade" buttons open
 
-### Files now unused (safe to leave; delete later if you want)
-- `main.js`, `style.css` — the old app's logic/styles (the redesign is self-contained and does not load them)
-- `redesign.html` / `index.legacy.html` — keep as reference or remove after you're happy
+### Files
+- `main.js` — **removed** (the redesign is self-contained and never loaded it).
+- `style.css` — **kept**: `pricing.html` (the Clerk checkout page your "Upgrade" buttons open) still uses it.
+- `index.legacy.html` — backup of the old shell. Full rollback: `git checkout c74ad14 -- index.html main.js` then commit.
+- `redesign.html` — source file; identical to `index.html`. Keep as reference or remove.
 
 ## 2. Deploy
 This repo auto-deploys to Cloudflare Pages on push:
@@ -48,4 +50,16 @@ git push
 
 ## Notes
 - Pricing + in-app limits now mirror the **real Clerk plans**: Free (3,000 / 5 / 12 / 2), Pro $6.99 ($4.99 annual) (10,000 / 15 / 12 / 10), Power $12.99 ($8.99 annual) (25,000 / 30 / 25 / 15).
-- Daily/monthly generation caps (3/25/60 per day) are advertised but **enforced server-side only if you add that check** — the current `/api/chat` does not rate-limit per plan. Flag if you want that added.
+
+## Per-plan generation rate limits (server-side)
+`functions/api/chat.js` now enforces daily/monthly generation caps (Free 3/day·20/mo, Pro 25·400, Power 60·1000). It is **inert until you bind a KV namespace**, and fails open on any error, so it cannot break generation.
+
+To turn it on:
+1. **Cloudflare dashboard → Workers & Pages → KV** → create a namespace (e.g. `lumi-rate-limit`).
+2. **Your Pages project → Settings → Functions → KV namespace bindings** → add a binding named **`RATE_LIMIT`** → select that namespace. (Add it to both Production and Preview.)
+3. Redeploy. Enforcement activates immediately.
+4. *(Optional)* set `CLERK_ISSUER` env var to `https://clerk.lumistudy.org` — otherwise the issuer is read from the verified session token.
+
+How it works: the requester is identified from a **signature-verified** Clerk session JWT (`sub` + plan from the `pla` claim); guests are limited by IP at the Free tier. Counts are stored per-user-per-day and per-month in KV with TTL. Over-limit returns HTTP 429 with a friendly message that the app surfaces in its status line.
+
+**Test after enabling** (limits are low, so it's quick): on a Free/guest session, generate 4 packs — the 4th should return the 429 message. Verify a Pro/Power test account gets the higher cap. (If a paid user is wrongly throttled to Free, the `pla` claim isn't reaching the token — check Clerk Billing is enabled for that instance.)
