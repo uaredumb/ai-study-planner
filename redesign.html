@@ -849,6 +849,47 @@
   </div>
 
   <!-- ============================================================= -->
+  <!-- BILLING MODAL — real Clerk pricing table / checkout           -->
+  <!-- Opened by any [data-upgrade] CTA, the in-app Upgrade button,  -->
+  <!-- the "more space" upsell, or a #buy hash. Mounts Clerk Billing.-->
+  <!-- ============================================================= -->
+  <div id="billingModal" class="hidden fixed inset-0 z-[90] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="billingTitle" aria-hidden="true">
+    <div id="billingBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    <div class="relative min-h-full flex items-start sm:items-center justify-center p-3 sm:p-6">
+      <div class="relative w-full max-w-3xl rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-lift">
+        <div class="flex items-start justify-between gap-3 px-5 sm:px-8 pt-5 sm:pt-6 pb-4 border-b border-slate-200/70 dark:border-white/10">
+          <div>
+            <h2 id="billingTitle" class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Choose your plan</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Paid plans include a <strong class="text-slate-700 dark:text-slate-200">3-day free trial</strong> · cancel anytime.</p>
+          </div>
+          <button id="billingClose" type="button" aria-label="Close" class="-mr-1 h-9 w-9 grid place-items-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="px-4 sm:px-6 py-5 sm:py-6">
+          <!-- Clerk pricing table mounts here -->
+          <div id="billingMount"></div>
+          <!-- loading state -->
+          <div id="billingLoading" class="py-12 text-center">
+            <span class="inline-block h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent"></span>
+            <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">Loading secure checkout…</p>
+          </div>
+          <!-- fallback state -->
+          <div id="billingFallback" class="hidden py-10 text-center">
+            <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Checkout didn't load just now.</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400" id="billingFallbackMsg">Refresh the page and try again in a moment.</p>
+            <button id="billingRetry" type="button" class="mt-4 inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Try again</button>
+          </div>
+        </div>
+        <div class="px-5 sm:px-8 py-4 border-t border-slate-200/70 dark:border-white/10 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <svg class="h-4 w-4 flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V8a4 4 0 118 0v3m-9 0h10a1 1 0 011 1v6a1 1 0 01-1 1H7a1 1 0 01-1-1v-6a1 1 0 011-1z"/></svg>
+          Secure checkout powered by Clerk. Your card is handled by Stripe.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
   <!-- COMPONENT STYLES (small, kept here for the marketing build)   -->
   <!-- ============================================================= -->
   <style>
@@ -1723,6 +1764,7 @@
     var photoDataUrl = "";
     var lastResult = null;
     var abortCtl = null;
+    var billingMounted = false, pendingUpgrade = false;
 
     function getPubKey() {
       var k = String((window.APP_CONFIG && window.APP_CONFIG.CLERK_PUBLISHABLE_KEY) || "").trim().replace(/^['"]|['"]$/g, "");
@@ -1767,12 +1809,19 @@
       var a = e.target.closest('a[href="#app"], a[href$="#app"], [data-open-app]');
       if (!a) return;
       e.preventDefault();
-      openApp({ upgrade: a.hasAttribute("data-upgrade") });
+      // Pricing CTAs go straight to Clerk checkout; everything else opens the generator.
+      if (a.hasAttribute("data-upgrade")) { startUpgrade(); return; }
+      openApp();
     });
     window.addEventListener("hashchange", function () { if (location.hash === "#app") openApp(); else if (!appView.classList.contains("hidden")) closeApp(); });
     if (location.hash === "#app") openApp();
     if (els.appBackBtn) els.appBackBtn.addEventListener("click", closeApp);
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !appView.classList.contains("hidden")) closeApp(); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      var modal = document.getElementById("billingModal");
+      if (modal && !modal.classList.contains("hidden")) return; // billing modal handles its own Esc
+      if (!appView.classList.contains("hidden")) closeApp();
+    });
 
     /* ---- theme toggle (shared key) ---- */
     if (els.appThemeToggle) els.appThemeToggle.addEventListener("click", function () {
@@ -1947,7 +1996,15 @@
       try { if (!window.Clerk.loaded) await window.Clerk.load(); } catch (e) {}
       isAuthed = Boolean(window.Clerk.user);
       refreshAuthUi();
-      try { window.Clerk.addListener(function () { isAuthed = Boolean(window.Clerk.user); refreshAuthUi(); }); } catch (e) {}
+      try {
+        window.Clerk.addListener(function () {
+          var was = isAuthed;
+          isAuthed = Boolean(window.Clerk.user);
+          refreshAuthUi();
+          // user just finished signing in for an upgrade → open Clerk checkout
+          if (isAuthed && !was && pendingUpgrade) openBillingModal();
+        });
+      } catch (e) {}
     }
     function requireAccount(reason) {
       if (isAuthed || !authEnabled) return true;
@@ -1961,11 +2018,91 @@
       els.appStatus.textContent = reason ? ("Sign in to " + reason + ".") : "Sign in to continue.";
     }
     function startUpgrade() {
-      if (!isAuthed) { startSignIn("upgrade to Pro"); return; }
-      var path = (window.APP_CONFIG && window.APP_CONFIG.PRICING_PAGE_PATH) || "pricing.html";
-      // open the existing billing/pricing page in a new tab; falls back to Clerk profile billing
-      window.open(path, "_blank", "noopener");
+      // Real subscriptions go through Clerk Billing's pricing table (the "Clerk page thing").
+      if (authEnabled && !isAuthed) { pendingUpgrade = true; startSignIn("upgrade your plan"); return; }
+      openBillingModal(); // mounts the Clerk pricing table (or shows a retry if Clerk isn't ready)
     }
+
+    /* ---- Clerk Billing pricing-table modal ---- */
+    var billingModal = $("billingModal");
+    function openBillingModal() {
+      pendingUpgrade = false;
+      if (!billingModal) return;
+      billingModal.classList.remove("hidden");
+      billingModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      mountBilling();
+    }
+    function closeBillingModal() {
+      if (!billingModal) return;
+      billingModal.classList.add("hidden");
+      billingModal.setAttribute("aria-hidden", "true");
+      // keep the underlying app view's scroll-lock if it's still open
+      if (appView.classList.contains("hidden")) document.body.style.overflow = "";
+    }
+    function setBillingState(state) {
+      var load = $("billingLoading"), fb = $("billingFallback"), mount = $("billingMount");
+      if (load) load.classList.toggle("hidden", state !== "loading");
+      if (fb) fb.classList.toggle("hidden", state !== "fallback");
+      if (mount) mount.classList.toggle("hidden", state !== "ready");
+    }
+    function billingAppearance() {
+      var dark = document.documentElement.classList.contains("dark");
+      var vars = { colorPrimary: "#6366F1", fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif", borderRadius: "0.85rem" };
+      if (dark) {
+        vars.colorBackground = "#0f172a"; vars.colorText = "#e2e8f0"; vars.colorTextSecondary = "#94a3b8";
+        vars.colorInputBackground = "#1e293b"; vars.colorInputText = "#e2e8f0"; vars.colorNeutral = "#cbd5e1";
+      }
+      return { variables: vars };
+    }
+    function billingFallback(msg) {
+      var el = $("billingFallbackMsg");
+      if (el && msg) el.textContent = msg;
+      setBillingState("fallback");
+    }
+    async function mountBilling() {
+      var mount = $("billingMount");
+      if (!mount) return;
+      setBillingState("loading");
+      if (!authEnabled) { billingFallback("Accounts aren't available here yet — please try again on lumistudy.org."); return; }
+      // make sure Clerk is actually ready
+      var tries = 0;
+      while ((!window.Clerk || !window.Clerk.loaded) && tries < 60) { await new Promise(function (r) { setTimeout(r, 100); }); tries++; }
+      if (!window.Clerk || typeof window.Clerk.mountPricingTable !== "function") { billingFallback("Refresh the page and try again in a moment."); return; }
+      try {
+        if (billingMounted && typeof window.Clerk.unmountPricingTable === "function") {
+          try { window.Clerk.unmountPricingTable(mount); } catch (e) {}
+        }
+        mount.innerHTML = "";
+        await window.Clerk.mountPricingTable(mount, {
+          for: "user",
+          newSubscriptionRedirectUrl: location.pathname + "#app",
+          appearance: billingAppearance(),
+          checkoutProps: { appearance: billingAppearance() }
+        });
+        billingMounted = true;
+        setBillingState("ready");
+      } catch (e) {
+        billingMounted = false;
+        billingFallback("Refresh the page and try again in a moment.");
+      }
+    }
+    if (billingModal) {
+      var bd = $("billingBackdrop"), bc = $("billingClose"), br = $("billingRetry");
+      if (bd) bd.addEventListener("click", closeBillingModal);
+      if (bc) bc.addEventListener("click", closeBillingModal);
+      if (br) br.addEventListener("click", function () { billingMounted = false; mountBilling(); });
+    }
+    // Esc closes the billing modal first (it sits above the app view).
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && billingModal && !billingModal.classList.contains("hidden")) { e.stopPropagation(); closeBillingModal(); }
+    }, true);
+    // Open checkout directly from a #buy link (e.g. an old /pricing.html bookmark redirects here).
+    function maybeOpenBuyHash() {
+      if (location.hash === "#buy") { history.replaceState(null, "", location.pathname + location.search); startUpgrade(); }
+    }
+    window.addEventListener("hashchange", maybeOpenBuyHash);
+
     if (els.appAccountBtn) els.appAccountBtn.addEventListener("click", function () { startSignIn(); });
     if (els.appUpgradeBtn) els.appUpgradeBtn.addEventListener("click", function () { startUpgrade(); });
 
@@ -2298,7 +2435,8 @@
     /* INIT                                                         */
     /* =========================================================== */
     refreshLimitsUi();
-    initClerk();
+    // Run the #buy deep-link handler once auth state is known (covers every initClerk return path).
+    initClerk().then(maybeOpenBuyHash, maybeOpenBuyHash);
 
     // expose a couple of pure functions for quick console testing
     window.__lumiDev = { generateFlashcards: generateFlashcards, generateQuizQuestions: generateQuizQuestions, buildEnhancedStudyPlan: buildEnhancedStudyPlan, buildQuizSessionItems: buildQuizSessionItems, renderResult: renderResult, openApp: openApp };
