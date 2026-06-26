@@ -536,8 +536,8 @@
             </ul>
           </article>
           <!-- Pro (highlighted) -->
-          <article class="relative rounded-3xl border-2 border-brand-500 bg-white dark:bg-slate-900 p-6 shadow-glow flex flex-col">
-            <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide text-white bg-brand-600 shadow-soft">MOST POPULAR</span>
+          <article class="relative rounded-3xl border-2 border-amber-400 bg-white dark:bg-slate-900 p-6 shadow-glow flex flex-col">
+            <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide text-amber-950 bg-gradient-to-r from-amber-300 to-yellow-400 shadow-soft">BEST VALUE</span>
             <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Pro</h3>
             <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$6.99</span><span class="text-sm font-medium text-slate-400">/month</span></p>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For everyday studying. <span class="text-brand-600 dark:text-brand-300 font-semibold">$4.99/mo billed annually.</span></p>
@@ -2088,6 +2088,8 @@
       try { if (!window.Clerk.loaded) await window.Clerk.load(); } catch (e) {}
       isAuthed = Boolean(window.Clerk.user);
       refreshAuthUi();
+      // Clerk UI components can lag behind load(); retry mount after a short delay
+      if (isAuthed) setTimeout(refreshAuthUi, 500);
       try {
         window.Clerk.addListener(function () {
           var was = isAuthed;
