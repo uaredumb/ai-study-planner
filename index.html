@@ -843,6 +843,57 @@
   </div>
 
   <!-- ============================================================= -->
+  <!-- LUMIBOT — in-app study chat assistant (Pro & Power)           -->
+  <!-- Floating launcher + chat panel. Reads the current Clean Notes -->
+  <!-- (or the raw paste box) and can answer about / edit them.      -->
+  <!-- Shown only while the study app (#appView) is open.            -->
+  <!-- ============================================================= -->
+  <button id="lumibotLauncher" type="button" aria-label="Open LumiBot study assistant"
+    class="hidden fixed bottom-5 right-5 z-[85] h-14 w-14 rounded-full bg-brand-600 hover:bg-brand-700 text-white grid place-items-center transition hover:-translate-y-0.5">
+    <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 9h9m-9 3.5h6M21 11.5a8 8 0 01-11.5 7.2L4 20l1.3-4.7A8 8 0 1121 11.5z"/></svg>
+  </button>
+
+  <div id="lumibotPanel" class="hidden fixed z-[85] left-3 right-3 bottom-3 sm:left-auto sm:right-5 sm:bottom-24 sm:w-[372px] flex flex-col max-h-[80vh] sm:max-h-[560px] rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-lift overflow-hidden" role="dialog" aria-modal="false" aria-label="LumiBot study assistant">
+    <!-- header -->
+    <div class="flex items-center gap-3 px-4 py-3 border-b border-slate-200/70 dark:border-white/10 bg-gradient-to-r from-brand-50 to-white dark:from-white/[.06] dark:to-transparent">
+      <span class="relative h-9 w-9 flex-none">
+        <img src="LumiStudy logo with glowing orb (1).png?v=20260313" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft" />
+        <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-accent-500 border-2 border-white dark:border-slate-900"></span>
+      </span>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-extrabold text-slate-900 dark:text-white leading-none flex items-center gap-1.5">LumiBot <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold tracking-wide bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-200">PRO</span></p>
+        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Asks &amp; edits your study notes</p>
+      </div>
+      <button id="lumibotClose" type="button" aria-label="Close LumiBot" class="-mr-1 h-8 w-8 grid place-items-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <!-- messages -->
+    <div id="lumibotMessages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-slate-50/60 dark:bg-transparent"></div>
+
+    <!-- locked state (Free / signed-out) -->
+    <div id="lumibotLocked" class="hidden flex-1 grid place-items-center px-6 py-10 text-center">
+      <div>
+        <div class="mx-auto h-12 w-12 grid place-items-center rounded-2xl bg-brand-100 dark:bg-brand-500/15 text-brand-600 dark:text-brand-300 mb-3">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V8a4 4 0 118 0v3m-9 0h10a1 1 0 011 1v6a1 1 0 01-1 1H7a1 1 0 01-1-1v-6a1 1 0 011-1z"/></svg>
+        </div>
+        <p id="lumibotLockTitle" class="font-bold text-slate-900 dark:text-white">LumiBot is a Pro feature</p>
+        <p id="lumibotLockMsg" class="text-sm text-slate-500 dark:text-slate-400 mt-1">Upgrade to Pro or Power to chat with LumiBot about your notes — and let it edit them for you.</p>
+        <button id="lumibotLockBtn" type="button" class="mt-4 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Upgrade to unlock</button>
+      </div>
+    </div>
+
+    <!-- composer -->
+    <form id="lumibotComposer" class="flex items-end gap-2 p-3 border-t border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900">
+      <textarea id="lumibotInput" rows="1" aria-label="Message LumiBot" placeholder="Ask about your notes, or “add a note about…”" class="flex-1 resize-none max-h-28 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-brand-400 focus:border-transparent"></textarea>
+      <button id="lumibotSend" type="submit" aria-label="Send message" class="h-10 w-10 flex-none grid place-items-center rounded-xl text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L4 5l16 7-16 7 2-7zm0 0h7"/></svg>
+      </button>
+    </form>
+  </div>
+
+  <!-- ============================================================= -->
   <!-- COMPONENT STYLES (small, kept here for the marketing build)   -->
   <!-- ============================================================= -->
   <style>
@@ -884,6 +935,21 @@
     .app-chip > input:focus-visible + span { outline: 2px solid #6366f1; outline-offset: 2px; }
     .app-drop-over { border-color: #6366f1 !important; background: #eef2ff !important; }
     .dark .app-drop-over { background: rgba(99,102,241,.12) !important; }
+
+    /* LumiBot launcher: soft lift + attention pulse */
+    @keyframes lumibot-pulse {
+      0%   { box-shadow: 0 12px 30px -8px rgba(79,70,229,.55), 0 0 0 0 rgba(99,102,241,.45); }
+      70%  { box-shadow: 0 12px 30px -8px rgba(79,70,229,.55), 0 0 0 16px rgba(99,102,241,0); }
+      100% { box-shadow: 0 12px 30px -8px rgba(79,70,229,.55), 0 0 0 0 rgba(99,102,241,0); }
+    }
+    #lumibotLauncher { animation: lumibot-pulse 2.8s ease-out infinite; }
+    #lumibotLauncher:hover { animation-play-state: paused; }
+    /* LumiBot typing indicator */
+    .lumibot-dots span { display: inline-block; width: 6px; height: 6px; margin: 0 1.5px; border-radius: 9999px; background: currentColor; animation: lumibot-blink 1.2s infinite both; }
+    .lumibot-dots span:nth-child(2) { animation-delay: .18s; }
+    .lumibot-dots span:nth-child(3) { animation-delay: .36s; }
+    @keyframes lumibot-blink { 0%,80%,100% { opacity: .25; transform: translateY(0); } 40% { opacity: .9; transform: translateY(-2px); } }
+    @media (prefers-reduced-motion: reduce) { #lumibotLauncher { animation: none; } .lumibot-dots span { animation: none; } }
   </style>
 
   <!-- ============================================================= -->
@@ -1749,6 +1815,7 @@
       if (location.hash !== "#app") history.pushState(null, "", "#app");
       restoreState();
       refreshAuthUi();
+      showLumibotLauncher(true);
       if (opts.upgrade) startUpgrade();
       setTimeout(function () { if (els.appNotes) els.appNotes.focus({ preventScroll: true }); }, 50);
     }
@@ -1757,6 +1824,8 @@
       appView.setAttribute("aria-hidden", "true");
       document.body.style.overflow = "";
       if (location.hash === "#app") history.replaceState(null, "", location.pathname + location.search);
+      closeLumibot();
+      showLumibotLauncher(false);
     }
     // open from any CTA pointing at #app
     document.addEventListener("click", function (e) {
@@ -1961,6 +2030,7 @@
         if (els.homeUserButton) { els.homeUserButton.classList.add("hidden"); els.homeUserButton.innerHTML = ""; }
       }
       syncPlan();
+      refreshLumibotGate();
     }
     async function initClerk() {
       authEnabled = !!getPubKey();
@@ -2473,6 +2543,179 @@
       if (s.cardCount && els.appCardCount) { var opt = els.appCardCount.querySelector('option[value="' + s.cardCount + '"]'); if (opt) els.appCardCount.value = s.cardCount; }
       if (s.result) { lastResult = s.result; renderResult(s.result); }
     }
+
+    /* =========================================================== */
+    /* LUMIBOT — in-app study chat assistant (Pro & Power)         */
+    /* =========================================================== */
+    var lumibotHistory = [];   // [{ role:'user'|'assistant', content }]
+    var lumibotOpen = false, lumibotBusy = false, lumibotGreeted = false;
+    var lumibotUndo = null;    // snapshot of notes before the last edit (one-step undo)
+
+    function lumibotNeedsAuth() { return authEnabled && !isAuthed; }
+    // Pro, Power and God Mode all set isProMode. In keyless dev (no Clerk) allow it.
+    function lumibotEntitled() { return !authEnabled || isProMode; }
+
+    function showLumibotLauncher(show) {
+      var b = $("lumibotLauncher");
+      if (!b) return;
+      b.classList.toggle("hidden", !(show && !lumibotOpen));
+    }
+    function refreshLumibotGate() {
+      var panel = $("lumibotPanel");
+      if (!panel) return;
+      var entitled = lumibotEntitled();
+      var locked = $("lumibotLocked"), msgs = $("lumibotMessages"), composer = $("lumibotComposer");
+      if (locked) locked.classList.toggle("hidden", entitled);
+      if (msgs) msgs.classList.toggle("hidden", !entitled);
+      if (composer) composer.classList.toggle("hidden", !entitled);
+      if (!entitled) {
+        var needsAuth = lumibotNeedsAuth();
+        var t = $("lumibotLockTitle"), m = $("lumibotLockMsg"), btn = $("lumibotLockBtn");
+        if (t) t.textContent = needsAuth ? "Sign in to use LumiBot" : "LumiBot is a Pro feature";
+        if (m) m.textContent = needsAuth
+          ? "Sign in to your Lumi account, then upgrade to Pro or Power to chat with LumiBot."
+          : "Upgrade to Pro or Power to chat with LumiBot about your notes — and let it edit them for you.";
+        if (btn) btn.textContent = needsAuth ? "Sign in" : "Upgrade to unlock";
+      } else if (lumibotOpen && !lumibotGreeted) {
+        lumibotGreet();
+      }
+    }
+    function lumibotGreet() {
+      if (lumibotGreeted) return;
+      lumibotGreeted = true;
+      appendLumibotMessage("bot", "Hi! I'm LumiBot ✨  Ask me anything about your study notes — or tell me to change them, like “simplify these” or “add a note about mitosis.”");
+    }
+    function openLumibot() {
+      var panel = $("lumibotPanel");
+      if (!panel) return;
+      lumibotOpen = true;
+      panel.classList.remove("hidden");
+      showLumibotLauncher(false);
+      refreshLumibotGate();
+      setTimeout(function () { var i = $("lumibotInput"); if (lumibotEntitled() && i) i.focus(); }, 60);
+    }
+    function closeLumibot() {
+      var panel = $("lumibotPanel");
+      if (panel) panel.classList.add("hidden");
+      lumibotOpen = false;
+      if (appView && !appView.classList.contains("hidden")) showLumibotLauncher(true);
+    }
+    function toggleLumibot() { if (lumibotOpen) closeLumibot(); else openLumibot(); }
+
+    function lumibotScrollDown() { var m = $("lumibotMessages"); if (m) m.scrollTop = m.scrollHeight; }
+    function appendLumibotMessage(role, text) {
+      var m = $("lumibotMessages");
+      if (!m) return null;
+      var wrap = document.createElement("div");
+      wrap.className = role === "user" ? "flex justify-end" : "flex justify-start";
+      var bubble = document.createElement("div");
+      bubble.className = role === "user"
+        ? "max-w-[85%] rounded-2xl rounded-br-sm bg-brand-600 text-white px-3.5 py-2 text-sm leading-relaxed shadow-soft"
+        : "max-w-[88%] rounded-2xl rounded-bl-sm bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 px-3.5 py-2 text-sm leading-relaxed";
+      bubble.innerHTML = escapeHtml(text).replace(/\n/g, "<br>");
+      wrap.appendChild(bubble); m.appendChild(wrap); lumibotScrollDown();
+      return wrap;
+    }
+    function lumibotShowTyping() {
+      var m = $("lumibotMessages");
+      if (!m) return null;
+      var wrap = document.createElement("div");
+      wrap.className = "flex justify-start";
+      wrap.innerHTML = '<div class="rounded-2xl rounded-bl-sm bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 px-3.5 py-2.5"><span class="lumibot-dots"><span></span><span></span><span></span></span></div>';
+      m.appendChild(wrap); lumibotScrollDown();
+      return wrap;
+    }
+
+    // What notes is LumiBot working with, and where do its edits apply?
+    function lumibotNotesContext() {
+      if (lastResult && ensureStringArray(lastResult.cleanNotes).length) {
+        return { text: ensureStringArray(lastResult.cleanNotes).join("\n"), target: "pack" };
+      }
+      return { text: els.appNotes ? els.appNotes.value.trim() : "", target: "raw" };
+    }
+    function lumibotApplyEdit(lines) {
+      lines = ensureStringArray(lines);
+      if (!lines.length) return false;
+      if (lumibotNotesContext().target === "pack" && lastResult) {
+        lumibotUndo = { target: "pack", notes: ensureStringArray(lastResult.cleanNotes).slice() };
+        lastResult.cleanNotes = lines;
+        if (lastResult.selectedOutputs) lastResult.selectedOutputs.cleanNotes = true;
+        renderResult(lastResult);
+      } else {
+        lumibotUndo = { target: "raw", notes: els.appNotes ? els.appNotes.value : "" };
+        if (els.appNotes) { els.appNotes.value = lines.join("\n"); updateCharCount(); }
+      }
+      saveState();
+      return true;
+    }
+    function lumibotUndoEdit() {
+      if (!lumibotUndo) return;
+      if (lumibotUndo.target === "pack" && lastResult) { lastResult.cleanNotes = lumibotUndo.notes; renderResult(lastResult); }
+      else if (lumibotUndo.target === "raw" && els.appNotes) { els.appNotes.value = lumibotUndo.notes; updateCharCount(); }
+      saveState();
+      lumibotUndo = null;
+      appendLumibotMessage("bot", "↩️ Reverted your notes to how they were.");
+    }
+    function appendLumibotEditAction() {
+      var m = $("lumibotMessages");
+      if (!m) return;
+      var row = document.createElement("div");
+      row.className = "flex justify-start";
+      row.innerHTML = '<button type="button" class="lumibot-undo inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-white/5 hover:bg-brand-100 dark:hover:bg-white/10 px-2.5 py-1 rounded-lg transition"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3"/></svg>Undo edit</button>';
+      row.querySelector(".lumibot-undo").addEventListener("click", function () { row.remove(); lumibotUndoEdit(); });
+      m.appendChild(row); lumibotScrollDown();
+    }
+
+    async function lumibotSend() {
+      if (lumibotBusy) return;
+      if (!lumibotEntitled()) { refreshLumibotGate(); return; }
+      var input = $("lumibotInput");
+      var text = input ? input.value.trim() : "";
+      if (!text) return;
+      appendLumibotMessage("user", text);
+      lumibotHistory.push({ role: "user", content: text });
+      if (input) { input.value = ""; input.style.height = "auto"; }
+      lumibotBusy = true;
+      var sendBtn = $("lumibotSend"); if (sendBtn) sendBtn.disabled = true;
+      var typing = lumibotShowTyping();
+      try {
+        var headers = Object.assign({ "Content-Type": "application/json" }, await getApiAuthHeaders());
+        var res = await fetch("/api/lumibot", {
+          method: "POST", headers: headers,
+          body: JSON.stringify({ messages: lumibotHistory.slice(-12), notes: lumibotNotesContext().text })
+        });
+        if (typing) typing.remove();
+        if (res.status === 401) { isAuthed = false; refreshAuthUi(); appendLumibotMessage("bot", "Please sign in again to keep chatting."); return; }
+        if (res.status === 402) { var up = null; try { up = await res.json(); } catch (e) {} appendLumibotMessage("bot", (up && up.error) || "LumiBot is a Pro feature."); refreshLumibotGate(); return; }
+        if (!res.ok) { var ep = null; try { ep = await res.json(); } catch (e) {} throw new Error((ep && ep.error) || "LumiBot ran into a problem. Please try again."); }
+        var data = await res.json();
+        var reply = (data && typeof data.reply === "string" && data.reply.trim()) ? data.reply.trim() : "Sorry, I didn't catch that — could you rephrase?";
+        appendLumibotMessage("bot", reply);
+        lumibotHistory.push({ role: "assistant", content: reply });
+        if (data && Array.isArray(data.updatedNotes) && data.updatedNotes.length && lumibotApplyEdit(data.updatedNotes)) appendLumibotEditAction();
+      } catch (err) {
+        if (typing) typing.remove();
+        appendLumibotMessage("bot", (err && err.message) || "Something went wrong. Please try again.");
+      } finally {
+        lumibotBusy = false;
+        var sb = $("lumibotSend"); if (sb) sb.disabled = false;
+      }
+    }
+
+    (function wireLumibot() {
+      var launcher = $("lumibotLauncher"), closeBtn = $("lumibotClose"), composer = $("lumibotComposer"),
+          input = $("lumibotInput"), lockBtn = $("lumibotLockBtn");
+      if (launcher) launcher.addEventListener("click", toggleLumibot);
+      if (closeBtn) closeBtn.addEventListener("click", closeLumibot);
+      if (composer) composer.addEventListener("submit", function (e) { e.preventDefault(); lumibotSend(); });
+      if (input) {
+        input.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); lumibotSend(); } });
+        input.addEventListener("input", function () { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 112) + "px"; });
+      }
+      if (lockBtn) lockBtn.addEventListener("click", function () { if (lumibotNeedsAuth()) startSignIn("use LumiBot"); else startUpgrade(); });
+      // Esc closes the LumiBot panel before it would close the whole study app.
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape" && lumibotOpen) { e.stopPropagation(); closeLumibot(); } }, true);
+    })();
 
     /* =========================================================== */
     /* INIT                                                         */

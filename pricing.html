@@ -1,51 +1,261 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="preload">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lumi Pricing</title>
-  <meta name="robots" content="noindex" />
-  <!-- Pricing now lives on the main site with secure Clerk checkout. Send everyone there. -->
-  <meta http-equiv="refresh" content="0; url=index.html#buy" />
+  <title>Pricing & Plans — Lumi Study</title>
+  <meta name="description" content="Simple, honest pricing for Lumi Study. Start free, upgrade to Pro or Power when you're ready. 3-day free trial, cancel anytime." />
+  <link rel="canonical" href="https://lumistudy.org/pricing.html" />
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=20260304" />
   <link rel="apple-touch-icon" sizes="180x180" href="LumiStudy logo with glowing orb (1).png?v=20260313" />
+
+  <!-- Brand font -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind via CDN (no build step) — same brand config as index.html -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: { sans: ["Outfit", "ui-sans-serif", "system-ui", "sans-serif"] },
+          colors: {
+            brand: { 50:"#eef2ff",100:"#e0e7ff",200:"#c7d2fe",300:"#a5b4fc",400:"#818cf8",500:"#6366f1",600:"#4f46e5",700:"#4338ca",800:"#3730a3",900:"#312e81",950:"#1e1b4b" },
+            accent: { 50:"#ecfdf5",100:"#d1fae5",200:"#a7f3d0",300:"#6ee7b7",400:"#34d399",500:"#10b981",600:"#059669",700:"#047857",800:"#065f46",900:"#064e3b" },
+          },
+          boxShadow: {
+            soft: "0 1px 2px rgba(15,23,42,.04), 0 8px 24px -8px rgba(15,23,42,.12)",
+            lift: "0 2px 4px rgba(15,23,42,.04), 0 24px 48px -16px rgba(49,46,129,.28)",
+            glow: "0 0 0 1px rgba(99,102,241,.18), 0 20px 60px -20px rgba(99,102,241,.55)",
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Theme bootstrap: runs before paint so there's no flash. Default = light, honors saved choice. -->
+  <script>
+    (function initTheme() {
+      try {
+        if (localStorage.getItem("lumi-theme") === "dark") document.documentElement.classList.add("dark");
+        else document.documentElement.classList.remove("dark");
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- App config + Clerk bootstrap (same contract as index.html) -->
+  <script>window.APP_CONFIG = window.APP_CONFIG || { CANONICAL_HOST: "", CLERK_PUBLISHABLE_KEY: "" };</script>
+  <script src="config.js" onerror="this.remove()"></script>
+  <script src="/runtime-config" onerror="this.remove()"></script>
+  <script>
+    // Preload Clerk exactly like the app so the pricing table + secure checkout work here too.
+    (function preloadClerk() {
+      var key = String((window.APP_CONFIG && window.APP_CONFIG.CLERK_PUBLISHABLE_KEY) || "").trim().replace(/^['"]|['"]$/g, "");
+      if (!/^pk_(test|live)_/.test(key)) return;
+      window.__clerk_publishable_key = key;
+      window.__CLERK_PUBLISHABLE_KEY__ = key;
+      var meta = document.querySelector('meta[name="clerk-publishable-key"]');
+      if (!meta) { meta = document.createElement("meta"); meta.setAttribute("name", "clerk-publishable-key"); document.head.appendChild(meta); }
+      meta.setAttribute("content", key);
+      if (document.querySelector('script[data-clerk-loader="app"]')) return;
+      var script = document.createElement("script");
+      script.async = true; script.crossOrigin = "anonymous"; script.type = "text/javascript";
+      script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
+      script.setAttribute("data-clerk-loader", "app");
+      script.setAttribute("data-clerk-publishable-key", key);
+      document.head.appendChild(script);
+    })();
+  </script>
+
   <style>
-    :root { color-scheme: light dark; }
-    html, body { height: 100%; margin: 0; }
-    body {
-      font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
-      background: #f8fafc; color: #0f172a;
-      display: grid; place-items: center; text-align: center; padding: 24px;
+    html:not(.preload) body, html:not(.preload) body * { transition: background-color .35s ease, border-color .35s ease, color .25s ease, box-shadow .35s ease; }
+    html { scroll-behavior: smooth; }
+    section[id] { scroll-margin-top: 5rem; }
+    body { font-feature-settings: "ss01","cv01"; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .aurora::before {
+      content: ""; position: absolute; inset: -30% -10% auto -10%; height: 520px; z-index: 0;
+      background:
+        radial-gradient(48% 60% at 18% 22%, rgba(99,102,241,.26), transparent 60%),
+        radial-gradient(42% 55% at 82% 14%, rgba(16,185,129,.18), transparent 62%);
+      filter: blur(8px); pointer-events: none;
     }
-    @media (prefers-color-scheme: dark) { body { background: #020617; color: #e2e8f0; } }
-    .logo { height: 56px; width: 56px; border-radius: 16px; object-fit: cover; box-shadow: 0 10px 30px rgba(99,102,241,.25); }
-    h1 { font-size: 1.25rem; font-weight: 800; margin: 18px 0 6px; }
-    p { margin: 0 0 18px; color: #64748b; }
-    @media (prefers-color-scheme: dark) { p { color: #94a3b8; } }
-    a.btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 11px 20px; border-radius: 12px; font-weight: 700; text-decoration: none;
-      color: #fff; background: #6366f1;
-    }
-    a.btn:hover { background: #4f46e5; }
-    .spin { height: 26px; width: 26px; border-radius: 9999px; border: 3px solid #6366f1; border-top-color: transparent; animation: s 0.8s linear infinite; }
-    @keyframes s { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    :focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; border-radius: 6px; }
   </style>
 </head>
-<body>
-  <div>
-    <img class="logo" src="LumiStudy logo with glowing orb (1).png?v=20260313" alt="Lumi" />
-    <h1>Taking you to pricing…</h1>
-    <p>Secure checkout opens on the main site.</p>
-    <div class="spin" role="status" aria-label="Loading" style="margin: 0 auto 18px;"></div>
-    <a class="btn" href="index.html#buy">Continue to plans &rarr;</a>
-  </div>
+
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans antialiased selection:bg-brand-200 selection:text-brand-900">
+
+  <!-- ============================================================= -->
+  <!-- NAVBAR                                                        -->
+  <!-- ============================================================= -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/70 dark:border-white/10">
+    <nav class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <a href="index.html" class="flex items-center gap-2.5 group" aria-label="Lumi Study home">
+        <img src="LumiStudy logo with glowing orb (1).png?v=20260313" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft group-hover:scale-105 transition-transform" />
+        <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600 dark:text-slate-300">
+        <a href="index.html#features" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Features</a>
+        <a href="index.html#how" class="hover:text-brand-600 dark:hover:text-brand-300 transition">How it works</a>
+        <a href="pricing.html" class="text-brand-700 dark:text-brand-300" aria-current="page">Pricing</a>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button id="themeToggle" type="button" aria-label="Toggle dark mode" class="h-9 w-9 grid place-items-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition">
+          <svg class="hidden dark:block h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="block dark:hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+        </button>
+        <a href="index.html#app" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Open app</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- ============================================================= -->
+    <!-- HERO                                                          -->
+    <!-- ============================================================= -->
+    <section class="relative aurora overflow-hidden">
+      <div class="relative max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-6 text-center">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">Pricing</span>
+        <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">Simple, honest pricing</h1>
+        <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Start free. Upgrade to Pro or Power whenever you're ready — and unlock <strong class="text-slate-800 dark:text-white">LumiBot</strong>, your AI study chat that answers questions about your notes and edits them for you.</p>
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-500 dark:text-slate-400">
+          <span class="inline-flex items-center gap-1.5"><svg class="h-4 w-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>3-day free trial on paid plans</span>
+          <span class="inline-flex items-center gap-1.5"><svg class="h-4 w-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Cancel anytime</span>
+          <span class="inline-flex items-center gap-1.5"><svg class="h-4 w-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Secure checkout by Stripe</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- CLERK PRICING TABLE                                           -->
+    <!-- ============================================================= -->
+    <section id="plans" class="relative px-4 sm:px-6 pb-10 pt-4">
+      <div class="max-w-5xl mx-auto">
+        <div id="pricingTableMount"></div>
+        <div id="pricingTableLoading" class="py-16 text-center">
+          <span class="inline-block h-9 w-9 animate-spin rounded-full border-2 border-brand-500 border-t-transparent"></span>
+          <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">Loading plans…</p>
+        </div>
+        <div id="pricingTableFallback" class="hidden py-14 text-center">
+          <p class="text-base font-semibold text-slate-800 dark:text-white">Plans are taking a moment to load.</p>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Refresh and try again, or start free in the app.</p>
+          <div class="mt-5 flex items-center justify-center gap-3">
+            <button id="pricingTableRetry" type="button" class="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Try again</button>
+            <a href="index.html#app" class="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition">Start for free</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- COMPARE PLANS                                                 -->
+    <!-- TODO: drop the full feature-comparison table in here once the -->
+    <!-- user re-shares the reference image (rows/columns to match).   -->
+    <!-- All real plan data is in the lumi-clerk-billing memory.       -->
+    <!-- ============================================================= -->
+    <section id="compare" class="px-4 sm:px-6 pb-20">
+      <!-- comparison table goes here -->
+    </section>
+  </main>
+
+  <!-- ============================================================= -->
+  <!-- FOOTER                                                        -->
+  <!-- ============================================================= -->
+  <footer class="border-t border-slate-200/70 dark:border-white/10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <a href="index.html" class="flex items-center gap-2.5">
+        <img src="LumiStudy logo with glowing orb (1).png?v=20260313" alt="" class="h-8 w-8 rounded-lg object-cover" />
+        <span class="font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
+      </a>
+      <div class="flex items-center gap-6 text-sm font-semibold text-slate-500 dark:text-slate-400">
+        <a href="index.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Home</a>
+        <a href="index.html#app" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Open app</a>
+        <a href="pricing.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Pricing</a>
+      </div>
+      <p class="text-xs text-slate-400 dark:text-slate-500">© <span id="year">2026</span> Lumi Study</p>
+    </div>
+  </footer>
+
   <script>
-    // Belt-and-suspenders: redirect immediately even if the meta refresh is blocked.
-    try { location.replace("index.html#buy"); } catch (e) { location.href = "index.html#buy"; }
+    (function () {
+      var $ = function (id) { return document.getElementById(id); };
+      document.documentElement.classList.remove("preload");
+      try { $("year").textContent = String(new Date().getFullYear()); } catch (e) {}
+
+      /* theme toggle (shared key with the app) */
+      var tt = $("themeToggle");
+      if (tt) tt.addEventListener("click", function () {
+        var d = document.documentElement.classList.toggle("dark");
+        try { localStorage.setItem("lumi-theme", d ? "dark" : "light"); } catch (e) {}
+      });
+
+      function getPubKey() {
+        var k = String((window.APP_CONFIG && window.APP_CONFIG.CLERK_PUBLISHABLE_KEY) || "").trim().replace(/^['"]|['"]$/g, "");
+        return /^pk_(test|live)_/.test(k) ? k : "";
+      }
+      function appearance() {
+        var dark = document.documentElement.classList.contains("dark");
+        var vars = { colorPrimary: "#6366F1", fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif", borderRadius: "0.85rem" };
+        if (dark) {
+          vars.colorBackground = "#0f172a"; vars.colorText = "#e2e8f0"; vars.colorTextSecondary = "#94a3b8";
+          vars.colorInputBackground = "#1e293b"; vars.colorInputText = "#e2e8f0"; vars.colorNeutral = "#cbd5e1";
+        }
+        return { variables: vars };
+      }
+      function setState(state) {
+        var mount = $("pricingTableMount"), load = $("pricingTableLoading"), fb = $("pricingTableFallback");
+        if (mount) mount.classList.toggle("hidden", state !== "ready");
+        if (load) load.classList.toggle("hidden", state !== "loading");
+        if (fb) fb.classList.toggle("hidden", state !== "fallback");
+      }
+
+      var mounted = false, busy = false;
+      async function mountPricing() {
+        var mount = $("pricingTableMount");
+        if (!mount || busy) return;
+        busy = true; setState("loading");
+        try {
+          if (!getPubKey()) { setState("fallback"); return; }
+          var tries = 0;
+          while ((!window.Clerk || !window.Clerk.loaded) && tries < 80) {
+            if (window.Clerk && !window.Clerk.loaded) { try { await window.Clerk.load(); } catch (e) {} }
+            await new Promise(function (r) { setTimeout(r, 100); }); tries++;
+          }
+          if (!window.Clerk || typeof window.Clerk.mountPricingTable !== "function") { setState("fallback"); return; }
+          if (mounted && typeof window.Clerk.unmountPricingTable === "function") { try { window.Clerk.unmountPricingTable(mount); } catch (e) {} }
+          mount.innerHTML = "";
+          await window.Clerk.mountPricingTable(mount, {
+            for: "user",
+            newSubscriptionRedirectUrl: "index.html#app",
+            appearance: appearance(),
+            checkoutProps: { appearance: appearance() }
+          });
+          mounted = true; setState("ready");
+        } catch (e) {
+          mounted = false; setState("fallback");
+        } finally { busy = false; }
+      }
+
+      var retry = $("pricingTableRetry");
+      if (retry) retry.addEventListener("click", function () { mounted = false; mountPricing(); });
+
+      // Re-theme the mounted Clerk table whenever dark mode toggles (appearance is set at mount time).
+      var lastDark = document.documentElement.classList.contains("dark");
+      try {
+        new MutationObserver(function () {
+          var dark = document.documentElement.classList.contains("dark");
+          if (dark === lastDark) return;
+          lastDark = dark;
+          if (mounted) { mounted = false; mountPricing(); }
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+      } catch (e) {}
+
+      mountPricing();
+    })();
   </script>
 </body>
 </html>
