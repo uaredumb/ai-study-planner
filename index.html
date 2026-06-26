@@ -193,7 +193,7 @@
         <a href="#features" class="px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Features</a>
         <a href="#demo" class="px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Try it</a>
         <a href="#examples" class="px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Examples</a>
-        <a href="#pricing" class="px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Pricing</a>
+        <a href="pricing.html" class="px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Pricing</a>
       </div>
 
       <!-- Right actions -->
@@ -225,7 +225,7 @@
         <a href="#features" class="block px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium">Features</a>
         <a href="#demo" class="block px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium">Try it</a>
         <a href="#examples" class="block px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium">Examples</a>
-        <a href="#pricing" class="block px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium">Pricing</a>
+        <a href="pricing.html" class="block px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium">Pricing</a>
         <button id="homeSignInBtnM" type="button" class="block w-full text-left px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium">Sign in</button>
       </div>
     </div>
@@ -520,23 +520,58 @@
           <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Start free, no card needed. Paid plans include a <strong class="text-slate-800 dark:text-white">3-day free trial</strong> and cancel anytime. Save with annual billing.</p>
         </div>
 
-        <!-- Live Clerk Billing pricing table (real plans + secure checkout) -->
-        <div class="mt-12 reveal">
-          <div id="pricingTableMount"></div>
-          <div id="pricingTableLoading" class="py-16 text-center">
-            <span class="inline-block h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent"></span>
-            <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">Loading live plans…</p>
-          </div>
-          <div id="pricingTableFallback" class="hidden py-14 text-center">
-            <p class="text-base font-bold text-slate-900 dark:text-white">Plans are taking a moment to load.</p>
-            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Refresh the page, or start free and upgrade anytime from inside the app.</p>
-            <div class="mt-5 flex items-center justify-center gap-3">
-              <button id="pricingTableRetry" type="button" class="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Try again</button>
-              <a href="#app" class="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-white/5 hover:bg-brand-100 dark:hover:bg-white/10 border border-brand-100 dark:border-white/10 transition">Start for free</a>
-            </div>
-          </div>
+        <!-- Custom plan cards (overview only — no checkout here; the full table + checkout live on pricing.html) -->
+        <div class="mt-12 grid md:grid-cols-3 gap-6 reveal">
+          <!-- Free -->
+          <article class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col">
+            <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Free</h3>
+            <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$0</span><span class="text-sm font-medium text-slate-400">/forever</span></p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For trying Lumi out.</p>
+            <ul class="mt-5 space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
+              <li class="flex gap-2.5"><span class="check"></span>3,000-character notes</li>
+              <li class="flex gap-2.5"><span class="check"></span>5 flashcards per pack</li>
+              <li class="flex gap-2.5"><span class="check"></span>12-question quizzes</li>
+              <li class="flex gap-2.5"><span class="check"></span>2 saved study packs</li>
+              <li class="flex gap-2.5"><span class="check"></span>3 study packs per day</li>
+            </ul>
+          </article>
+          <!-- Pro (highlighted) -->
+          <article class="relative rounded-3xl border-2 border-brand-500 bg-white dark:bg-slate-900 p-6 shadow-glow flex flex-col">
+            <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide text-white bg-brand-600 shadow-soft">MOST POPULAR</span>
+            <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Pro</h3>
+            <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$6.99</span><span class="text-sm font-medium text-slate-400">/month</span></p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For everyday studying. <span class="text-brand-600 dark:text-brand-300 font-semibold">$4.99/mo billed annually.</span></p>
+            <ul class="mt-5 space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
+              <li class="flex gap-2.5"><span class="check"></span><span><strong class="font-semibold text-slate-800 dark:text-white">Everything in Free</strong>, plus:</span></li>
+              <li class="flex gap-2.5"><span class="check"></span>10,000-character notes · 15 flashcards</li>
+              <li class="flex gap-2.5"><span class="check"></span><strong class="font-semibold text-slate-800 dark:text-white">LumiBot</strong> study chat assistant</li>
+              <li class="flex gap-2.5"><span class="check"></span>Fast AI + article summaries</li>
+              <li class="flex gap-2.5"><span class="check"></span>25 study packs per day</li>
+            </ul>
+          </article>
+          <!-- Power -->
+          <article class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col">
+            <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Power</h3>
+            <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$12.99</span><span class="text-sm font-medium text-slate-400">/month</span></p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For heavy course loads. <span class="text-brand-600 dark:text-brand-300 font-semibold">$8.99/mo billed annually.</span></p>
+            <ul class="mt-5 space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
+              <li class="flex gap-2.5"><span class="check"></span><span><strong class="font-semibold text-slate-800 dark:text-white">Everything in Pro</strong>, plus:</span></li>
+              <li class="flex gap-2.5"><span class="check"></span>25,000-character notes · 30 flashcards</li>
+              <li class="flex gap-2.5"><span class="check"></span>25-question quizzes</li>
+              <li class="flex gap-2.5"><span class="check"></span>Advanced AI + advanced summaries</li>
+              <li class="flex gap-2.5"><span class="check"></span>60 study packs/day · priority &amp; early access</li>
+            </ul>
+          </article>
         </div>
-        <p class="mt-6 text-center text-sm text-slate-400 dark:text-slate-500">Start free, no card needed. Paid plans include a 3-day free trial · cancel anytime · no ads, ever.</p>
+
+        <!-- Single CTA under all the cards → full pricing page -->
+        <div class="mt-10 text-center reveal">
+          <a href="pricing.html" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-glow hover:-translate-y-0.5 transition">
+            See full pricing &amp; compare plans in detail
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
+          </a>
+          <p class="mt-4 text-sm text-slate-400 dark:text-slate-500">Start free, no card needed · 3-day trial on paid plans · cancel anytime · no ads, ever.</p>
+        </div>
       </div>
     </section>
 
@@ -611,7 +646,7 @@
                 Generate my first study pack
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
               </a>
-              <a href="#pricing" class="inline-flex items-center justify-center px-7 py-3.5 rounded-xl font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 transition">See pricing</a>
+              <a href="pricing.html" class="inline-flex items-center justify-center px-7 py-3.5 rounded-xl font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 transition">See pricing</a>
             </div>
           </div>
         </div>
@@ -638,7 +673,7 @@
             <li><a href="#features" class="hover:text-brand-600 dark:hover:text-white transition">Features</a></li>
             <li><a href="#how" class="hover:text-brand-600 dark:hover:text-white transition">How it works</a></li>
             <li><a href="#demo" class="hover:text-brand-600 dark:hover:text-white transition">Try the demo</a></li>
-            <li><a href="#pricing" class="hover:text-brand-600 dark:hover:text-white transition">Pricing</a></li>
+            <li><a href="pricing.html" class="hover:text-brand-600 dark:hover:text-white transition">Pricing</a></li>
           </ul>
         </div>
         <div>
@@ -2079,9 +2114,10 @@
     if (els.homeSignInBtnM) els.homeSignInBtnM.addEventListener("click", homeSignIn);
     if (els.homeSignInBtnFooter) els.homeSignInBtnFooter.addEventListener("click", function (e) { e.preventDefault(); homeSignIn(); });
     function startUpgrade() {
-      // Real subscriptions go through Clerk Billing's pricing table (the "Clerk page thing").
-      if (authEnabled && !isAuthed) { pendingUpgrade = true; startSignIn("upgrade your plan"); return; }
-      openBillingModal(); // mounts the Clerk pricing table (or shows a retry if Clerk isn't ready)
+      // All upgrade CTAs (in-app Upgrade, "more space", #buy, data-upgrade) go to the
+      // dedicated pricing page. The old in-page Clerk modal rendered blank whenever Clerk
+      // Billing/Commerce is off, which read as "nothing loads" — so route to pricing.html.
+      window.location.href = "pricing.html";
     }
 
     /* ---- Clerk Billing pricing-table modal ---- */
@@ -2722,7 +2758,7 @@
     /* =========================================================== */
     refreshLimitsUi();
     // Once auth state is known: handle #buy deep-links and mount the inline Clerk pricing table.
-    function afterClerk() { maybeOpenBuyHash(); mountInlinePricing(); }
+    function afterClerk() { maybeOpenBuyHash(); } // homepage pricing is now custom cards; no inline Clerk table to mount
     initClerk().then(afterClerk, afterClerk);
 
     // expose a couple of pure functions for quick console testing
