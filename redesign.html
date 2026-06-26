@@ -518,72 +518,23 @@
           <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Start free, no card needed. Paid plans include a <strong class="text-slate-800 dark:text-white">3-day free trial</strong> and cancel anytime. Save with annual billing.</p>
         </div>
 
-        <div class="mt-12 grid lg:grid-cols-3 gap-6 items-stretch">
-          <!-- Free -->
-          <div class="reveal rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-7 shadow-soft flex flex-col">
-            <div class="flex items-baseline justify-between">
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Free</h3>
-              <span class="text-xs font-semibold text-slate-400">Always free</span>
-            </div>
-            <p class="mt-3"><span class="text-4xl font-extrabold text-slate-900 dark:text-white">$0</span><span class="text-slate-500 dark:text-slate-400"> / forever</span></p>
-            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Everything you need to try Lumi for real.</p>
-            <ul class="mt-6 space-y-3 text-sm text-slate-600 dark:text-slate-300 flex-1">
-              <li class="flex gap-3"><span class="check"></span>All five study-pack outputs</li>
-              <li class="flex gap-3"><span class="check"></span><strong class="text-slate-800 dark:text-white">5 flashcards</strong> &amp; <strong class="text-slate-800 dark:text-white">12 quiz questions</strong> per pack</li>
-              <li class="flex gap-3"><span class="check"></span>Up to <strong class="text-slate-800 dark:text-white">3,000 characters</strong> of notes</li>
-              <li class="flex gap-3"><span class="check"></span><strong class="text-slate-800 dark:text-white">2 saved study files</strong></li>
-              <li class="flex gap-3"><span class="check"></span><strong class="text-slate-800 dark:text-white">3 packs/day</strong> · photo &amp; PDF upload</li>
-              <li class="flex gap-3"><span class="check"></span>Sync across devices</li>
-            </ul>
-            <a href="#app" class="mt-7 inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-white/5 hover:bg-brand-100 dark:hover:bg-white/10 border border-brand-100 dark:border-white/10 transition">Start for free</a>
+        <!-- Live Clerk Billing pricing table (real plans + secure checkout) -->
+        <div class="mt-12 reveal">
+          <div id="pricingTableMount"></div>
+          <div id="pricingTableLoading" class="py-16 text-center">
+            <span class="inline-block h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent"></span>
+            <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">Loading live plans…</p>
           </div>
-
-          <!-- Pro (highlighted) -->
-          <div class="reveal relative rounded-2xl p-7 shadow-glow flex flex-col bg-gradient-to-br from-brand-600 to-brand-700 text-white overflow-hidden lg:-mt-3 lg:mb-[-0.75rem]" style="transition-delay:.08s">
-            <div class="absolute top-0 right-0 h-40 w-40 bg-accent-400/30 rounded-full blur-3xl"></div>
-            <div class="relative flex items-baseline justify-between">
-              <h3 class="text-lg font-bold">Pro</h3>
-              <span class="inline-flex items-center gap-1 text-xs font-bold bg-accent-400 text-accent-950 px-2.5 py-1 rounded-full">★ Most popular</span>
+          <div id="pricingTableFallback" class="hidden py-14 text-center">
+            <p class="text-base font-bold text-slate-900 dark:text-white">Plans are taking a moment to load.</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Refresh the page, or start free and upgrade anytime from inside the app.</p>
+            <div class="mt-5 flex items-center justify-center gap-3">
+              <button id="pricingTableRetry" type="button" class="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Try again</button>
+              <a href="#app" class="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-white/5 hover:bg-brand-100 dark:hover:bg-white/10 border border-brand-100 dark:border-white/10 transition">Start for free</a>
             </div>
-            <p class="relative mt-3"><span class="text-4xl font-extrabold">$6.99</span><span class="text-white/80"> / month</span></p>
-            <p class="relative mt-2 text-sm text-white/80">or <strong>$4.99/mo</strong> billed annually ($59.88/yr) · 3-day free trial</p>
-            <ul class="relative mt-6 space-y-3 text-sm text-white/95 flex-1">
-              <li class="flex gap-3"><span class="check check-light"></span>Everything in Free, plus:</li>
-              <li class="flex gap-3"><span class="check check-light"></span>Up to <strong>15 flashcards</strong> per pack</li>
-              <li class="flex gap-3"><span class="check check-light"></span>Up to <strong>10,000 characters</strong> of notes</li>
-              <li class="flex gap-3"><span class="check check-light"></span><strong>10 saved files</strong> · <strong>25 packs/day</strong> (400/mo)</li>
-              <li class="flex gap-3"><span class="check check-light"></span>Faster AI model · LumiBot · article summaries</li>
-              <li class="flex gap-3"><span class="check check-light"></span>Priority generation &amp; PDF export</li>
-            </ul>
-            <a href="#app" data-upgrade class="relative mt-7 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-brand-700 bg-white hover:bg-brand-50 shadow-lift transition">
-              Start 3-day trial
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </a>
-          </div>
-
-          <!-- Power -->
-          <div class="reveal rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-7 shadow-soft flex flex-col" style="transition-delay:.16s">
-            <div class="flex items-baseline justify-between">
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Power</h3>
-              <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/15 px-2.5 py-1 rounded-full">⚡ For power users</span>
-            </div>
-            <p class="mt-3"><span class="text-4xl font-extrabold text-slate-900 dark:text-white">$12.99</span><span class="text-slate-500 dark:text-slate-400"> / month</span></p>
-            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">or <strong class="text-slate-700 dark:text-slate-200">$8.99/mo</strong> billed annually ($107.88/yr)</p>
-            <ul class="mt-6 space-y-3 text-sm text-slate-600 dark:text-slate-300 flex-1">
-              <li class="flex gap-3"><span class="check"></span>Everything in Pro, plus:</li>
-              <li class="flex gap-3"><span class="check"></span>Up to <strong class="text-slate-800 dark:text-white">30 flashcards</strong> &amp; <strong class="text-slate-800 dark:text-white">25 quiz questions</strong></li>
-              <li class="flex gap-3"><span class="check"></span>Up to <strong class="text-slate-800 dark:text-white">25,000 characters</strong> of notes</li>
-              <li class="flex gap-3"><span class="check"></span><strong class="text-slate-800 dark:text-white">15 saved files</strong> · <strong class="text-slate-800 dark:text-white">60 packs/day</strong> (1,000/mo)</li>
-              <li class="flex gap-3"><span class="check"></span>Advanced AI models &amp; article summaries</li>
-              <li class="flex gap-3"><span class="check"></span>Early access to new features</li>
-            </ul>
-            <a href="#app" data-upgrade class="mt-7 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-white bg-slate-900 dark:bg-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition">
-              Go Power
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </a>
           </div>
         </div>
-        <p class="mt-6 text-center text-sm text-slate-400 dark:text-slate-500">All plans are student-friendly. No ads, ever. Cancel anytime.</p>
+        <p class="mt-6 text-center text-sm text-slate-400 dark:text-slate-500">Start free, no card needed. Paid plans include a 3-day free trial · cancel anytime · no ads, ever.</p>
       </div>
     </section>
 
@@ -2103,6 +2054,58 @@
     }
     window.addEventListener("hashchange", maybeOpenBuyHash);
 
+    /* ---- Inline Clerk pricing table in the homepage #pricing section ---- */
+    var inlinePricingMounted = false, inlinePricingBusy = false;
+    function setInlinePricingState(state) {
+      var mount = $("pricingTableMount"), load = $("pricingTableLoading"), fb = $("pricingTableFallback");
+      if (mount) mount.classList.toggle("hidden", state !== "ready");
+      if (load) load.classList.toggle("hidden", state !== "loading");
+      if (fb) fb.classList.toggle("hidden", state !== "fallback");
+    }
+    async function mountInlinePricing() {
+      var mount = $("pricingTableMount");
+      if (!mount || inlinePricingBusy) return;
+      inlinePricingBusy = true;
+      setInlinePricingState("loading");
+      try {
+        if (!authEnabled) { setInlinePricingState("fallback"); return; }
+        var tries = 0;
+        while ((!window.Clerk || !window.Clerk.loaded) && tries < 80) { await new Promise(function (r) { setTimeout(r, 100); }); tries++; }
+        if (!window.Clerk || typeof window.Clerk.mountPricingTable !== "function") { setInlinePricingState("fallback"); return; }
+        if (inlinePricingMounted && typeof window.Clerk.unmountPricingTable === "function") {
+          try { window.Clerk.unmountPricingTable(mount); } catch (e) {}
+        }
+        mount.innerHTML = "";
+        await window.Clerk.mountPricingTable(mount, {
+          for: "user",
+          newSubscriptionRedirectUrl: location.pathname + "#app",
+          appearance: billingAppearance(),
+          checkoutProps: { appearance: billingAppearance() }
+        });
+        inlinePricingMounted = true;
+        setInlinePricingState("ready");
+      } catch (e) {
+        inlinePricingMounted = false;
+        setInlinePricingState("fallback");
+      } finally {
+        inlinePricingBusy = false;
+      }
+    }
+    var pricingRetryBtn = $("pricingTableRetry");
+    if (pricingRetryBtn) pricingRetryBtn.addEventListener("click", function () { inlinePricingMounted = false; mountInlinePricing(); });
+
+    // Re-theme the mounted Clerk tables (inline + modal) whenever dark mode toggles.
+    var lastDark = document.documentElement.classList.contains("dark");
+    try {
+      new MutationObserver(function () {
+        var dark = document.documentElement.classList.contains("dark");
+        if (dark === lastDark) return;
+        lastDark = dark;
+        if (inlinePricingMounted) { inlinePricingMounted = false; mountInlinePricing(); }
+        if (billingMounted && billingModal && !billingModal.classList.contains("hidden")) { billingMounted = false; mountBilling(); }
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    } catch (e) {}
+
     if (els.appAccountBtn) els.appAccountBtn.addEventListener("click", function () { startSignIn(); });
     if (els.appUpgradeBtn) els.appUpgradeBtn.addEventListener("click", function () { startUpgrade(); });
 
@@ -2435,8 +2438,9 @@
     /* INIT                                                         */
     /* =========================================================== */
     refreshLimitsUi();
-    // Run the #buy deep-link handler once auth state is known (covers every initClerk return path).
-    initClerk().then(maybeOpenBuyHash, maybeOpenBuyHash);
+    // Once auth state is known: handle #buy deep-links and mount the inline Clerk pricing table.
+    function afterClerk() { maybeOpenBuyHash(); mountInlinePricing(); }
+    initClerk().then(afterClerk, afterClerk);
 
     // expose a couple of pure functions for quick console testing
     window.__lumiDev = { generateFlashcards: generateFlashcards, generateQuizQuestions: generateQuizQuestions, buildEnhancedStudyPlan: buildEnhancedStudyPlan, buildQuizSessionItems: buildQuizSessionItems, renderResult: renderResult, openApp: openApp };
