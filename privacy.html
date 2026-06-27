@@ -1,0 +1,419 @@
+<!doctype html>
+<!--
+  ───────────────────────────────────────────────────────────────────────────
+  Privacy Policy — Lumi Study
+  This is a real, product-specific policy written to match how the app actually
+  works (Cloudflare hosting, Clerk auth, Stripe billing, OpenRouter + Google
+  Gemini for AI). Before relying on it publicly you should:
+    • Have it reviewed by a lawyer for your jurisdiction.
+    • Fill in the company legal entity / address if you operate under one.
+    • Confirm the "Last updated" date below.
+  ───────────────────────────────────────────────────────────────────────────
+-->
+<html lang="en" class="preload">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy — Lumi Study</title>
+  <meta name="description" content="How Lumi Study collects, uses, shares, and protects your information when you use our AI study tools." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://lumistudy.org/privacy.html" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=20260304" />
+  <link rel="apple-touch-icon" sizes="180x180" href="LumiStudy logo with glowing orb (1).png?v=20260313" />
+
+  <!-- Brand font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind via CDN (no build step) — same brand config as index.html -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: { sans: ["Outfit", "ui-sans-serif", "system-ui", "sans-serif"] },
+          colors: {
+            brand: { 50:"#eef2ff",100:"#e0e7ff",200:"#c7d2fe",300:"#a5b4fc",400:"#818cf8",500:"#6366f1",600:"#4f46e5",700:"#4338ca",800:"#3730a3",900:"#312e81",950:"#1e1b4b" },
+            accent: { 50:"#ecfdf5",100:"#d1fae5",200:"#a7f3d0",300:"#6ee7b7",400:"#34d399",500:"#10b981",600:"#059669",700:"#047857",800:"#065f46",900:"#064e3b" },
+          },
+          boxShadow: {
+            soft: "0 1px 2px rgba(15,23,42,.04), 0 8px 24px -8px rgba(15,23,42,.12)",
+            lift: "0 2px 4px rgba(15,23,42,.04), 0 24px 48px -16px rgba(49,46,129,.28)",
+            glow: "0 0 0 1px rgba(99,102,241,.18), 0 20px 60px -20px rgba(99,102,241,.55)",
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Theme bootstrap: runs before paint so there's no flash. Default = light, honors saved choice. -->
+  <script>
+    (function initTheme() {
+      try {
+        if (localStorage.getItem("lumi-theme") === "dark") document.documentElement.classList.add("dark");
+        else document.documentElement.classList.remove("dark");
+      } catch (e) {}
+    })();
+  </script>
+
+  <style>
+    html:not(.preload) body, html:not(.preload) body * { transition: background-color .35s ease, border-color .35s ease, color .25s ease, box-shadow .35s ease; }
+    html { scroll-behavior: smooth; }
+    body { font-feature-settings: "ss01","cv01"; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .aurora::before {
+      content: ""; position: absolute; inset: -30% -10% auto -10%; height: 460px; z-index: 0;
+      background:
+        radial-gradient(48% 60% at 18% 22%, rgba(99,102,241,.24), transparent 60%),
+        radial-gradient(42% 55% at 82% 14%, rgba(16,185,129,.16), transparent 62%);
+      filter: blur(8px); pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    :focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; border-radius: 6px; }
+
+    /* ── Legal document typography ─────────────────────────────────────── */
+    .prose-legal { max-width: 46rem; }
+    .prose-legal section { scroll-margin-top: 5.5rem; }
+    .prose-legal h2 {
+      font-size: 1.4rem; line-height: 1.3; font-weight: 800; letter-spacing: -0.01em;
+      margin-top: 3rem; color: #0f172a;
+    }
+    .prose-legal section:first-of-type h2 { margin-top: 2.25rem; }
+    .prose-legal h3 { font-size: 1.05rem; font-weight: 700; margin-top: 1.85rem; color: #1e293b; }
+    .prose-legal p { margin-top: 0.9rem; line-height: 1.72; color: #475569; }
+    .prose-legal ul { margin-top: 0.9rem; padding-left: 1.2rem; list-style: disc; }
+    .prose-legal ol { margin-top: 0.9rem; padding-left: 1.3rem; list-style: decimal; }
+    .prose-legal li { margin-top: 0.5rem; line-height: 1.65; color: #475569; }
+    .prose-legal li::marker { color: #818cf8; }
+    .prose-legal strong { font-weight: 700; color: #1e293b; }
+    .prose-legal a { color: #4f46e5; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+    .prose-legal a:hover { color: #4338ca; }
+    .dark .prose-legal h2 { color: #f8fafc; }
+    .dark .prose-legal h3 { color: #e2e8f0; }
+    .dark .prose-legal p, .dark .prose-legal li { color: #94a3b8; }
+    .dark .prose-legal strong { color: #e2e8f0; }
+    .dark .prose-legal a { color: #a5b4fc; }
+    .dark .prose-legal a:hover { color: #c7d2fe; }
+
+    /* ── Table of contents (sticky on desktop) ─────────────────────────── */
+    .toc { border-left: 2px solid rgba(148,163,184,.25); }
+    .toc a {
+      display: block; padding: .32rem 0 .32rem .9rem; margin-left: -2px;
+      border-left: 2px solid transparent; font-size: .82rem; line-height: 1.35; color: #64748b;
+      transition: color .2s ease, border-color .2s ease;
+    }
+    .toc a:hover { color: #4f46e5; }
+    .toc a.active { color: #4338ca; border-color: #6366f1; font-weight: 600; }
+    .dark .toc { border-color: rgba(148,163,184,.18); }
+    .dark .toc a { color: #94a3b8; }
+    .dark .toc a:hover, .dark .toc a.active { color: #a5b4fc; border-color: #818cf8; }
+
+    /* Definitions / sub-processor table */
+    .legal-table { width: 100%; border-collapse: collapse; margin-top: 1.1rem; font-size: .92rem; }
+    .legal-table th, .legal-table td { text-align: left; vertical-align: top; padding: .7rem .85rem; border-bottom: 1px solid rgba(148,163,184,.22); }
+    .legal-table th { font-weight: 700; color: #0f172a; }
+    .legal-table td { color: #475569; line-height: 1.55; }
+    .legal-table td:first-child { font-weight: 600; color: #1e293b; white-space: nowrap; }
+    .dark .legal-table th { color: #f1f5f9; }
+    .dark .legal-table td { color: #94a3b8; }
+    .dark .legal-table td:first-child { color: #e2e8f0; }
+    .dark .legal-table th, .dark .legal-table td { border-color: rgba(148,163,184,.16); }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans antialiased selection:bg-brand-200 selection:text-brand-900">
+
+  <!-- ============================================================= -->
+  <!-- NAVBAR                                                        -->
+  <!-- ============================================================= -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/70 dark:border-white/10">
+    <nav class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <a href="index.html" class="flex items-center gap-2.5 group" aria-label="Lumi Study home">
+        <img src="LumiStudy logo with glowing orb (1).png?v=20260313" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft group-hover:scale-105 transition-transform" />
+        <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600 dark:text-slate-300">
+        <a href="index.html#features" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Features</a>
+        <a href="index.html#how" class="hover:text-brand-600 dark:hover:text-brand-300 transition">How it works</a>
+        <a href="pricing.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Pricing</a>
+        <a href="changelog.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Changelog</a>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button id="themeToggle" type="button" aria-label="Toggle dark mode" class="h-9 w-9 grid place-items-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition">
+          <svg class="hidden dark:block h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="block dark:hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+        </button>
+        <a href="index.html#app" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Open app</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- ============================================================= -->
+    <!-- HERO                                                          -->
+    <!-- ============================================================= -->
+    <section class="relative aurora overflow-hidden">
+      <div class="relative max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-8 text-center">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">Legal</span>
+        <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">Privacy Policy</h1>
+        <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">How we collect, use, and protect your information when you use Lumi Study.</p>
+        <p class="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">Last updated <time datetime="2026-06-27" class="font-semibold text-slate-700 dark:text-slate-200">June 27, 2026</time></p>
+        <!-- Privacy / Terms switch -->
+        <div class="mt-6 inline-flex rounded-xl bg-slate-100 dark:bg-white/5 p-1 text-sm font-semibold">
+          <a href="privacy.html" aria-current="page" class="px-4 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-brand-700 dark:text-brand-200 shadow-soft">Privacy</a>
+          <a href="terms.html" class="px-4 py-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-300 transition">Terms</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- BODY: sticky TOC + content                                    -->
+    <!-- ============================================================= -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-24 grid lg:grid-cols-[230px_minmax(0,1fr)] gap-10 lg:gap-16">
+
+      <!-- Table of contents -->
+      <aside class="hidden lg:block">
+        <nav class="toc sticky top-24" aria-label="On this page">
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 pl-3.5 mb-2">On this page</p>
+          <a href="#information">1. Information we collect</a>
+          <a href="#how-we-use">2. How we use information</a>
+          <a href="#ai-processing">3. How AI processes your content</a>
+          <a href="#sharing">4. How we share information</a>
+          <a href="#cookies">5. Cookies &amp; local storage</a>
+          <a href="#retention">6. Data retention</a>
+          <a href="#security">7. Data security</a>
+          <a href="#your-rights">8. Your rights &amp; choices</a>
+          <a href="#international">9. International transfers</a>
+          <a href="#children">10. Children's privacy</a>
+          <a href="#third-party-links">11. Third-party links</a>
+          <a href="#changes">12. Changes to this policy</a>
+          <a href="#contact">13. Contact us</a>
+        </nav>
+      </aside>
+
+      <!-- Content -->
+      <article class="prose-legal min-w-0">
+
+        <!-- Intro + summary -->
+        <p class="!mt-0">This Privacy Policy explains how <strong>Lumi Study</strong> ("Lumi Study", "we", "us", or "our") collects, uses, shares, and protects information when you visit <a href="https://lumistudy.org">lumistudy.org</a> and use our AI study tools (together, the "Service"). By using the Service, you agree to the practices described here.</p>
+
+        <div class="mt-6 rounded-2xl border border-brand-200/70 dark:border-brand-500/20 bg-brand-50/70 dark:bg-brand-500/10 p-5 sm:p-6">
+          <p class="!mt-0 text-sm font-bold uppercase tracking-wide text-brand-700 dark:text-brand-200">The short version</p>
+          <ul class="!mt-3 text-sm">
+            <li>You give us notes, files, photos, and messages so our AI can turn them into study packs.</li>
+            <li>To generate results, your content is sent to our AI providers (<strong>OpenRouter</strong> and <strong>Google</strong>) for processing. We don't sell your data, and we don't use your study content to train our own AI models.</li>
+            <li>We don't keep the notes, files, or photos you submit on our servers after your result is generated — copies you save stay in your own browser.</li>
+            <li>Accounts and payments are handled by <strong>Clerk</strong> and <strong>Stripe</strong>; we never see your full card number.</li>
+            <li>You can access, export, or delete your account data at any time — just email us.</li>
+          </ul>
+        </div>
+
+        <!-- 1 -->
+        <section id="information">
+          <h2>1. Information we collect</h2>
+
+          <h3>Information you provide</h3>
+          <ul>
+            <li><strong>Account information.</strong> When you create an account, our authentication provider Clerk collects your name, email address, and sign-in credentials (or the profile details from a third-party login you choose to use). We receive your user ID, email, name, and subscription plan status.</li>
+            <li><strong>Study content.</strong> The text notes, documents and PDFs, images or photos of notes, and chat messages you send to LumiBot — i.e., the material you ask the Service to process.</li>
+            <li><strong>Payment information.</strong> When you subscribe to a paid plan, payments are processed by Stripe through Clerk Billing. We receive limited billing details (such as your plan, subscription status, and the card brand or last four digits where made available) but never your full card number or security code.</li>
+            <li><strong>Communications.</strong> If you contact us (for example, by emailing <a href="mailto:hello@lumistudy.org">hello@lumistudy.org</a>), we receive your message and contact details.</li>
+          </ul>
+
+          <h3>Information collected automatically</h3>
+          <ul>
+            <li><strong>Usage and device data.</strong> Our hosting provider Cloudflare automatically logs technical data such as your IP address, browser type, device and operating system, referring pages, and timestamps, for security, abuse prevention, and reliability.</li>
+            <li><strong>Fair-use counters.</strong> To enforce per-plan usage limits, we store short-lived counters tied to your account ID or, for signed-out visitors, an identifier derived from your IP address. These counters reset on a daily and monthly cycle and then expire automatically.</li>
+            <li><strong>Local storage.</strong> We store small amounts of data in your browser — not on our servers — to remember preferences such as your light/dark theme, demo text, and in-progress quiz and flashcard state.</li>
+            <li><strong>Cookies.</strong> Clerk sets essential cookies needed to keep you signed in and to secure your session. See <a href="#cookies">Cookies &amp; local storage</a>.</li>
+          </ul>
+        </section>
+
+        <!-- 2 -->
+        <section id="how-we-use">
+          <h2>2. How we use your information</h2>
+          <p>We use the information we collect to:</p>
+          <ul>
+            <li>Provide, operate, and maintain the Service and your account;</li>
+            <li>Generate your study materials and LumiBot replies (which requires sending your content to our AI providers — see <a href="#ai-processing">section 3</a>);</li>
+            <li>Authenticate you and keep your account secure;</li>
+            <li>Process payments, manage subscriptions, and prevent billing fraud;</li>
+            <li>Enforce per-plan usage limits and protect the Service from abuse, spam, and misuse;</li>
+            <li>Respond to your requests and provide customer support;</li>
+            <li>Understand how the Service is used so we can fix problems and improve it;</li>
+            <li>Comply with our legal obligations and enforce our <a href="terms.html">Terms of Service</a>.</li>
+          </ul>
+        </section>
+
+        <!-- 3 -->
+        <section id="ai-processing">
+          <h2>3. How AI processes your content</h2>
+          <p>To turn your input into clean notes, flashcards, quizzes, study plans, and LumiBot replies, the content you submit is transmitted through our servers (hosted on Cloudflare) to our AI gateway, <strong>OpenRouter</strong>, which routes it to the underlying AI model (currently <strong>Google's Gemini</strong>). The generated result is then returned to you.</p>
+          <ul>
+            <li><strong>Purpose-limited.</strong> This processing happens only to fulfill your request and produce your study materials.</li>
+            <li><strong>No training on your content.</strong> We do not use your study content to train our own AI models, and we do not sell it.</li>
+            <li><strong>Not stored by us.</strong> Lumi Study does not save the notes, documents, or photos you submit to a database on our servers; they are held only transiently to generate your result. Any copies you choose to save remain in your browser's local storage on your own device.</li>
+            <li><strong>Provider handling.</strong> Your content is processed by the providers above under their own terms and privacy policies, which may involve transient logging on their systems.</li>
+            <li><strong>Please don't submit sensitive data.</strong> Avoid including highly sensitive personal information — such as government ID numbers, health records, financial account numbers, or passwords — in your notes or images.</li>
+          </ul>
+        </section>
+
+        <!-- 4 -->
+        <section id="sharing">
+          <h2>4. How we share information</h2>
+          <p>We do not sell your personal information, and we do not share it for cross-context behavioral advertising. We share information only with service providers ("sub-processors") that help us run the Service, and where required by law:</p>
+
+          <table class="legal-table">
+            <thead><tr><th>Provider</th><th>What they do</th></tr></thead>
+            <tbody>
+              <tr><td>Cloudflare</td><td>Website hosting, content delivery, serverless functions, security, and storage of fair-use rate-limit counters.</td></tr>
+              <tr><td>Clerk</td><td>Account creation, authentication, session management, and subscription/billing orchestration.</td></tr>
+              <tr><td>Stripe</td><td>Payment processing for paid subscriptions (via Clerk Billing).</td></tr>
+              <tr><td>OpenRouter</td><td>AI gateway that routes your submitted content to the AI model.</td></tr>
+              <tr><td>Google</td><td>Provider of the Gemini AI model that generates study results (accessed via OpenRouter).</td></tr>
+              <tr><td>Google Fonts &amp; CDNs</td><td>Deliver fonts and front-end libraries to your browser; may receive your IP address when these assets load.</td></tr>
+            </tbody>
+          </table>
+
+          <p>We may also disclose information: (a) to comply with law, legal process, or lawful government requests; (b) to enforce our Terms or protect the rights, safety, and security of Lumi Study, our users, or the public; and (c) in connection with a merger, acquisition, financing, or sale of assets, in which case we will require the recipient to honor this Policy or notify you of any changes.</p>
+        </section>
+
+        <!-- 5 -->
+        <section id="cookies">
+          <h2>5. Cookies &amp; local storage</h2>
+          <p>We use a small number of cookies and browser storage technologies:</p>
+          <ul>
+            <li><strong>Essential cookies.</strong> Clerk sets cookies that are necessary to sign you in and keep your session secure. The Service won't work properly without them.</li>
+            <li><strong>Local storage.</strong> We store preferences (theme, demo text, in-progress quiz and flashcard state) locally in your browser. This never leaves your device.</li>
+          </ul>
+          <p>We do not currently use third-party advertising or cross-site tracking cookies. You can clear cookies and local storage through your browser settings, but doing so may sign you out and reset your preferences.</p>
+        </section>
+
+        <!-- 6 -->
+        <section id="retention">
+          <h2>6. Data retention</h2>
+          <ul>
+            <li><strong>Account data</strong> is retained while your account is active and is managed through Clerk. If you delete your account, your profile data is deleted in line with Clerk's processes.</li>
+            <li><strong>Submitted study content</strong> is not retained on our servers after your result is generated.</li>
+            <li><strong>Fair-use counters</strong> expire automatically (daily counters within roughly 48 hours; monthly counters within roughly a month).</li>
+            <li><strong>Server logs</strong> are retained by Cloudflare for a limited period for security and operational purposes.</li>
+            <li><strong>Billing records</strong> may be retained by us, Clerk, or Stripe for as long as required for accounting, tax, and legal compliance.</li>
+            <li><strong>Local storage</strong> stays on your device until you clear it.</li>
+          </ul>
+        </section>
+
+        <!-- 7 -->
+        <section id="security">
+          <h2>7. Data security</h2>
+          <p>We protect your information using industry-standard measures, including encryption in transit (HTTPS/TLS), reputable infrastructure and identity providers (Cloudflare, Clerk, and Stripe), and access controls. However, no method of transmission or storage is completely secure, and we cannot guarantee absolute security. You are responsible for keeping your account credentials confidential.</p>
+        </section>
+
+        <!-- 8 -->
+        <section id="your-rights">
+          <h2>8. Your rights &amp; choices</h2>
+          <p>Depending on where you live, you may have some or all of the following rights regarding your personal information:</p>
+          <ul>
+            <li><strong>Access &amp; portability</strong> — request a copy of the personal data we hold about you.</li>
+            <li><strong>Correction</strong> — ask us to fix inaccurate or incomplete data (you can update most profile details directly in your account).</li>
+            <li><strong>Deletion</strong> — request that we delete your account and associated personal data.</li>
+            <li><strong>Restriction &amp; objection</strong> — ask us to limit or stop certain processing.</li>
+            <li><strong>Withdraw consent</strong> — where we rely on consent, you can withdraw it at any time.</li>
+          </ul>
+          <p>If you are in the European Economic Area or the United Kingdom, these rights arise under the GDPR / UK GDPR, and you may also lodge a complaint with your local data protection authority. If you are a California resident, the CCPA/CPRA gives you rights to know, delete, and correct your personal information and to opt out of its "sale" or "sharing" — note that we do not sell or share personal information in that sense — and we will not discriminate against you for exercising your rights.</p>
+          <p>To exercise any of these rights, email us at <a href="mailto:hello@lumistudy.org">hello@lumistudy.org</a>. We may need to verify your identity before acting on your request.</p>
+        </section>
+
+        <!-- 9 -->
+        <section id="international">
+          <h2>9. International data transfers</h2>
+          <p>We and our service providers may process and store your information in the United States and other countries that may have data protection laws different from those in your jurisdiction. Where required, we rely on appropriate safeguards (such as standard contractual clauses) for these transfers. By using the Service, you understand that your information may be transferred to and processed in these locations.</p>
+        </section>
+
+        <!-- 10 -->
+        <section id="children">
+          <h2>10. Children's privacy</h2>
+          <p>The Service is intended for users who are at least <strong>13 years old</strong>. If you are under 18 (or the age of majority where you live), you may use the Service only with the involvement and consent of a parent, guardian, or school. We do not knowingly collect personal information from children under 13. If you believe a child under 13 has provided us with personal information, please contact us and we will delete it.</p>
+        </section>
+
+        <!-- 11 -->
+        <section id="third-party-links">
+          <h2>11. Third-party links</h2>
+          <p>The Service may contain links to third-party websites or services that we do not control. This Policy does not apply to those third parties, and we are not responsible for their content or privacy practices. We encourage you to review their privacy policies.</p>
+        </section>
+
+        <!-- 12 -->
+        <section id="changes">
+          <h2>12. Changes to this policy</h2>
+          <p>We may update this Privacy Policy from time to time. When we do, we will revise the "Last updated" date at the top of this page and, for material changes, provide a more prominent notice where appropriate. Your continued use of the Service after an update means you accept the revised Policy.</p>
+        </section>
+
+        <!-- 13 -->
+        <section id="contact">
+          <h2>13. Contact us</h2>
+          <p>If you have questions about this Privacy Policy or how we handle your information, contact us at <a href="mailto:hello@lumistudy.org">hello@lumistudy.org</a>.</p>
+          <p>See also our <a href="terms.html">Terms of Service</a>.</p>
+        </section>
+
+      </article>
+    </div>
+  </main>
+
+  <!-- ============================================================= -->
+  <!-- FOOTER                                                        -->
+  <!-- ============================================================= -->
+  <footer class="border-t border-slate-200/70 dark:border-white/10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <a href="index.html" class="flex items-center gap-2.5">
+        <img src="LumiStudy logo with glowing orb (1).png?v=20260313" alt="" class="h-8 w-8 rounded-lg object-cover" />
+        <span class="font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
+      </a>
+      <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
+        <a href="index.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Home</a>
+        <a href="pricing.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Pricing</a>
+        <a href="changelog.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Changelog</a>
+        <a href="privacy.html" class="text-brand-700 dark:text-brand-300" aria-current="page">Privacy</a>
+        <a href="terms.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Terms</a>
+      </div>
+      <p class="text-xs text-slate-400 dark:text-slate-500">© <span id="year">2026</span> Lumi Study</p>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var $ = function (id) { return document.getElementById(id); };
+      document.documentElement.classList.remove("preload");
+      try { $("year").textContent = String(new Date().getFullYear()); } catch (e) {}
+
+      /* theme toggle (shared key with the app) */
+      var tt = $("themeToggle");
+      if (tt) tt.addEventListener("click", function () {
+        var d = document.documentElement.classList.toggle("dark");
+        try { localStorage.setItem("lumi-theme", d ? "dark" : "light"); } catch (e) {}
+      });
+
+      /* TOC scrollspy — highlight the section currently in view */
+      var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+      var byId = {};
+      links.forEach(function (a) { byId[a.getAttribute("href").slice(1)] = a; });
+      var sections = links
+        .map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); })
+        .filter(Boolean);
+
+      if ("IntersectionObserver" in window && sections.length) {
+        var current = null;
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) {
+              if (current) current.classList.remove("active");
+              current = byId[e.target.id];
+              if (current) current.classList.add("active");
+            }
+          });
+        }, { rootMargin: "-20% 0px -70% 0px", threshold: 0 });
+        sections.forEach(function (s) { io.observe(s); });
+      }
+    })();
+  </script>
+</body>
+</html>
