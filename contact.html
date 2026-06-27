@@ -215,7 +215,7 @@
             <h3 class="font-bold text-slate-900 dark:text-white">Prefer email?</h3>
           </div>
           <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Write to us directly at</p>
-          <a href="mailto:hello@lumistudy.org" class="mt-1 inline-block font-semibold text-brand-600 dark:text-brand-300 hover:underline break-all">hello@lumistudy.org</a>
+          <a href="mailto:lumistudy.org@gmail.com" class="mt-1 inline-block font-semibold text-brand-600 dark:text-brand-300 hover:underline break-all">lumistudy.org@gmail.com</a>
         </div>
 
         <div class="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/60 shadow-soft p-5">
@@ -320,7 +320,7 @@
                 $("formSuccess").classList.remove("hidden");
                 $("formSuccess").scrollIntoView({ behavior: "smooth", block: "center" });
               } else {
-                var msg = "Something went wrong sending your message. Please try again, or email hello@lumistudy.org.";
+                var msg = "Something went wrong sending your message. Please try again, or email lumistudy.org@gmail.com.";
                 if (r.data && Array.isArray(r.data.errors) && r.data.errors.length) {
                   msg = r.data.errors.map(function (x) { return x.message; }).join(" ");
                 }
@@ -329,7 +329,7 @@
               }
             })
             .catch(function () {
-              showError("Couldn't reach the server. Check your connection and try again, or email hello@lumistudy.org.");
+              showError("Couldn't reach the server. Check your connection and try again, or email lumistudy.org@gmail.com.");
               setLoading(false);
             });
         });
