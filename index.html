@@ -2044,16 +2044,30 @@
       isProMode = isGodMode || isPowerMode || Boolean(meta.proUnlocked) || hasClerkPlan("pro");
       refreshLimitsUi();
     }
+    // Mount a Clerk UserButton at most once per element. Re-mounting (or wiping
+    // innerHTML and re-mounting) pulls Clerk's own nodes out from under it,
+    // throwing "removeChild" errors that poison Clerk's renderer so nothing
+    // renders at all. Guard with a flag; unmount cleanly when signing out.
+    function mountUserButtonOnce(el, opts) {
+      if (!el || el.dataset.clerkMounted === "1") return;
+      try { window.Clerk.mountUserButton(el, opts); el.dataset.clerkMounted = "1"; } catch (e) {}
+    }
+    function unmountUserButtonIfMounted(el) {
+      if (!el || el.dataset.clerkMounted !== "1") return;
+      try { window.Clerk.unmountUserButton(el); } catch (e) {}
+      el.dataset.clerkMounted = "";
+    }
     function refreshAuthUi() {
       var authed = isAuthed && window.Clerk && window.Clerk.user;
       // --- generator (#app) header ---
       if (authed) {
         els.appAccountBtn.classList.add("hidden");
         els.appUserButton.classList.remove("hidden");
-        try { els.appUserButton.innerHTML = ""; window.Clerk.mountUserButton(els.appUserButton, { afterSignOutUrl: location.pathname + "#app" }); } catch (e) {}
+        mountUserButtonOnce(els.appUserButton, { afterSignOutUrl: location.pathname + "#app" });
       } else {
         els.appAccountBtn.classList.remove("hidden");
         els.appUserButton.classList.add("hidden");
+        unmountUserButtonIfMounted(els.appUserButton);
       }
       // --- homepage header (Sign in ↔ account profile) ---
       if (authed) {
@@ -2066,14 +2080,14 @@
         }
         if (els.homeUserButton) {
           els.homeUserButton.classList.remove("hidden");
-          try { els.homeUserButton.innerHTML = ""; window.Clerk.mountUserButton(els.homeUserButton, { afterSignOutUrl: location.pathname }); } catch (e) {}
+          mountUserButtonOnce(els.homeUserButton, { afterSignOutUrl: location.pathname });
         }
       } else {
         if (els.homeSignInBtn) els.homeSignInBtn.classList.remove("hidden");
         if (els.homeSignInBtnM) els.homeSignInBtnM.classList.remove("hidden");
         if (els.homeSignInBtnFooter && els.homeSignInBtnFooter.parentElement) els.homeSignInBtnFooter.parentElement.classList.remove("hidden");
         if (els.homeStartBtn) els.homeStartBtn.firstChild.textContent = "Start for free";
-        if (els.homeUserButton) { els.homeUserButton.classList.add("hidden"); els.homeUserButton.innerHTML = ""; }
+        if (els.homeUserButton) { els.homeUserButton.classList.add("hidden"); unmountUserButtonIfMounted(els.homeUserButton); }
       }
       syncPlan();
       refreshLumibotGate();
@@ -2088,8 +2102,6 @@
       try { if (!window.Clerk.loaded) await window.Clerk.load(); } catch (e) {}
       isAuthed = Boolean(window.Clerk.user);
       refreshAuthUi();
-      // Clerk UI components can lag behind load(); retry mount after a short delay
-      if (isAuthed) setTimeout(refreshAuthUi, 500);
       try {
         window.Clerk.addListener(function () {
           var was = isAuthed;
