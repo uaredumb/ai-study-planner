@@ -58,17 +58,16 @@
             "fade-in": { "0%": { opacity: 0 }, "100%": { opacity: 1 } },
             float: { "0%,100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-10px)" } },
             shimmer: { "100%": { transform: "translateX(100%)" } },
-            "pop-in": { "0%": { opacity: 0, transform: "scale(.96)" }, "100%": { opacity: 1, transform: "scale(1)" } },
+            /* Opacity-only on purpose: animating transform here leaves a retained
+               matrix on the card wrapper (fill: both), which flattens the 3D context
+               of the flashcard inside and stops the flip from rotating. */
+            "pop-in": { "0%": { opacity: 0 }, "100%": { opacity: 1 } },
           },
           animation: {
             "fade-up": "fade-up .6s cubic-bezier(.21,.6,.35,1) both",
             "fade-in": "fade-in .6s ease both",
             float: "float 6s ease-in-out infinite",
-            /* fill: backwards (not "both") on purpose — a forwards/both fill retains the
-               final scale(1) as a computed matrix transform, which flattens the preserve-3d
-               of any flashcard inside the card and breaks the flip. backwards lets the
-               transform revert to none once the entrance finishes. */
-            "pop-in": "pop-in .35s cubic-bezier(.21,.6,.35,1) backwards",
+            "pop-in": "pop-in .35s cubic-bezier(.21,.6,.35,1) both",
           },
         },
       },
