@@ -64,7 +64,11 @@
             "fade-up": "fade-up .6s cubic-bezier(.21,.6,.35,1) both",
             "fade-in": "fade-in .6s ease both",
             float: "float 6s ease-in-out infinite",
-            "pop-in": "pop-in .35s cubic-bezier(.21,.6,.35,1) both",
+            /* fill: backwards (not "both") on purpose — a forwards/both fill retains the
+               final scale(1) as a computed matrix transform, which flattens the preserve-3d
+               of any flashcard inside the card and breaks the flip. backwards lets the
+               transform revert to none once the entrance finishes. */
+            "pop-in": "pop-in .35s cubic-bezier(.21,.6,.35,1) backwards",
           },
         },
       },
