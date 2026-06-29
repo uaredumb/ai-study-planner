@@ -328,6 +328,9 @@
     .sc-caret { display: inline-block; width: 2px; height: 1.05em; vertical-align: text-bottom; background: #6366f1; border-radius: 1px; animation: sc-blink 1s step-end infinite; }
     @media (prefers-reduced-motion: reduce) { .sc-caret { animation: none; } }
   </style>
+
+  <!-- Mailchimp Connected Site (tracking + pop-up forms) -->
+  <script id="mcjs">!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/f977eb32eb487d8c218893089/5259053cb92f7d6fee3bad4d3.js");</script>
 </head>
 
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans antialiased selection:bg-brand-200 selection:text-brand-900">
@@ -957,6 +960,30 @@
           </ul>
         </div>
       </div>
+
+      <!-- Newsletter signup → Mailchimp via /api/subscribe -->
+      <div class="mt-10 pt-8 border-t border-slate-200/70 dark:border-white/10">
+        <div class="grid sm:grid-cols-2 gap-6 items-center">
+          <div>
+            <p class="text-sm font-bold text-slate-900 dark:text-white">Get study tips in your inbox</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm">Occasional updates on new features and smarter ways to study. No spam — unsubscribe anytime.</p>
+          </div>
+          <form id="newsletterForm" class="w-full sm:max-w-sm sm:justify-self-end" novalidate>
+            <div class="flex gap-2">
+              <label for="newsletterEmail" class="sr-only">Email address</label>
+              <input id="newsletterEmail" name="email" type="email" autocomplete="email" required
+                placeholder="you@example.com"
+                class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition" />
+              <button type="submit" id="newsletterBtn"
+                class="shrink-0 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 transition disabled:opacity-60 disabled:cursor-not-allowed">
+                Subscribe
+              </button>
+            </div>
+            <p id="newsletterMsg" class="hidden mt-2 text-sm" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+
       <div class="mt-10 pt-6 border-t border-slate-200/70 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
         <p class="text-sm text-slate-400 dark:text-slate-500">© 2026 Lumi Study. Made for students, by people who hated cramming.</p>
         <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
@@ -3792,5 +3819,8 @@
 
   })();
   </script>
+
+  <!-- Newsletter signup handler (shared) → Mailchimp embedded form (JSONP, no backend) -->
+  <script src="newsletter.js" defer></script>
 </body>
 </html>
