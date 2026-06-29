@@ -6,7 +6,7 @@
   // ── CONFIG: paste your audience's embedded-form action URL here ──────────────
   // Mailchimp → Audience → Sign up forms → Embedded forms → copy the <form action="…"> URL.
   // It looks like: https://ACCOUNT.us21.list-manage.com/subscribe/post?u=XXXX&id=YYYY
-  var MC_ACTION = "PASTE_MAILCHIMP_EMBEDDED_FORM_ACTION_URL_HERE";
+  var MC_ACTION = "https://us8.list-manage.com/subscribe/post?u=f977eb32eb487d8c218893089&id=4c5b969a69";
   // ─────────────────────────────────────────────────────────────────────────────
 
   var form = document.getElementById("newsletterForm");
