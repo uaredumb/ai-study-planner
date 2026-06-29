@@ -215,6 +215,13 @@ export async function onRequestPost(context) {
   const requestMode = payload?.mode === "ocr" ? "ocr" : payload?.mode === "vision" ? "vision" : "text";
   const notes = typeof payload?.notes === "string" ? payload.notes.trim() : "";
   const imageDataUrl = typeof payload?.imageDataUrl === "string" ? payload.imageDataUrl.trim() : "";
+  // Optional learner preferences (grade/level + custom instructions) set in the
+  // app's Settings. Sanitized + capped; ignored when absent so behavior is
+  // unchanged for callers that don't send it.
+  const customInstructions =
+    typeof payload?.customInstructions === "string"
+      ? payload.customInstructions.replace(/[\x00-\x1f\x7f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 600)
+      : "";
   const shouldStream = Boolean(payload?.stream);
   if (requestMode === "text" && !notes) {
     return jsonResponse({ error: "Missing 'notes' in request body." }, 400);
@@ -260,15 +267,23 @@ export async function onRequestPost(context) {
     "Avoid filler like 'remember', 'important thing to know', 'know this', or generic reminders. " +
     "If the source does not contain enough readable study material, return empty arrays instead of guessing.";
 
+  // When the user set custom instructions, ask the model to adapt tone/level —
+  // but never to break the JSON shape or invent facts.
+  const prefsLine = customInstructions
+    ? "Learner preferences (adapt vocabulary, depth, and examples to these, but never change the required JSON shape or invent facts): " +
+      customInstructions
+    : "";
+
   const userPrompt = [
     "Convert the notes into structured study help.",
     "Make cleanNotes easy to turn into flashcards and quiz questions.",
     "Each cleanNotes line should state one concrete concept, definition, process, cause/effect, comparison, or example.",
+    prefsLine,
     "Return valid JSON only in this exact shape:",
     '{ "cleanNotes": ["..."], "studyTasks": ["..."], "studyOrder": ["..."] }',
     "Notes:",
     notes
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 
   const userVisionText = [
     "Read the uploaded image of handwritten or typed notes.",
@@ -276,9 +291,10 @@ export async function onRequestPost(context) {
     "If a part of the image is unreadable, skip that part instead of guessing.",
     "Make cleanNotes easy to turn into flashcards and quiz questions.",
     "Each cleanNotes line should state one concrete concept, definition, process, cause/effect, comparison, or example.",
+    prefsLine,
     "Return valid JSON only in this exact shape:",
     '{ "cleanNotes": ["..."], "studyTasks": ["..."], "studyOrder": ["..."] }'
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 
   const userOcrText = [
     "Read the uploaded image and extract only the text content.",

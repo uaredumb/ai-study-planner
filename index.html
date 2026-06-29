@@ -913,6 +913,141 @@
   </div>
 
   <!-- ============================================================= -->
+  <!-- SETTINGS MODAL — custom account settings                      -->
+  <!-- Opened from the custom account menu. Theme, Clerk account,    -->
+  <!-- subscription status, and study custom instructions.          -->
+  <!-- ============================================================= -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-[95] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
+    <div id="settingsBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    <div class="relative min-h-full flex items-start sm:items-center justify-center p-3 sm:p-6">
+      <div class="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-lift">
+        <!-- header -->
+        <div class="flex items-center justify-between gap-3 px-5 sm:px-7 pt-5 pb-4 border-b border-slate-200/70 dark:border-white/10">
+          <div class="flex items-center gap-2.5">
+            <span class="h-9 w-9 grid place-items-center rounded-xl bg-brand-50 dark:bg-white/5 text-brand-600 dark:text-brand-300">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h9M18 7h2M4 17h2M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>
+            </span>
+            <h2 id="settingsTitle" class="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Settings</h2>
+          </div>
+          <button id="settingsClose" type="button" aria-label="Close settings" class="-mr-1 h-9 w-9 grid place-items-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <!-- body -->
+        <div class="px-5 sm:px-7 py-5 space-y-6 max-h-[72vh] overflow-y-auto">
+          <!-- Appearance -->
+          <section>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Appearance</p>
+            <div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[.03] px-4 py-3.5">
+              <div>
+                <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">Theme</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Switch between light and dark.</p>
+              </div>
+              <div class="inline-flex rounded-lg bg-slate-100 dark:bg-white/5 p-1" role="group" aria-label="Theme">
+                <button type="button" data-theme-set="light" class="settings-theme-btn px-3 py-1.5 rounded-md text-xs font-bold transition">Light</button>
+                <button type="button" data-theme-set="dark" class="settings-theme-btn px-3 py-1.5 rounded-md text-xs font-bold transition">Dark</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Account -->
+          <section>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Account</p>
+            <div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[.03] px-4 py-3.5">
+              <div class="min-w-0">
+                <p id="settingsEmail" class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">Your account</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Profile, email &amp; security.</p>
+              </div>
+              <button id="settingsAccountBtn" type="button" class="flex-none inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition">
+                Account settings
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
+              </button>
+            </div>
+          </section>
+
+          <!-- Subscription -->
+          <section>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Subscription</p>
+            <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[.03] px-4 py-3.5">
+              <div class="flex items-center justify-between gap-3">
+                <span id="settingsPlanBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-200">Free plan</span>
+                <button id="settingsUpgradeBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">◆ Upgrade</button>
+              </div>
+              <p id="settingsPlanDesc" class="text-sm text-slate-500 dark:text-slate-400 mt-2.5">You're on the Free plan.</p>
+              <button id="settingsPromoLink" type="button" class="mt-2 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:underline">Have a promo code?</button>
+            </div>
+          </section>
+
+          <!-- Custom instructions -->
+          <section>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Custom instructions</p>
+            <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[.03] px-4 py-3.5 space-y-3.5">
+              <p class="text-xs text-slate-400 dark:text-slate-500 -mt-0.5">Tell Lumi about you so every study pack fits your level.</p>
+              <div>
+                <label for="settingsGrade" class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Your grade / level</label>
+                <select id="settingsGrade" class="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-400 focus:border-transparent">
+                  <option value="">Not set</option>
+                  <option value="grade-6">6th grade</option>
+                  <option value="grade-7">7th grade</option>
+                  <option value="grade-8">8th grade</option>
+                  <option value="grade-9">9th grade (Freshman)</option>
+                  <option value="grade-10">10th grade (Sophomore)</option>
+                  <option value="grade-11">11th grade (Junior)</option>
+                  <option value="grade-12">12th grade (Senior)</option>
+                  <option value="college">College / University</option>
+                  <option value="grad">Graduate / Postgrad</option>
+                  <option value="adult">Adult learner / Self-study</option>
+                </select>
+              </div>
+              <div>
+                <label for="settingsInstructions" class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">How should Lumi tailor your study packs?</label>
+                <textarea id="settingsInstructions" rows="4" maxlength="600" class="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-brand-400 focus:border-transparent resize-y" placeholder="e.g. Keep explanations simple, focus on AP Biology terms, and add a real-world example for each concept."></textarea>
+                <p class="mt-1 text-right text-xs text-slate-400 dark:text-slate-500"><span id="settingsInstrCount">0</span> / 600</p>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span id="settingsPrefsStatus" class="text-xs font-semibold text-accent-600 dark:text-accent-400"></span>
+                <button id="settingsSaveBtn" type="button" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Save preferences</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- PROMO CODE MODAL — redeem a Lumi access / promo code          -->
+  <!-- Validates server-side (/api/pro/redeem) and unlocks via Clerk -->
+  <!-- unsafeMetadata (proUnlocked / godMode).                       -->
+  <!-- ============================================================= -->
+  <div id="promoModal" class="hidden fixed inset-0 z-[96] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="promoTitle" aria-hidden="true">
+    <div id="promoBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    <div class="relative min-h-full flex items-start sm:items-center justify-center p-3 sm:p-6">
+      <div class="relative w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-lift">
+        <div class="flex items-center justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b border-slate-200/70 dark:border-white/10">
+          <div class="flex items-center gap-2.5">
+            <span class="h-9 w-9 grid place-items-center rounded-xl bg-brand-50 dark:bg-white/5 text-brand-600 dark:text-brand-300">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M4 9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 6 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-6z"/><path stroke-linecap="round" d="M14 8v8" stroke-dasharray="1.5 2.5"/></svg>
+            </span>
+            <h2 id="promoTitle" class="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Redeem a code</h2>
+          </div>
+          <button id="promoClose" type="button" aria-label="Close" class="-mr-1 h-9 w-9 grid place-items-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="px-5 sm:px-6 py-5">
+          <p class="text-sm text-slate-500 dark:text-slate-400">Enter a Lumi promo or access code to unlock more.</p>
+          <form id="promoForm" class="mt-3 flex items-center gap-2">
+            <input id="promoInput" type="text" autocomplete="off" spellcheck="false" placeholder="Enter your code" class="flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3.5 py-2.5 text-sm font-medium tracking-wide text-slate-800 dark:text-slate-100 placeholder:text-slate-400 placeholder:font-normal placeholder:tracking-normal focus:ring-2 focus:ring-brand-400 focus:border-transparent uppercase" />
+            <button id="promoSubmit" type="submit" class="flex-none inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed transition">Redeem</button>
+          </form>
+          <p id="promoStatus" class="mt-2.5 text-sm font-semibold min-h-[1.25rem]"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
   <!-- LUMIBOT — in-app study chat assistant (Pro & Power)           -->
   <!-- Floating launcher + chat panel. Reads the current Clean Notes -->
   <!-- (or the raw paste box) and can answer about / edit them.      -->
@@ -2374,30 +2509,136 @@
       isProMode = isGodMode || isPowerMode || Boolean(meta.proUnlocked) || hasClerkPlan("pro");
       refreshLimitsUi();
     }
-    // Mount a Clerk UserButton at most once per element. Re-mounting (or wiping
-    // innerHTML and re-mounting) pulls Clerk's own nodes out from under it,
-    // throwing "removeChild" errors that poison Clerk's renderer so nothing
-    // renders at all. Guard with a flag; unmount cleanly when signing out.
-    function mountUserButtonOnce(el, opts) {
-      if (!el || el.dataset.clerkMounted === "1") return;
-      try { window.Clerk.mountUserButton(el, opts); el.dataset.clerkMounted = "1"; } catch (e) {}
+    /* ---------------------------------------------------------------
+       CUSTOM ACCOUNT MENU — replaces Clerk's default UserButton dropdown.
+       We render our own avatar button + dropdown (Settings, Upgrade,
+       Contact, Promo code, Log out) and drive Clerk through its JS API
+       (openUserProfile / signOut / user.update). Built once per mount
+       point, then refreshed (avatar/name/plan) on each auth change.
+    --------------------------------------------------------------- */
+    var MI_ICONS = {
+      settings: '<svg class="h-4 w-4 flex-none text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h9M18 7h2M4 17h2M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>',
+      upgrade: '<svg class="h-4 w-4 flex-none text-brand-500 dark:text-brand-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l1.7 4.6L18 9l-4.3 1.4L12 15l-1.7-4.6L6 9l4.3-1.4L12 3z"/></svg>',
+      contact: '<svg class="h-4 w-4 flex-none text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><rect x="4" y="6" width="16" height="12" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 8l7 5 7-5"/></svg>',
+      promo: '<svg class="h-4 w-4 flex-none text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M4 9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 6 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-6z"/><path stroke-linecap="round" d="M14 8v8" stroke-dasharray="1.5 2.5"/></svg>',
+      logout: '<svg class="h-4 w-4 flex-none text-rose-400 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H4m0 0l3.5-3.5M4 12l3.5 3.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M10 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-7"/></svg>'
+    };
+    var lumiMenus = [];
+    function menuItemHtml(action, label, extra) {
+      return '<button type="button" role="menuitem" data-mi="' + action + '" data-item="' + action + '" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition ' + (extra || "") + '">' + MI_ICONS[action] + '<span>' + label + '</span></button>';
     }
-    function unmountUserButtonIfMounted(el) {
-      if (!el || el.dataset.clerkMounted !== "1") return;
-      try { window.Clerk.unmountUserButton(el); } catch (e) {}
-      el.dataset.clerkMounted = "";
+    function setMenuOpen(m, open) {
+      m.open = open;
+      m.panel.classList.toggle("hidden", !open);
+      m.btn.setAttribute("aria-expanded", String(open));
     }
+    function closeAllUserMenus(except) {
+      lumiMenus.forEach(function (m) { if (m !== except) setMenuOpen(m, false); });
+    }
+    function closeUserMenu(el) {
+      if (el && el._lumiMenu) setMenuOpen(el._lumiMenu, false);
+    }
+    function createUserMenu(container, opts) {
+      container.innerHTML = "";
+      container.classList.add("relative");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.setAttribute("aria-haspopup", "menu");
+      btn.setAttribute("aria-expanded", "false");
+      btn.setAttribute("aria-label", "Open account menu");
+      btn.className = "block h-9 w-9 rounded-full overflow-hidden bg-brand-100 dark:bg-white/10 ring-2 ring-transparent hover:ring-brand-300 dark:hover:ring-brand-500/50 focus:outline-none focus:ring-brand-400 transition";
+      var avatar = document.createElement("img");
+      avatar.alt = "";
+      avatar.className = "h-full w-full object-cover";
+      avatar.addEventListener("error", function () { avatar.style.display = "none"; });
+      btn.appendChild(avatar);
+
+      var panel = document.createElement("div");
+      panel.className = "lumi-account-menu hidden absolute right-0 mt-2 w-60 origin-top-right rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-lift py-1.5 z-[88]";
+      panel.setAttribute("role", "menu");
+      panel.innerHTML =
+        '<div class="px-3.5 py-2.5 mb-1 border-b border-slate-100 dark:border-white/10">' +
+          '<p data-mn="name" class="text-sm font-bold text-slate-900 dark:text-white truncate">Your account</p>' +
+          '<p data-mn="email" class="text-xs text-slate-400 dark:text-slate-500 truncate"></p>' +
+        '</div>' +
+        menuItemHtml("settings", "Settings") +
+        menuItemHtml("upgrade", "Upgrade", "text-brand-700 dark:text-brand-300") +
+        menuItemHtml("contact", "Contact") +
+        menuItemHtml("promo", "Promo code") +
+        '<div class="mt-1 pt-1 border-t border-slate-100 dark:border-white/10">' +
+          menuItemHtml("logout", "Log out", "text-rose-600 dark:text-rose-400") +
+        '</div>';
+
+      container.appendChild(btn);
+      container.appendChild(panel);
+
+      var m = { container: container, btn: btn, panel: panel, avatar: avatar, opts: opts || {}, open: false };
+      lumiMenus.push(m);
+
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var willOpen = !m.open;
+        closeAllUserMenus(m);
+        setMenuOpen(m, willOpen);
+      });
+      panel.addEventListener("click", function (e) {
+        var item = e.target.closest("[data-mi]");
+        if (!item) return;
+        setMenuOpen(m, false);
+        var action = item.getAttribute("data-mi");
+        if (action === "settings") openSettings();
+        else if (action === "upgrade") startUpgrade();
+        else if (action === "contact") window.location.href = "contact.html";
+        else if (action === "promo") openPromo();
+        else if (action === "logout") doSignOut(m.opts.afterSignOutUrl);
+      });
+      return m;
+    }
+    function updateUserMenu(m) {
+      var u = window.Clerk && window.Clerk.user;
+      if (!u) return;
+      if (u.imageUrl) { m.avatar.src = u.imageUrl; m.avatar.style.display = ""; }
+      var name = u.fullName || u.firstName || u.username || "Your account";
+      var email = (u.primaryEmailAddress && u.primaryEmailAddress.emailAddress) || "";
+      var nameEl = m.panel.querySelector('[data-mn="name"]');
+      var emailEl = m.panel.querySelector('[data-mn="email"]');
+      if (nameEl) nameEl.textContent = name;
+      if (emailEl) emailEl.textContent = email;
+      var up = m.panel.querySelector('[data-item="upgrade"]');
+      if (up) up.classList.toggle("hidden", isPowerMode || isGodMode);
+    }
+    function renderUserMenu(el, opts) {
+      if (!el) return;
+      if (!el._lumiMenu) el._lumiMenu = createUserMenu(el, opts);
+      updateUserMenu(el._lumiMenu);
+    }
+    function refreshAllUserMenus() { lumiMenus.forEach(updateUserMenu); }
+    function doSignOut(after) {
+      if (window.Clerk && typeof window.Clerk.signOut === "function") {
+        try { window.Clerk.signOut({ redirectUrl: after || location.pathname }); return; } catch (e) {}
+        try { window.Clerk.signOut(); return; } catch (e2) {}
+      }
+    }
+    // Close menus on outside click / Esc (Esc in capture phase so it wins over the app/billing Esc handlers).
+    document.addEventListener("click", function (e) {
+      if (!lumiMenus.some(function (m) { return m.open; })) return;
+      if (!lumiMenus.some(function (m) { return m.container.contains(e.target); })) closeAllUserMenus();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && lumiMenus.some(function (m) { return m.open; })) { e.stopPropagation(); closeAllUserMenus(); }
+    }, true);
+
     function refreshAuthUi() {
       var authed = isAuthed && window.Clerk && window.Clerk.user;
       // --- generator (#app) header ---
       if (authed) {
         els.appAccountBtn.classList.add("hidden");
         els.appUserButton.classList.remove("hidden");
-        mountUserButtonOnce(els.appUserButton, { afterSignOutUrl: location.pathname + "#app" });
+        renderUserMenu(els.appUserButton, { afterSignOutUrl: location.pathname + "#app" });
       } else {
         els.appAccountBtn.classList.remove("hidden");
         els.appUserButton.classList.add("hidden");
-        unmountUserButtonIfMounted(els.appUserButton);
+        closeUserMenu(els.appUserButton);
       }
       // --- homepage header (Sign in ↔ account profile) ---
       if (authed) {
@@ -2410,14 +2651,14 @@
         }
         if (els.homeUserButton) {
           els.homeUserButton.classList.remove("hidden");
-          mountUserButtonOnce(els.homeUserButton, { afterSignOutUrl: location.pathname });
+          renderUserMenu(els.homeUserButton, { afterSignOutUrl: location.pathname });
         }
       } else {
         if (els.homeSignInBtn) els.homeSignInBtn.classList.remove("hidden");
         if (els.homeSignInBtnM) els.homeSignInBtnM.classList.remove("hidden");
         if (els.homeSignInBtnFooter && els.homeSignInBtnFooter.parentElement) els.homeSignInBtnFooter.parentElement.classList.remove("hidden");
         if (els.homeStartBtn) els.homeStartBtn.firstChild.textContent = "Start for free";
-        if (els.homeUserButton) { els.homeUserButton.classList.add("hidden"); unmountUserButtonIfMounted(els.homeUserButton); }
+        if (els.homeUserButton) { els.homeUserButton.classList.add("hidden"); closeUserMenu(els.homeUserButton); }
       }
       syncPlan();
       refreshLumibotGate();
@@ -2610,6 +2851,205 @@
     if (els.appAccountBtn) els.appAccountBtn.addEventListener("click", function () { startSignIn(); });
     if (els.appUpgradeBtn) els.appUpgradeBtn.addEventListener("click", function () { startUpgrade(); });
 
+    /* =========================================================== */
+    /* SETTINGS + PROMO CODE                                        */
+    /* =========================================================== */
+    var settingsModal = $("settingsModal");
+    var promoModal = $("promoModal");
+    var PREFS_KEY = "lumi-study-prefs";
+    var GRADE_LABELS = {
+      "grade-6": "6th grade", "grade-7": "7th grade", "grade-8": "8th grade",
+      "grade-9": "9th grade", "grade-10": "10th grade", "grade-11": "11th grade", "grade-12": "12th grade",
+      "college": "College / University", "grad": "Graduate / Postgrad", "adult": "Adult learner"
+    };
+    function gradeLabel(v) { return GRADE_LABELS[v] || ""; }
+
+    /* ---- study preferences (custom instructions + grade) ---- */
+    function readPrefs() {
+      var meta = (window.Clerk && window.Clerk.user && window.Clerk.user.unsafeMetadata) || {};
+      var sp = meta.studyPrefs;
+      if (sp && typeof sp === "object") {
+        return { educationLevel: sp.educationLevel || "", customInstructions: sp.customInstructions || "" };
+      }
+      try { var raw = localStorage.getItem(PREFS_KEY); if (raw) { var o = JSON.parse(raw); return { educationLevel: o.educationLevel || "", customInstructions: o.customInstructions || "" }; } } catch (e) {}
+      return { educationLevel: "", customInstructions: "" };
+    }
+    async function savePrefs(prefs) {
+      try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+      if (window.Clerk && window.Clerk.user && typeof window.Clerk.user.update === "function") {
+        var existing = window.Clerk.user.unsafeMetadata || {};
+        await window.Clerk.user.update({ unsafeMetadata: Object.assign({}, existing, { studyPrefs: prefs }) });
+      }
+    }
+    // Combined instruction string handed to /api/chat so generation honors the learner's level + notes.
+    function studyPrefsInstruction() {
+      var p = readPrefs();
+      var parts = [];
+      if (p.educationLevel && gradeLabel(p.educationLevel)) parts.push("The learner's level is: " + gradeLabel(p.educationLevel) + ".");
+      if (p.customInstructions) parts.push(p.customInstructions);
+      return parts.join(" ").trim().slice(0, 600);
+    }
+
+    /* ---- theme control (shared lumi-theme key) ---- */
+    function setTheme(mode) {
+      var dark = mode === "dark";
+      document.documentElement.classList.toggle("dark", dark);
+      try { localStorage.setItem("lumi-theme", dark ? "dark" : "light"); } catch (e) {}
+      reflectThemeButtons();
+    }
+    function reflectThemeButtons() {
+      if (!settingsModal) return;
+      var dark = document.documentElement.classList.contains("dark");
+      settingsModal.querySelectorAll("[data-theme-set]").forEach(function (b) {
+        var active = b.getAttribute("data-theme-set") === (dark ? "dark" : "light");
+        b.className = "settings-theme-btn px-3 py-1.5 rounded-md text-xs font-bold transition " +
+          (active ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200");
+      });
+    }
+
+    /* ---- settings modal ---- */
+    function planDescText(p) {
+      if (p.name === "God") return "God Mode — everything unlocked.";
+      return (p.name === "Free" ? "You're on the Free plan. " : "You're on Lumi " + p.name + ". ") +
+        "Up to " + p.cards + " flashcards, " + p.chars.toLocaleString() + " characters & " + p.files + " files per pack.";
+    }
+    function setPrefsStatus(msg, ok) {
+      var el = $("settingsPrefsStatus");
+      if (!el) return;
+      el.textContent = msg || "";
+      el.className = "text-xs font-semibold " + (ok ? "text-accent-600 dark:text-accent-400" : "text-slate-400 dark:text-slate-500");
+    }
+    function updateInstrCount() {
+      var ta = $("settingsInstructions"), c = $("settingsInstrCount");
+      if (ta && c) c.textContent = String(ta.value.length);
+    }
+    function loadSettingsUi() {
+      reflectThemeButtons();
+      var u = window.Clerk && window.Clerk.user;
+      var email = (u && u.primaryEmailAddress && u.primaryEmailAddress.emailAddress) || (u && u.fullName) || "Your account";
+      if ($("settingsEmail")) $("settingsEmail").textContent = email;
+      var p = plan();
+      var planName = p.name === "Free" ? "Free plan" : p.name === "God" ? "God Mode" : "Lumi " + p.name;
+      if ($("settingsPlanBadge")) $("settingsPlanBadge").textContent = planName;
+      if ($("settingsPlanDesc")) $("settingsPlanDesc").textContent = planDescText(p);
+      if ($("settingsUpgradeBtn")) $("settingsUpgradeBtn").classList.toggle("hidden", isPowerMode || isGodMode);
+      var prefs = readPrefs();
+      if ($("settingsGrade")) $("settingsGrade").value = prefs.educationLevel || "";
+      if ($("settingsInstructions")) { $("settingsInstructions").value = prefs.customInstructions || ""; updateInstrCount(); }
+      setPrefsStatus("");
+    }
+    function openSettings() {
+      if (!settingsModal) return;
+      closeAllUserMenus();
+      settingsModal.classList.remove("hidden");
+      settingsModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      loadSettingsUi();
+    }
+    function closeSettings() {
+      if (!settingsModal) return;
+      settingsModal.classList.add("hidden");
+      settingsModal.setAttribute("aria-hidden", "true");
+      if (appView.classList.contains("hidden")) document.body.style.overflow = "";
+    }
+    if (settingsModal) {
+      if ($("settingsBackdrop")) $("settingsBackdrop").addEventListener("click", closeSettings);
+      if ($("settingsClose")) $("settingsClose").addEventListener("click", closeSettings);
+      settingsModal.querySelectorAll("[data-theme-set]").forEach(function (b) {
+        b.addEventListener("click", function () { setTheme(b.getAttribute("data-theme-set")); });
+      });
+      if ($("settingsAccountBtn")) $("settingsAccountBtn").addEventListener("click", function () {
+        if (window.Clerk && typeof window.Clerk.openUserProfile === "function") { try { window.Clerk.openUserProfile(); return; } catch (e) {} }
+        startSignIn();
+      });
+      if ($("settingsUpgradeBtn")) $("settingsUpgradeBtn").addEventListener("click", function () { startUpgrade(); });
+      if ($("settingsPromoLink")) $("settingsPromoLink").addEventListener("click", openPromo);
+      if ($("settingsInstructions")) $("settingsInstructions").addEventListener("input", updateInstrCount);
+      if ($("settingsSaveBtn")) $("settingsSaveBtn").addEventListener("click", async function () {
+        var prefs = {
+          educationLevel: ($("settingsGrade") && $("settingsGrade").value) || "",
+          customInstructions: (($("settingsInstructions") && $("settingsInstructions").value) || "").trim().slice(0, 600)
+        };
+        setPrefsStatus("Saving…");
+        try { await savePrefs(prefs); setPrefsStatus("Saved ✓", true); }
+        catch (e) { setPrefsStatus("Saved on this device.", true); }
+      });
+    }
+
+    /* ---- promo code modal ---- */
+    function setPromoStatus(msg, kind) {
+      var el = $("promoStatus");
+      if (!el) return;
+      el.textContent = msg || "";
+      el.className = "mt-2.5 text-sm font-semibold min-h-[1.25rem] " +
+        (kind === "success" ? "text-accent-600 dark:text-accent-400" : kind === "error" ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400");
+    }
+    function openPromo() {
+      if (!promoModal) return;
+      closeAllUserMenus();
+      promoModal.classList.remove("hidden");
+      promoModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      setPromoStatus("");
+      if ($("promoInput")) { $("promoInput").value = ""; setTimeout(function () { try { $("promoInput").focus(); } catch (e) {} }, 30); }
+    }
+    function closePromo() {
+      if (!promoModal) return;
+      promoModal.classList.add("hidden");
+      promoModal.setAttribute("aria-hidden", "true");
+      if (settingsModal && settingsModal.classList.contains("hidden") && appView.classList.contains("hidden")) document.body.style.overflow = "";
+    }
+    async function applyUnlock(mode) {
+      var btn = $("promoSubmit");
+      try {
+        var existing = (window.Clerk.user.unsafeMetadata) || {};
+        var patch = mode === "god" ? { godMode: true, proUnlocked: true } : { proUnlocked: true };
+        await window.Clerk.user.update({ unsafeMetadata: Object.assign({}, existing, patch) });
+        syncPlan();
+        refreshAllUserMenus();
+        if (settingsModal && !settingsModal.classList.contains("hidden")) loadSettingsUi();
+        setPromoStatus(mode === "god" ? "God Mode unlocked! 🎉" : "Lumi Pro unlocked! 🎉", "success");
+        if (btn) btn.disabled = false;
+        setTimeout(closePromo, 1500);
+      } catch (e) {
+        setPromoStatus("Unlocked, but couldn't save it to your account. Try again.", "error");
+        if (btn) btn.disabled = false;
+      }
+    }
+    async function submitPromo() {
+      var code = (($("promoInput") && $("promoInput").value) || "").trim();
+      if (!code) { setPromoStatus("Enter a code first.", "error"); return; }
+      if (!(window.Clerk && window.Clerk.user)) { setPromoStatus("Sign in first to redeem a code.", "error"); return; }
+      var btn = $("promoSubmit");
+      if (btn) btn.disabled = true;
+      setPromoStatus("Checking…");
+      try {
+        // Emergency client-side God Mode code (from config.js), if configured.
+        var guestGod = String((window.APP_CONFIG && window.APP_CONFIG.GUEST_GOD_MODE_CODE) || "").trim();
+        if (guestGod && code.toLowerCase() === guestGod.toLowerCase()) { await applyUnlock("god"); return; }
+        // Server-validated promo codes (PRO_CODE_HASHES / GOD_MODE_CODE_HASHES).
+        var res = await fetch("/api/pro/redeem", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code }) });
+        var data = await res.json().catch(function () { return {}; });
+        if (res.ok && data && data.ok) { await applyUnlock(data.mode === "god" ? "god" : "pro"); return; }
+        setPromoStatus((data && data.error) || "That code isn't valid.", "error");
+      } catch (e) {
+        setPromoStatus("Couldn't reach the server. Please try again.", "error");
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+    if (promoModal) {
+      if ($("promoBackdrop")) $("promoBackdrop").addEventListener("click", closePromo);
+      if ($("promoClose")) $("promoClose").addEventListener("click", closePromo);
+      if ($("promoForm")) $("promoForm").addEventListener("submit", function (e) { e.preventDefault(); submitPromo(); });
+    }
+    // Esc closes promo first, then settings (capture phase wins over the app/billing Esc handlers).
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      if (promoModal && !promoModal.classList.contains("hidden")) { e.stopPropagation(); closePromo(); return; }
+      if (settingsModal && !settingsModal.classList.contains("hidden")) { e.stopPropagation(); closeSettings(); }
+    }, true);
+
     async function getApiAuthHeaders() {
       if (!authEnabled || !window.Clerk || !window.Clerk.session) return {};
       try { var t = await window.Clerk.session.getToken({ skipCache: true }); return t ? { Authorization: "Bearer " + t } : {}; }
@@ -2621,7 +3061,10 @@
     /* =========================================================== */
     async function cleanNotesViaApi(rawNotes, onChunk, signal) {
       var headers = Object.assign({ "Content-Type": "application/json" }, await getApiAuthHeaders());
-      var res = await fetch("/api/chat", { method: "POST", headers: headers, signal: signal, body: JSON.stringify({ notes: rawNotes, stream: true }) });
+      var body = { notes: rawNotes, stream: true };
+      var ci = studyPrefsInstruction();
+      if (ci) body.customInstructions = ci;
+      var res = await fetch("/api/chat", { method: "POST", headers: headers, signal: signal, body: JSON.stringify(body) });
       if (!res.ok) {
         var ep = null; try { ep = await res.json(); } catch (e) {}
         if (res.status === 401) { isAuthed = false; refreshAuthUi(); startSignIn("generate study packs"); throw new Error("Your session expired. Please sign in again."); }
@@ -3109,7 +3552,7 @@
     initClerk().then(afterClerk, afterClerk);
 
     // expose a couple of pure functions for quick console testing
-    window.__lumiDev = { generateFlashcards: generateFlashcards, generateQuizQuestions: generateQuizQuestions, buildEnhancedStudyPlan: buildEnhancedStudyPlan, buildQuizSessionItems: buildQuizSessionItems, renderResult: renderResult, openApp: openApp };
+    window.__lumiDev = { generateFlashcards: generateFlashcards, generateQuizQuestions: generateQuizQuestions, buildEnhancedStudyPlan: buildEnhancedStudyPlan, buildQuizSessionItems: buildQuizSessionItems, renderResult: renderResult, openApp: openApp, openSettings: openSettings, openPromo: openPromo, renderUserMenu: renderUserMenu };
 
   })();
   </script>
