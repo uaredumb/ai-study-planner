@@ -1012,6 +1012,11 @@
         </div>
 
         <div class="flex items-center gap-1.5">
+          <button id="appSavedBtn" type="button" aria-label="Your saved study packs" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M6 4h12a1 1 0 011 1v15l-7-4-7 4V5a1 1 0 011-1z"/></svg>
+            <span class="hidden sm:inline">Saved</span>
+            <span id="appSavedCount" class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[11px] font-bold bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-200">0</span>
+          </button>
           <button id="appAccountBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Sign in</button>
           <div id="appUserButton" class="hidden"></div>
         </div>
@@ -1299,11 +1304,58 @@
   </div>
 
   <!-- ============================================================= -->
+  <!-- SAVED PACKS MODAL — your study packs, saved on this device     -->
+  <!-- Opened from the header "Saved" button. Open / delete a pack,   -->
+  <!-- with a per-plan cap (Free 2 · Pro 10 · Power 15).              -->
+  <!-- ============================================================= -->
+  <div id="packsModal" class="hidden fixed inset-0 z-[95] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="packsTitle" aria-hidden="true">
+    <div id="packsBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    <div class="relative min-h-full flex items-start sm:items-center justify-center p-3 sm:p-6">
+      <div class="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-lift">
+        <div class="flex items-center justify-between gap-3 px-5 sm:px-7 pt-5 pb-4 border-b border-slate-200/70 dark:border-white/10">
+          <div class="flex items-center gap-2.5">
+            <span class="h-9 w-9 grid place-items-center rounded-xl bg-brand-50 dark:bg-white/5 text-brand-600 dark:text-brand-300">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M6 4h12a1 1 0 011 1v15l-7-4-7 4V5a1 1 0 011-1z"/></svg>
+            </span>
+            <div>
+              <h2 id="packsTitle" class="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Saved study packs</h2>
+              <p id="packsCountLine" class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">0 saved</p>
+            </div>
+          </div>
+          <button id="packsClose" type="button" aria-label="Close" class="-mr-1 h-9 w-9 grid place-items-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="px-5 sm:px-7 py-5 max-h-[68vh] overflow-y-auto">
+          <ul id="packsList" class="space-y-3"></ul>
+          <div id="packsEmpty" class="hidden text-center py-10">
+            <div class="mx-auto h-12 w-12 grid place-items-center rounded-2xl bg-brand-100 dark:bg-brand-500/15 text-brand-600 dark:text-brand-300 mb-3">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 4h12a1 1 0 011 1v15l-7-4-7 4V5a1 1 0 011-1z"/></svg>
+            </div>
+            <p class="font-bold text-slate-900 dark:text-white">No saved packs yet</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Generate a study pack, then tap <strong class="text-slate-700 dark:text-slate-200">Save to library</strong> to keep it here.</p>
+          </div>
+          <div id="packsFull" class="hidden mt-4 flex items-start gap-3 rounded-2xl border border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 px-4 py-3">
+            <svg class="h-5 w-5 flex-none text-amber-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-amber-800 dark:text-amber-200">You've used all your saved-pack slots.</p>
+              <p class="text-sm text-amber-700/90 dark:text-amber-200/80 mt-0.5">Delete one above, or <button id="packsUpgradeBtn" type="button" class="font-bold underline hover:no-underline">upgrade for more</button>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
   <!-- LUMIBOT — in-app study chat assistant (Pro & Power)           -->
   <!-- Floating launcher + chat panel. Reads the current Clean Notes -->
   <!-- (or the raw paste box) and can answer about / edit them.      -->
   <!-- Shown only while the study app (#appView) is open.            -->
   <!-- ============================================================= -->
+  <!-- Transient toast (saved / deleted feedback) -->
+  <div id="lumiToast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-6 z-[120] px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-slate-900 dark:bg-white dark:text-slate-900 shadow-lift" role="status" aria-live="polite"></div>
+
   <button id="lumibotLauncher" type="button" aria-label="Open LumiBot study assistant"
     class="hidden fixed bottom-5 right-5 z-[85] h-14 w-14 rounded-full bg-brand-600 hover:bg-brand-700 text-white grid place-items-center transition hover:-translate-y-0.5">
     <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 9h9m-9 3.5h6M21 11.5a8 8 0 01-11.5 7.2L4 20l1.3-4.7A8 8 0 1121 11.5z"/></svg>
@@ -2588,6 +2640,7 @@
       if (location.hash !== "#app") history.pushState(null, "", "#app");
       restoreState();
       refreshAuthUi();
+      updateSavedCount();
       showLumibotLauncher(true);
       if (opts.upgrade) startUpgrade();
       setTimeout(function () { if (els.appNotes) els.appNotes.focus({ preventScroll: true }); }, 50);
@@ -2610,7 +2663,9 @@
       openApp();
     });
     window.addEventListener("hashchange", function () { if (location.hash === "#app") openApp(); else if (!appView.classList.contains("hidden")) closeApp(); });
-    if (location.hash === "#app") openApp();
+    // Defer the deep-link auto-open to a macrotask so the whole app script (all
+    // function expressions and var initializers) has finished before restoreState runs.
+    if (location.hash === "#app") setTimeout(openApp, 0);
     if (els.appBackBtn) els.appBackBtn.addEventListener("click", closeApp);
     document.addEventListener("keydown", function (e) {
       if (e.key !== "Escape") return;
@@ -2663,6 +2718,7 @@
       if (els.appCardLimitHint) els.appCardLimitHint.textContent = "Max " + p.cards + " (" + (p.name === "Free" ? "Free" : "Lumi " + p.name) + ")";
       if (els.appMoreChars) els.appMoreChars.classList.toggle("hidden", isProMode);
       if (els.appUpgradeBtn) els.appUpgradeBtn.classList.toggle("hidden", isPowerMode || isGodMode);
+      updateSavedCount();
     }
     function updateCharCount() {
       if (!els.appNotes || !els.appCharCount) return;
@@ -3431,6 +3487,7 @@
 
         var result = await generateStudyPack(text, outputs, signal);
         lastResult = result;
+        currentPackId = null;   // a fresh pack isn't in the library until saved
         renderResult(result);
         saveState();
         els.appStatus.textContent = "Done";
@@ -3456,8 +3513,13 @@
       head.className = "flex items-center justify-between flex-wrap gap-3 mb-4 animate-fade-in";
       head.innerHTML =
         '<div class="flex items-center gap-3"><span class="h-10 w-10 grid place-items-center rounded-xl bg-accent-100 dark:bg-accent-500/15 text-accent-600 dark:text-accent-300"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>' +
-        '<div><p class="text-lg font-extrabold text-slate-900 dark:text-white leading-none">' + escapeHtml(r.title) + '</p><p class="text-xs text-slate-400 mt-1">Study pack ready · saved to this device</p></div></div>';
+        '<div><p class="text-lg font-extrabold text-slate-900 dark:text-white leading-none">' + escapeHtml(r.title) + '</p><p class="text-xs text-slate-400 mt-1">Study pack ready</p></div></div>' +
+        '<button id="appSavePackBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">' +
+          '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 4h12a1 1 0 011 1v15l-7-4-7 4V5a1 1 0 011-1z"/></svg>' +
+          '<span class="save-label">Save to library</span>' +
+        '</button>';
       els.appOutput.appendChild(head);
+      wireSavePackBtn();
 
       var grid = document.createElement("div");
       grid.className = "grid lg:grid-cols-2 gap-4";
@@ -3613,7 +3675,8 @@
           url: els.appArticleUrl ? els.appArticleUrl.value : "",
           cardCount: els.appCardCount ? els.appCardCount.value : "5",
           outputs: getSelectedOutputs(),
-          result: lastResult
+          result: lastResult,
+          packId: currentPackId
         }));
       } catch (e) {}
     }
@@ -3623,6 +3686,11 @@
       var raw; try { raw = localStorage.getItem(STATE_KEY); } catch (e) {}
       if (!raw) return;
       var s; try { s = JSON.parse(raw); } catch (e) { return; }
+      // Restore lastResult / currentPackId FIRST — switching modes below fires a
+      // change handler that calls saveState(), which would otherwise persist a null
+      // result over the saved draft before we've had a chance to set it.
+      if (s.packId) currentPackId = s.packId;
+      if (s.result) lastResult = s.result;
       if (s.notes && els.appNotes) els.appNotes.value = s.notes;
       if (s.url && els.appArticleUrl) els.appArticleUrl.value = s.url;
       if (s.outputs) document.querySelectorAll("#appChips input[data-out]").forEach(function (cb) { if (s.outputs[cb.getAttribute("data-out")] != null) cb.checked = s.outputs[cb.getAttribute("data-out")]; });
@@ -3630,8 +3698,164 @@
       els.appCardCountWrap.classList.toggle("hidden", !document.querySelector('#appChips input[data-out="flashcards"]').checked);
       updateCharCount();
       if (s.cardCount && els.appCardCount) { var opt = els.appCardCount.querySelector('option[value="' + s.cardCount + '"]'); if (opt) els.appCardCount.value = s.cardCount; }
-      if (s.result) { lastResult = s.result; renderResult(s.result); }
+      if (s.result) renderResult(s.result);
     }
+
+    /* =========================================================== */
+    /* SAVED STUDY PACKS — device-local library, capped per plan    */
+    /* (Free 2 · Pro 10 · Power 15 · God 100 — see plan().files)    */
+    /* =========================================================== */
+    var PACKS_KEY = "lumi-packs-v1";
+    var currentPackId = null;             // id of the pack currently shown, if it's in the library
+    var packsModal = $("packsModal");
+
+    function loadPacks() {
+      var raw; try { raw = localStorage.getItem(PACKS_KEY); } catch (e) {}
+      if (!raw) return [];
+      try { var a = JSON.parse(raw); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+    }
+    function writePacks(arr) {
+      try { localStorage.setItem(PACKS_KEY, JSON.stringify(arr)); } catch (e) {}
+      updateSavedCount();
+    }
+    function newPackId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+    function packSummary(r) {
+      var o = (r && r.selectedOutputs) || {}, parts = [];
+      if (o.cleanNotes) parts.push(ensureStringArray(r.cleanNotes).length + " notes");
+      if (o.studyPlan) parts.push(ensureStringArray(r.studyOrder).length + " steps");
+      if (o.flashcards) parts.push(ensureStringArray(r.flashcards).length + " cards");
+      if (o.quizQuestions) parts.push((Array.isArray(r.quizQuestions) ? r.quizQuestions.length : 0) + " quiz");
+      return parts.join(" · ");
+    }
+    function fmtSavedAt(ts) { try { return "Saved " + new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch (e) { return "Saved"; } }
+
+    function toast(msg) {
+      var t = $("lumiToast");
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.remove("hidden");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(function () { t.classList.add("hidden"); }, 2200);
+    }
+
+    function updateSavedCount() {
+      var badge = $("appSavedCount");
+      if (badge) badge.textContent = String(loadPacks().length);
+      syncSavePackBtn();
+    }
+    function syncSavePackBtn() {
+      var btn = $("appSavePackBtn");
+      if (!btn) return;
+      var lbl = btn.querySelector(".save-label");
+      var saved = !!(currentPackId && loadPacks().some(function (p) { return p.id === currentPackId; }));
+      if (lbl) lbl.textContent = saved ? "Saved ✓" : "Save to library";
+      btn.classList.toggle("bg-brand-600", !saved);
+      btn.classList.toggle("hover:bg-brand-700", !saved);
+      btn.classList.toggle("bg-accent-600", saved);
+      btn.classList.toggle("hover:bg-accent-700", saved);
+    }
+    function wireSavePackBtn() {
+      var btn = $("appSavePackBtn");
+      if (!btn || btn.__wired) { syncSavePackBtn(); return; }
+      btn.__wired = true;
+      btn.addEventListener("click", saveCurrentPack);
+      syncSavePackBtn();
+    }
+
+    function saveCurrentPack() {
+      if (!lastResult) { toast("Generate a pack first"); return; }
+      var packs = loadPacks();
+      // Re-save (update) a pack that's already in the library.
+      if (currentPackId) {
+        for (var i = 0; i < packs.length; i++) {
+          if (packs[i].id === currentPackId) {
+            packs[i].title = lastResult.title || packs[i].title;
+            packs[i].summary = packSummary(lastResult);
+            packs[i].result = lastResult;
+            packs[i].savedAt = Date.now();
+            writePacks(packs);
+            toast("Pack updated");
+            return;
+          }
+        }
+      }
+      var max = plan().files;
+      if (packs.length >= max) {
+        toast("You've saved all " + max + " packs on your plan");
+        openPacks();   // show the library so they can delete one or upgrade
+        return;
+      }
+      var entry = { id: newPackId(), title: lastResult.title || "Study pack", summary: packSummary(lastResult), savedAt: Date.now(), result: lastResult };
+      packs.unshift(entry);
+      currentPackId = entry.id;
+      writePacks(packs);
+      saveState();
+      toast("Saved to your library");
+      burstConfetti();
+    }
+    function openSavedPack(id) {
+      var packs = loadPacks(), p = null;
+      for (var i = 0; i < packs.length; i++) { if (packs[i].id === id) { p = packs[i]; break; } }
+      if (!p) return;
+      lastResult = p.result;
+      currentPackId = p.id;
+      renderResult(p.result);
+      saveState();
+      closePacks();
+      setTimeout(function () { if (els.appOutput) els.appOutput.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60);
+    }
+    function deleteSavedPack(id) {
+      var packs = loadPacks().filter(function (p) { return p.id !== id; });
+      if (currentPackId === id) currentPackId = null;
+      writePacks(packs);
+      renderPacksList();
+    }
+    function renderPacksList() {
+      var list = $("packsList"), empty = $("packsEmpty"), full = $("packsFull"), countLine = $("packsCountLine");
+      if (!list) return;
+      var packs = loadPacks(), max = plan().files;
+      if (countLine) countLine.textContent = packs.length + " of " + max + " saved";
+      if (full) full.classList.toggle("hidden", packs.length < max);
+      if (empty) empty.classList.toggle("hidden", packs.length > 0);
+      list.innerHTML = packs.map(function (p) {
+        var sub = (p.summary ? p.summary + " · " : "") + fmtSavedAt(p.savedAt);
+        return '<li class="flex items-center gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[.03] px-4 py-3">' +
+          '<span class="h-9 w-9 flex-none grid place-items-center rounded-xl bg-brand-100 dark:bg-brand-500/15 text-brand-600 dark:text-brand-300"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v4a1 1 0 001 1h4M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h11a1 1 0 001-1V8l-5-5z"/></svg></span>' +
+          '<div class="min-w-0 flex-1">' +
+            '<p class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">' + escapeHtml(p.title || "Study pack") + '</p>' +
+            '<p class="text-xs text-slate-400 dark:text-slate-500 truncate">' + escapeHtml(sub) + '</p>' +
+          '</div>' +
+          '<button data-open-pack="' + p.id + '" type="button" class="flex-none px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Open</button>' +
+          '<button data-del-pack="' + p.id + '" type="button" aria-label="Delete saved pack" class="flex-none h-8 w-8 grid place-items-center rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 0v12a1 1 0 001 1h6a1 1 0 001-1V7"/></svg></button>' +
+        '</li>';
+      }).join("");
+      list.querySelectorAll("[data-open-pack]").forEach(function (b) { b.addEventListener("click", function () { openSavedPack(b.getAttribute("data-open-pack")); }); });
+      list.querySelectorAll("[data-del-pack]").forEach(function (b) { b.addEventListener("click", function () { deleteSavedPack(b.getAttribute("data-del-pack")); }); });
+    }
+    function openPacks() {
+      if (!packsModal) return;
+      if (typeof closeAllUserMenus === "function") closeAllUserMenus();
+      renderPacksList();
+      packsModal.classList.remove("hidden");
+      packsModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+    }
+    function closePacks() {
+      if (!packsModal) return;
+      packsModal.classList.add("hidden");
+      packsModal.setAttribute("aria-hidden", "true");
+      if (appView.classList.contains("hidden")) document.body.style.overflow = "";
+    }
+    if (packsModal) {
+      if ($("packsBackdrop")) $("packsBackdrop").addEventListener("click", closePacks);
+      if ($("packsClose")) $("packsClose").addEventListener("click", closePacks);
+      if ($("packsUpgradeBtn")) $("packsUpgradeBtn").addEventListener("click", function () { closePacks(); startUpgrade(); });
+    }
+    if ($("appSavedBtn")) $("appSavedBtn").addEventListener("click", openPacks);
+    // Esc closes the packs modal (capture phase, before the app-level Esc closes the whole app).
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && packsModal && !packsModal.classList.contains("hidden")) { e.stopPropagation(); closePacks(); }
+    }, true);
 
     /* =========================================================== */
     /* LUMIBOT — in-app study chat assistant (Pro & Power)         */
