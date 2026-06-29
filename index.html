@@ -636,7 +636,7 @@
               <span class="font-semibold text-slate-900 dark:text-white">Do I need an account to try it?</span>
               <svg class="faq-icon h-5 w-5 text-slate-400 shrink-0 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 9l6 6 6-6"/></svg>
             </button>
-            <div class="faq-body"><p class="px-5 pb-5 text-slate-600 dark:text-slate-300">No — you can run the demo on this page instantly. Signing in is only needed to save study packs and sync them across your phone and laptop.</p></div>
+            <div class="faq-body"><p class="px-5 pb-5 text-slate-600 dark:text-slate-300">No — you can run the demo on this page instantly, no account needed. A free account is only required to open the full app, where you can generate richer study packs and save and sync them across your phone and laptop.</p></div>
           </div>
 
           <div class="faq-item rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-soft overflow-hidden">
@@ -756,11 +756,6 @@
         </div>
 
         <div class="flex items-center gap-1.5">
-          <button id="appThemeToggle" type="button" aria-label="Toggle dark mode" class="h-9 w-9 grid place-items-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition">
-            <svg class="hidden dark:block h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-            <svg class="block dark:hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
-          </button>
-          <button id="appUpgradeBtn" type="button" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-white/5 hover:bg-brand-100 dark:hover:bg-white/10 transition">◆ Upgrade</button>
           <button id="appAccountBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Sign in</button>
           <div id="appUserButton" class="hidden"></div>
         </div>
@@ -2289,7 +2284,6 @@
     var GOD   = { name: "God",   chars: 50000, cards: 50, quiz: 25, files: 100 };
 
     var isProMode = false, isPowerMode = false, isGodMode = false, isAuthed = false, authEnabled = false;
-    var guestGenerations = 0;
     var currentMode = "notes";
     var photoDataUrl = "";
     var lastResult = null;
@@ -2642,7 +2636,8 @@
       }
       // --- homepage header (Sign in ↔ account profile) ---
       if (authed) {
-        if (els.homeSignInBtn) els.homeSignInBtn.classList.add("hidden");
+        // Remove sm:inline-flex too — otherwise the responsive variant overrides `hidden` on desktop.
+        if (els.homeSignInBtn) { els.homeSignInBtn.classList.add("hidden"); els.homeSignInBtn.classList.remove("sm:inline-flex"); }
         if (els.homeSignInBtnM) els.homeSignInBtnM.classList.add("hidden");
         if (els.homeSignInBtnFooter && els.homeSignInBtnFooter.parentElement) els.homeSignInBtnFooter.parentElement.classList.add("hidden");
         if (els.homeStartBtn) {
@@ -2654,7 +2649,7 @@
           renderUserMenu(els.homeUserButton, { afterSignOutUrl: location.pathname });
         }
       } else {
-        if (els.homeSignInBtn) els.homeSignInBtn.classList.remove("hidden");
+        if (els.homeSignInBtn) { els.homeSignInBtn.classList.remove("hidden"); els.homeSignInBtn.classList.add("sm:inline-flex"); }
         if (els.homeSignInBtnM) els.homeSignInBtnM.classList.remove("hidden");
         if (els.homeSignInBtnFooter && els.homeSignInBtnFooter.parentElement) els.homeSignInBtnFooter.parentElement.classList.remove("hidden");
         if (els.homeStartBtn) els.homeStartBtn.firstChild.textContent = "Start for free";
@@ -3138,8 +3133,8 @@
     async function onGenerate() {
       var outputs = getSelectedOutputs();
       if (!Object.keys(outputs).some(function (k) { return outputs[k]; })) { els.appStatus.textContent = "Pick at least one output first."; return; }
-      // guest gate: 1 free generation
-      if (authEnabled && !isAuthed && guestGenerations >= 1) { startSignIn("generate more study packs"); els.appStatus.textContent = "Sign in to keep generating."; return; }
+      // Account required: the in-app generator is for signed-in users. The free demo on the home page (#demo) stays open to everyone.
+      if (!requireAccount("generate study packs")) { els.appStatus.textContent = "Create a free account to generate study packs — or try the demo on the home page."; return; }
 
       abortCtl = new AbortController();
       var signal = abortCtl.signal;
@@ -3168,7 +3163,6 @@
 
         var result = await generateStudyPack(text, outputs, signal);
         lastResult = result;
-        if (authEnabled && !isAuthed) guestGenerations += 1;
         renderResult(result);
         saveState();
         els.appStatus.textContent = "Done";
