@@ -508,11 +508,11 @@
           <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Paste your notes on the left, and Lumi builds a complete pack on the right — clean notes, a plan, flashcards, and a quiz.</p>
         </div>
 
-        <!-- Two overlapping browser windows: the generator + the finished pack -->
-        <div class="mt-16 relative mx-auto max-w-5xl reveal-scale pb-20 lg:pb-28">
+        <!-- Two equal-size browser windows: the generator + the finished pack -->
+        <div class="mt-14 grid lg:grid-cols-2 gap-6 lg:gap-7 items-stretch mx-auto max-w-6xl reveal-scale">
 
-          <!-- FRONT WINDOW: the generator -->
-          <div class="browser-chrome sc-float relative z-10 lg:w-[80%]">
+          <!-- WINDOW 1: the generator -->
+          <div class="browser-chrome hover-rise flex flex-col">
             <div class="bc-bar">
               <div class="bc-dots"><span class="bc-dot" style="background:#ff5f57"></span><span class="bc-dot" style="background:#febc2e"></span><span class="bc-dot" style="background:#28c840"></span></div>
               <div class="bc-url"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2"/><path stroke-linecap="round" d="M8 11V8a4 4 0 018 0v3"/></svg> lumistudy.org/app</div>
@@ -521,7 +521,7 @@
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3"/></svg>
               </div>
             </div>
-            <div class="bc-body p-5 sm:p-7">
+            <div class="bc-body flex-1 p-5 sm:p-7">
               <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-soft p-5 sm:p-6">
                 <div class="flex items-start justify-between gap-3">
                   <div>
@@ -555,14 +555,14 @@
             </div>
           </div>
 
-          <!-- FLOATING WINDOW: the finished study pack -->
-          <div class="browser-chrome sc-float-2 mt-6 lg:mt-0 lg:absolute lg:right-0 lg:-bottom-6 lg:w-[54%] z-20 lg:rotate-[1.6deg]">
+          <!-- WINDOW 2: the finished study pack -->
+          <div class="browser-chrome hover-rise flex flex-col">
             <div class="bc-bar">
               <div class="bc-dots"><span class="bc-dot" style="background:#ff5f57"></span><span class="bc-dot" style="background:#febc2e"></span><span class="bc-dot" style="background:#28c840"></span></div>
               <div class="bc-url"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2"/><path stroke-linecap="round" d="M8 11V8a4 4 0 018 0v3"/></svg> lumistudy.org/app</div>
               <div class="bc-actions"><span class="h-2.5 w-2.5 rounded-sm border border-current"></span></div>
             </div>
-            <div class="bc-body p-4 sm:p-5">
+            <div class="bc-body flex-1 p-4 sm:p-5">
               <div class="flex items-center gap-2.5 mb-3">
                 <span class="text-xl">🧬</span>
                 <div>

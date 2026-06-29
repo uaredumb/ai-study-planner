@@ -102,6 +102,27 @@
       z-index: 2147483600 !important;
     }
   </style>
+
+  <!-- Site-wide button + transition micro-animations -->
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      a.inline-flex, button {
+        transition: transform .22s cubic-bezier(.34,1.4,.6,1), box-shadow .28s ease,
+                    background-color .25s ease, border-color .25s ease, color .2s ease, filter .2s ease !important;
+      }
+      button:active:not(:disabled), a.inline-flex:active:not(:disabled) { transform: scale(.955); }
+      .btn-lift:hover { transform: translateY(-3px); }
+      .btn-lift:active:not(:disabled) { transform: translateY(-1px) scale(.97); }
+    }
+    .btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+    .btn-shine::after {
+      content: ""; position: absolute; top: 0; bottom: 0; left: -150%; width: 55%;
+      transform: skewX(-22deg); pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+    }
+    @media (prefers-reduced-motion: no-preference) { .btn-shine:hover::after { animation: btn-sheen .85s cubic-bezier(.4,0,.2,1); } }
+    @keyframes btn-sheen { from { left: -150%; } to { left: 170%; } }
+  </style>
 </head>
 
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans antialiased selection:bg-brand-200 selection:text-brand-900">
@@ -126,7 +147,7 @@
           <svg class="hidden dark:block h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
           <svg class="block dark:hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
         </button>
-        <a href="index.html#app" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Open app</a>
+        <a href="index.html#app" class="btn-shine inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Open app</a>
       </div>
     </nav>
   </header>
@@ -189,7 +210,7 @@
                 <li class="flex gap-2.5"><span class="pchk"></span>Fast AI + article summaries</li>
                 <li class="flex gap-2.5"><span class="pchk"></span>25 study packs per day</li>
               </ul>
-              <a href="index.html#app" class="mt-6 inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Start 3-day free trial</a>
+              <a href="index.html#app" class="btn-shine mt-6 inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Start 3-day free trial</a>
             </article>
             <!-- Power -->
             <article class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col">
@@ -235,7 +256,7 @@
           </table>
         </div>
         <div class="px-6 sm:px-8 py-5 border-t border-slate-200/70 dark:border-white/10 text-center">
-          <a href="index.html#app" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Start free — no card needed
+          <a href="index.html#app" class="btn-shine btn-lift inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Start free — no card needed
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
           </a>
         </div>
