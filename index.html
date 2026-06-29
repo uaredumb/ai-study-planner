@@ -11,7 +11,7 @@
   <meta property="og:description" content="Turn messy notes into clean notes, a study plan, flashcards, and a quiz — in seconds." />
   <meta property="og:type" content="website" />
   <!-- If JS is unavailable, reveal-on-scroll content must still be visible. -->
-  <noscript><style>.reveal{opacity:1 !important;transform:none !important}</style></noscript>
+  <noscript><style>.reveal,.reveal-left,.reveal-right,.reveal-scale,.reveal-blur,.stagger>*{opacity:1 !important;transform:none !important;filter:none !important}</style></noscript>
 
   <!-- Brand assets (reused from the live site) -->
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=20260304" />
@@ -212,11 +212,130 @@
     /* Confetti dots */
     .confetti { position: fixed; top: -12px; width: 9px; height: 14px; z-index: 60; pointer-events: none; border-radius: 2px; }
   </style>
+
+  <!-- ============================================================= -->
+  <!-- ANIMATION + BROWSER-CHROME SHOWCASE ENHANCEMENTS               -->
+  <!-- ============================================================= -->
+  <style>
+    /* ---- Scroll progress bar (top of page) ---- */
+    #scrollProgress {
+      position: fixed; top: 0; left: 0; height: 3px; width: 0%; z-index: 60;
+      pointer-events: none; border-radius: 0 2px 2px 0;
+      background: linear-gradient(90deg, #6366f1, #818cf8, #10b981);
+      box-shadow: 0 0 12px rgba(99,102,241,.55);
+      transition: width .12s linear;
+    }
+
+    /* ---- Reveal-on-scroll: extra directions + scale + blur ---- */
+    .reveal-left, .reveal-right, .reveal-scale, .reveal-blur {
+      opacity: 0;
+      transition: opacity .75s cubic-bezier(.21,.6,.35,1), transform .75s cubic-bezier(.21,.6,.35,1), filter .75s ease;
+    }
+    .reveal-left  { transform: translateX(-34px); }
+    .reveal-right { transform: translateX(34px); }
+    .reveal-scale { transform: scale(.92); }
+    .reveal-blur  { filter: blur(12px); }
+    .reveal-left.in, .reveal-right.in, .reveal-scale.in, .reveal-blur.in { opacity: 1; transform: none; filter: none; }
+
+    /* ---- Staggered children: container gets .in, kids cascade ---- */
+    .stagger > * { opacity: 0; transform: translateY(18px); transition: opacity .6s cubic-bezier(.21,.6,.35,1), transform .6s cubic-bezier(.21,.6,.35,1); }
+    .stagger.in > * { opacity: 1; transform: none; }
+    .stagger.in > *:nth-child(1){transition-delay:.04s}
+    .stagger.in > *:nth-child(2){transition-delay:.10s}
+    .stagger.in > *:nth-child(3){transition-delay:.16s}
+    .stagger.in > *:nth-child(4){transition-delay:.22s}
+    .stagger.in > *:nth-child(5){transition-delay:.28s}
+    .stagger.in > *:nth-child(6){transition-delay:.34s}
+    .stagger.in > *:nth-child(7){transition-delay:.40s}
+    .stagger.in > *:nth-child(8){transition-delay:.46s}
+
+    /* ---- Button micro-interactions (site-wide press + lift) ----
+       The global transition reset (html:not(.preload) body *) drops `transform`
+       from the transition list; we re-add it here with a more specific selector
+       so presses and lifts actually animate. */
+    @media (prefers-reduced-motion: no-preference) {
+      html:not(.preload) body a.inline-flex,
+      html:not(.preload) body button,
+      html:not(.preload) body .btn-anim {
+        transition: transform .22s cubic-bezier(.34,1.4,.6,1), box-shadow .28s ease,
+                    background-color .25s ease, border-color .25s ease, color .2s ease, filter .2s ease;
+      }
+      html:not(.preload) body button:active:not(:disabled),
+      html:not(.preload) body a.inline-flex:active,
+      html:not(.preload) body .btn-anim:active:not(:disabled) { transform: scale(.955); }
+      html:not(.preload) body .btn-lift:hover { transform: translateY(-3px); }
+      html:not(.preload) body .btn-lift:active:not(:disabled) { transform: translateY(-1px) scale(.97); }
+    }
+
+    /* ---- Sheen sweep across primary buttons on hover ---- */
+    .btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+    .btn-shine::after {
+      content: ""; position: absolute; top: 0; bottom: 0; left: -150%; width: 55%;
+      transform: skewX(-22deg); pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .btn-shine:hover::after { animation: btn-sheen .85s cubic-bezier(.4,0,.2,1); }
+    }
+    @keyframes btn-sheen { from { left: -150%; } to { left: 170%; } }
+
+    /* ---- Animated underline for primary nav links ---- */
+    .nav-link { position: relative; }
+    .nav-link::after {
+      content: ""; position: absolute; left: 14px; right: 14px; bottom: 5px; height: 2px;
+      border-radius: 2px; background: currentColor; opacity: .9;
+      transform: scaleX(0); transform-origin: left;
+      transition: transform .28s cubic-bezier(.21,.6,.35,1);
+    }
+    .nav-link:hover::after { transform: scaleX(1); }
+
+    /* ---- Card hover rise (gentle lift) ---- */
+    .hover-rise { transition: transform .3s cubic-bezier(.21,.6,.35,1), box-shadow .3s ease; }
+    .hover-rise:hover { transform: translateY(-5px); }
+
+    /* ===================== BROWSER-CHROME SHOWCASE ===================== */
+    .browser-chrome {
+      border-radius: 14px; overflow: hidden; background: #fff;
+      border: 1px solid rgba(15,23,42,.10);
+      box-shadow: 0 2px 4px rgba(15,23,42,.05), 0 44px 80px -34px rgba(49,46,129,.45);
+    }
+    .dark .browser-chrome { background: #0b1120; border-color: rgba(255,255,255,.10); box-shadow: 0 44px 90px -36px rgba(0,0,0,.85); }
+    .bc-bar { display: flex; align-items: center; gap: .75rem; padding: .6rem .9rem; background: #eef1f6; border-bottom: 1px solid rgba(15,23,42,.07); }
+    .dark .bc-bar { background: #0f1729; border-color: rgba(255,255,255,.07); }
+    .bc-dots { display: flex; gap: .42rem; flex: 0 0 auto; }
+    .bc-dot { width: 11px; height: 11px; border-radius: 50%; }
+    .bc-url {
+      flex: 1 1 auto; display: flex; align-items: center; gap: .4rem; justify-content: center;
+      max-width: 320px; margin: 0 auto; padding: .28rem .8rem; border-radius: 9999px;
+      background: rgba(255,255,255,.85); border: 1px solid rgba(15,23,42,.08);
+      font-size: .72rem; font-weight: 600; color: #64748b; white-space: nowrap;
+    }
+    .dark .bc-url { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.08); color: #94a3b8; }
+    .bc-actions { flex: 0 0 auto; display: flex; gap: .55rem; color: #cbd5e1; }
+    .dark .bc-actions { color: #475569; }
+    .bc-body { background: #f8fafc; }
+    .dark .bc-body { background: #020617; }
+
+    /* gentle float loop for the floating showcase frames */
+    @keyframes sc-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-13px); } }
+    .sc-float { animation: sc-float 7s ease-in-out infinite; }
+    .sc-float-2 { animation: sc-float 8s ease-in-out -4s infinite; }
+    .sc-float:hover, .sc-float-2:hover { animation-play-state: paused; }
+    @media (prefers-reduced-motion: reduce) { .sc-float, .sc-float-2 { animation: none; } }
+
+    /* typing caret inside the generator mockup */
+    @keyframes sc-blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+    .sc-caret { display: inline-block; width: 2px; height: 1.05em; vertical-align: text-bottom; background: #6366f1; border-radius: 1px; animation: sc-blink 1s step-end infinite; }
+    @media (prefers-reduced-motion: reduce) { .sc-caret { animation: none; } }
+  </style>
 </head>
 
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans antialiased selection:bg-brand-200 selection:text-brand-900">
 
   <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-3 focus:left-3 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-brand-600 focus:text-white">Skip to content</a>
+
+  <!-- Scroll progress indicator -->
+  <div id="scrollProgress" aria-hidden="true"></div>
 
   <!-- ============================================================= -->
   <!-- 1. STICKY NAVBAR                                               -->
@@ -232,11 +351,12 @@
 
       <!-- Center links -->
       <div class="hidden md:flex items-center gap-1">
-        <a href="#how" class="px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">How it works</a>
-        <a href="#features" class="px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Features</a>
-        <a href="#demo" class="px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Try it</a>
-        <a href="#examples" class="px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Examples</a>
-        <a href="pricing.html" class="px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Pricing</a>
+        <a href="#showcase" class="nav-link px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">A look inside</a>
+        <a href="#how" class="nav-link px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">How it works</a>
+        <a href="#features" class="nav-link px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Features</a>
+        <a href="#demo" class="nav-link px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Try it</a>
+        <a href="#examples" class="nav-link px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Examples</a>
+        <a href="pricing.html" class="nav-link px-3.5 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Pricing</a>
       </div>
 
       <!-- Right actions -->
@@ -248,7 +368,7 @@
           <svg class="block dark:hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
         </button>
         <button id="homeSignInBtn" type="button" class="hidden sm:inline-flex items-center px-3.5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition">Sign in</button>
-        <a id="homeStartBtn" href="#app" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-soft hover:shadow-lift transition">
+        <a id="homeStartBtn" href="#app" class="btn-shine inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-soft hover:shadow-lift transition">
           Start for free
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
@@ -264,6 +384,7 @@
     <!-- Mobile drawer -->
     <div id="mobileMenu" class="md:hidden hidden border-t border-slate-200/70 dark:border-white/10 bg-white/95 dark:bg-slate-950/95 backdrop-blur">
       <div class="px-4 py-3 space-y-1">
+        <a href="#showcase" class="block px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium">A look inside</a>
         <a href="#how" class="block px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium">How it works</a>
         <a href="#features" class="block px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium">Features</a>
         <a href="#demo" class="block px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium">Try it</a>
@@ -301,11 +422,11 @@
           </p>
 
           <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start animate-fade-up" style="animation-delay:.16s">
-            <a href="#app" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-base font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-glow hover:-translate-y-0.5 transition">
+            <a href="#app" class="btn-shine btn-lift inline-flex items-center justify-center gap-2 px-6 py-3.5 text-base font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-glow transition">
               Generate my first study pack — free
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
-            <a href="#how" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-base font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-brand-300 dark:hover:border-white/20 rounded-xl shadow-soft transition">
+            <a href="#how" class="btn-lift inline-flex items-center justify-center gap-2 px-6 py-3.5 text-base font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-brand-300 dark:hover:border-white/20 rounded-xl shadow-soft transition">
               <svg class="h-5 w-5 text-brand-500" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               See how it works
             </a>
@@ -368,6 +489,121 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- 3. PRODUCT SHOWCASE — browser-chrome framed app screens       -->
+    <!-- ============================================================= -->
+    <section id="showcase" class="relative py-20 sm:py-28">
+      <div class="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+        <div class="absolute top-12 left-1/2 -translate-x-1/2 h-72 w-[85%] max-w-4xl rounded-full bg-brand-400/15 dark:bg-brand-500/10 blur-3xl"></div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-2xl mx-auto text-center reveal">
+          <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">A look inside</p>
+          <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">See your study pack come together</h2>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Paste your notes on the left, and Lumi builds a complete pack on the right — clean notes, a plan, flashcards, and a quiz.</p>
+        </div>
+
+        <!-- Two overlapping browser windows: the generator + the finished pack -->
+        <div class="mt-16 relative mx-auto max-w-5xl reveal-scale pb-20 lg:pb-28">
+
+          <!-- FRONT WINDOW: the generator -->
+          <div class="browser-chrome sc-float relative z-10 lg:w-[80%]">
+            <div class="bc-bar">
+              <div class="bc-dots"><span class="bc-dot" style="background:#ff5f57"></span><span class="bc-dot" style="background:#febc2e"></span><span class="bc-dot" style="background:#28c840"></span></div>
+              <div class="bc-url"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2"/><path stroke-linecap="round" d="M8 11V8a4 4 0 018 0v3"/></svg> lumistudy.org/app</div>
+              <div class="bc-actions">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v6h6M20 20v-6h-6"/><path stroke-linecap="round" stroke-linejoin="round" d="M20 9A8 8 0 006 5.3L4 7M4 15a8 8 0 0014 3.7l2-1.7"/></svg>
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3"/></svg>
+              </div>
+            </div>
+            <div class="bc-body p-5 sm:p-7">
+              <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-soft p-5 sm:p-6">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Create a study pack</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Give Lumi your material and pick what to get back.</p>
+                  </div>
+                  <div class="hidden sm:flex items-center gap-0.5 rounded-xl bg-slate-100 dark:bg-white/5 p-1 text-xs font-semibold shrink-0">
+                    <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/10 text-brand-700 dark:text-brand-200 shadow-sm">Paste notes</span>
+                    <span class="px-2.5 py-1 rounded-lg text-slate-500 dark:text-slate-400">From a link</span>
+                    <span class="px-2.5 py-1 rounded-lg text-slate-500 dark:text-slate-400">Photo / PDF</span>
+                  </div>
+                </div>
+                <div class="mt-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Photosynthesis — light reactions happen in the thylakoid membrane, Calvin cycle in the stroma. Chlorophyll absorbs light (red + blue). Inputs: CO₂, water, sunlight → glucose + O₂. ATP &amp; NADPH made in the light reactions<span class="sc-caret"></span>
+                </div>
+                <div class="mt-4 flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Outputs:</span>
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-50 dark:bg-brand-500/15 text-brand-700 dark:text-brand-200 border border-brand-200 dark:border-brand-400/30">📝 Clean Notes</span>
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-50 dark:bg-brand-500/15 text-brand-700 dark:text-brand-200 border border-brand-200 dark:border-brand-400/30">📘 Study Plan</span>
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-50 dark:bg-brand-500/15 text-brand-700 dark:text-brand-200 border border-brand-200 dark:border-brand-400/30">🃏 Flashcards</span>
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-50 dark:bg-brand-500/15 text-brand-700 dark:text-brand-200 border border-brand-200 dark:border-brand-400/30">❓ Quiz</span>
+                </div>
+                <div class="mt-5 flex items-center gap-3 flex-wrap">
+                  <span class="btn-shine inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-brand-600 rounded-xl shadow-glow">
+                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.7 5.6L19 9l-5.3 1.4L12 16l-1.7-5.6L5 9l5.3-1.4L12 2z"/></svg>
+                    Generate Study Pack
+                  </span>
+                  <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-600 dark:text-accent-300"><span class="h-1.5 w-1.5 rounded-full bg-accent-500 animate-pulse"></span> Ready</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FLOATING WINDOW: the finished study pack -->
+          <div class="browser-chrome sc-float-2 mt-6 lg:mt-0 lg:absolute lg:right-0 lg:-bottom-6 lg:w-[54%] z-20 lg:rotate-[1.6deg]">
+            <div class="bc-bar">
+              <div class="bc-dots"><span class="bc-dot" style="background:#ff5f57"></span><span class="bc-dot" style="background:#febc2e"></span><span class="bc-dot" style="background:#28c840"></span></div>
+              <div class="bc-url"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2"/><path stroke-linecap="round" d="M8 11V8a4 4 0 018 0v3"/></svg> lumistudy.org/app</div>
+              <div class="bc-actions"><span class="h-2.5 w-2.5 rounded-sm border border-current"></span></div>
+            </div>
+            <div class="bc-body p-4 sm:p-5">
+              <div class="flex items-center gap-2.5 mb-3">
+                <span class="text-xl">🧬</span>
+                <div>
+                  <p class="text-sm font-bold text-slate-900 dark:text-white leading-none">Photosynthesis</p>
+                  <p class="text-[11px] text-slate-400 mt-1">Biology · study pack ready</p>
+                </div>
+                <span class="ml-auto inline-flex items-center gap-1 text-[11px] font-semibold text-accent-600 dark:text-accent-300 bg-accent-50 dark:bg-accent-500/15 px-2 py-0.5 rounded-full">
+                  <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Done
+                </span>
+              </div>
+              <div class="space-y-3">
+                <div class="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-3.5 shadow-soft">
+                  <p class="text-[10px] font-bold text-brand-500 mb-2">CLEAN NOTES</p>
+                  <ul class="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 list-disc pl-4">
+                    <li>Light reactions occur in the <strong class="text-slate-800 dark:text-white">thylakoid membrane</strong>.</li>
+                    <li>The <strong class="text-slate-800 dark:text-white">Calvin cycle</strong> runs in the stroma.</li>
+                    <li>Inputs: CO₂ + H₂O + light → glucose + O₂.</li>
+                  </ul>
+                </div>
+                <div class="rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 p-3.5 text-white shadow-soft">
+                  <p class="text-[10px] font-bold opacity-90 mb-1">FLASHCARD 1 / 8</p>
+                  <p class="text-sm font-semibold leading-snug">Where do the light reactions occur?</p>
+                  <p class="text-[11px] opacity-80 mt-2">Tap to flip ↻</p>
+                </div>
+                <div class="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-3.5 shadow-soft">
+                  <div class="flex items-center justify-between">
+                    <p class="text-[10px] font-bold text-amber-500">QUIZ · QUESTION 2 / 6</p>
+                    <span class="text-[10px] font-semibold text-slate-400">1 correct</span>
+                  </div>
+                  <div class="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden"><div class="h-full w-1/3 rounded-full bg-gradient-to-r from-brand-500 to-accent-500"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-2 text-center reveal">
+          <a href="#app" class="btn-shine btn-lift inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-glow transition">
+            Try it yourself — free
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
         </div>
       </div>
     </section>
@@ -523,7 +759,7 @@
               <p class="text-xs text-slate-400 dark:text-slate-500"><span id="demoCount">0</span> / 3000</p>
             </div>
 
-            <button id="demoGenerate" type="button" class="mt-4 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-glow hover:-translate-y-0.5 transition disabled:opacity-60 disabled:cursor-not-allowed">
+            <button id="demoGenerate" type="button" class="btn-shine btn-lift mt-4 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-glow transition disabled:opacity-60 disabled:cursor-not-allowed">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3l1.5 4L11 8.5 6.5 10 5 14l-1.5-4L-1 8.5 3.5 7 5 3z" transform="translate(4 1)"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 12l.9 2.4 2.6.9-2.6.9L17 19l-.9-2.4-2.6-.9 2.6-.9.9-2.4z"/></svg>
               Generate Study Pack
             </button>
@@ -557,7 +793,7 @@
         </div>
 
         <!-- Custom plan cards (overview only — no checkout here; the full table + checkout live on pricing.html) -->
-        <div class="mt-12 grid md:grid-cols-3 gap-6 reveal">
+        <div class="mt-12 grid md:grid-cols-3 gap-6 stagger">
           <!-- Free -->
           <article class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col">
             <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Free</h3>
@@ -678,11 +914,11 @@
             <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Your next study session starts in 10 seconds</h2>
             <p class="mt-4 text-lg text-brand-100 max-w-xl mx-auto">Turn the pile of notes into a plan you can actually follow. Free to start — no card, no catch.</p>
             <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-              <a href="#app" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-bold text-brand-700 bg-white hover:bg-brand-50 shadow-lift hover:-translate-y-0.5 transition">
+              <a href="#app" class="btn-shine btn-lift inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-bold text-brand-700 bg-white hover:bg-brand-50 shadow-lift transition">
                 Generate my first study pack
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
               </a>
-              <a href="pricing.html" class="inline-flex items-center justify-center px-7 py-3.5 rounded-xl font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 transition">See pricing</a>
+              <a href="pricing.html" class="btn-lift inline-flex items-center justify-center px-7 py-3.5 rounded-xl font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 transition">See pricing</a>
             </div>
           </div>
         </div>
@@ -695,7 +931,7 @@
   <!-- ============================================================= -->
   <footer class="border-t border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-950">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 stagger">
         <div class="lg:col-span-1">
           <a href="#top" class="flex items-center gap-2.5">
             <img src="LumiStudy logo with glowing orb (1).png?v=20260313" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft" />
@@ -840,7 +1076,7 @@
 
         <!-- GENERATE -->
         <div class="mt-7 flex items-center gap-3 flex-wrap">
-          <button id="appGenerate" type="button" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-glow hover:-translate-y-0.5 transition disabled:opacity-60 disabled:cursor-not-allowed">
+          <button id="appGenerate" type="button" class="btn-shine btn-lift inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-glow transition disabled:opacity-60 disabled:cursor-not-allowed">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 12l.9 2.4 2.6.9-2.6.9L17 19l-.9-2.4-2.6-.9 2.6-.9.9-2.4z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 3l1.2 3.2L13.5 7.5 10.2 8.8 9 12l-1.2-3.2L4.5 7.5 7.8 6.2 9 3z"/></svg>
             Generate Study Pack
           </button>
@@ -1323,10 +1559,14 @@
   (function () {
     "use strict";
 
-    /* ---- remove preload guard so theme transitions can run ---- */
-    window.addEventListener("load", function () {
-      requestAnimationFrame(function () { document.documentElement.classList.remove("preload"); });
-    });
+    /* ---- remove preload guard so theme transitions can run ----
+       Guard against the race where `load` already fired before this script
+       executes (in which case an addEventListener('load') callback never runs). */
+    function dropPreload() { requestAnimationFrame(function () { document.documentElement.classList.remove("preload"); }); }
+    if (document.readyState === "complete") dropPreload();
+    else window.addEventListener("load", dropPreload);
+    // Safety net: never leave the page stuck in the no-transition preload state.
+    setTimeout(dropPreload, 1200);
 
     /* ---------- THEME TOGGLE (persisted, default light) ---------- */
     var themeToggle = document.getElementById("themeToggle");
@@ -1337,13 +1577,19 @@
       });
     }
 
-    /* ---------- NAV: shadow on scroll + mobile menu ---------- */
+    /* ---------- NAV: shadow on scroll + scroll progress + mobile menu ---------- */
     var navBg = document.getElementById("navBg");
+    var scrollProgress = document.getElementById("scrollProgress");
     function onScroll() {
-      if (!navBg) return;
-      navBg.style.opacity = window.scrollY > 8 ? "1" : "0";
+      if (navBg) navBg.style.opacity = window.scrollY > 8 ? "1" : "0";
+      if (scrollProgress) {
+        var doc = document.documentElement;
+        var max = doc.scrollHeight - doc.clientHeight;
+        scrollProgress.style.width = (max > 0 ? Math.min(100, (doc.scrollTop / max) * 100) : 0) + "%";
+      }
     }
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
     onScroll();
 
     var menuBtn = document.getElementById("mobileMenuBtn");
@@ -1358,11 +1604,11 @@
       });
     }
 
-    /* ---------- REVEAL ON SCROLL ---------- */
+    /* ---------- REVEAL ON SCROLL (fade, directional, scale, blur, stagger) ---------- */
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
-    }, { threshold: 0.12 });
-    document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll(".reveal, .reveal-left, .reveal-right, .reveal-scale, .reveal-blur, .stagger").forEach(function (el) { io.observe(el); });
 
     /* ---------- FAQ ACCORDION ---------- */
     document.querySelectorAll(".faq-q").forEach(function (btn) {
