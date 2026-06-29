@@ -1,19 +1,18 @@
 /*
- * Lumi Study newsletter signup → Mailchimp embedded form (JSONP, no backend).
+ * Lumi Study newsletter signup → Mailchimp standard form POST.
  * Shared across all pages. Looks for a #newsletterForm; no-op if absent.
  */
 (function () {
-  // ── CONFIG: paste your audience's embedded-form action URL here ──────────────
-  // Mailchimp → Audience → Sign up forms → Embedded forms → copy the <form action="…"> URL.
-  // It looks like: https://ACCOUNT.us21.list-manage.com/subscribe/post?u=XXXX&id=YYYY
   var MC_ACTION = "https://us8.list-manage.com/subscribe/post?u=f977eb32eb487d8c218893089&id=4c5b969a69";
-  // ─────────────────────────────────────────────────────────────────────────────
 
   var form = document.getElementById("newsletterForm");
   if (!form) return;
   var input = document.getElementById("newsletterEmail");
   var btn = document.getElementById("newsletterBtn");
   var msg = document.getElementById("newsletterMsg");
+
+  var u = (MC_ACTION.match(/[?&]u=([^&]+)/) || [])[1];
+  var id = (MC_ACTION.match(/[?&]id=([^&]+)/) || [])[1];
 
   function showMsg(text, ok) {
     msg.textContent = text;
@@ -24,68 +23,41 @@
     msg.classList.toggle("dark:text-rose-400", !ok);
   }
 
-  // Mailchimp's post-json endpoint supports a JSONP callback, so we can submit
-  // cross-origin and get an inline result without any server of our own.
-  function submitToMailchimp(email) {
-    return new Promise(function (resolve, reject) {
-      var u = (MC_ACTION.match(/[?&]u=([^&]+)/) || [])[1];
-      var id = (MC_ACTION.match(/[?&]id=([^&]+)/) || [])[1];
-      if (!u || !id) { reject(new Error("not-configured")); return; }
-
-      var base = MC_ACTION.split("?")[0].replace("/post", "/post-json");
-      var cb = "mcCb_" + Date.now() + "_" + Math.floor(Math.random() * 1e6);
-      var script = document.createElement("script");
-      var timer = setTimeout(function () { cleanup(); reject(new Error("timeout")); }, 10000);
-
-      function cleanup() {
-        clearTimeout(timer);
-        try { delete window[cb]; } catch (_e) { window[cb] = undefined; }
-        if (script.parentNode) script.parentNode.removeChild(script);
-      }
-      window[cb] = function (data) { cleanup(); resolve(data || {}); };
-
-      script.src = base +
-        "?u=" + encodeURIComponent(u) +
-        "&id=" + encodeURIComponent(id) +
-        "&EMAIL=" + encodeURIComponent(email) +
-        "&b_" + u + "_" + id + "=" +
-        "&c=" + cb;
-      script.onerror = function () { cleanup(); reject(new Error("network")); };
-      document.body.appendChild(script);
+  if (!u || !id) {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      showMsg("Newsletter signup isn't configured yet.", false);
     });
+    return;
   }
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     if (!form.checkValidity()) { form.reportValidity(); return; }
     var email = (input.value || "").trim();
-    var original = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = "Subscribing…";
+    if (!email) return;
 
-    submitToMailchimp(email)
-      .then(function (data) {
-        if (data.result === "success") {
-          form.reset();
-          showMsg("You're in! Thanks for subscribing.", true);
-        } else {
-          var m = (data.msg || "").toString();
-          if (/already subscribed/i.test(m)) {
-            form.reset();
-            showMsg("You're already on the list — thanks!", true);
-          } else {
-            // Strip Mailchimp's leading "0 - " error code if present.
-            showMsg(m.replace(/^\d+\s*-\s*/, "") || "Something went wrong. Please try again.", false);
-          }
-        }
-      })
-      .catch(function (err) {
-        if (err && err.message === "not-configured") {
-          showMsg("Newsletter signup isn't configured yet.", false);
-        } else {
-          showMsg("Network error. Please try again.", false);
-        }
-      })
-      .finally(function () { btn.disabled = false; btn.textContent = original; });
+    var mcForm = document.createElement("form");
+    mcForm.method = "POST";
+    mcForm.action = MC_ACTION;
+    mcForm.target = "_blank";
+    mcForm.style.display = "none";
+
+    var emailField = document.createElement("input");
+    emailField.name = "EMAIL";
+    emailField.value = email;
+    mcForm.appendChild(emailField);
+
+    var honeypot = document.createElement("input");
+    honeypot.name = "b_" + u + "_" + id;
+    honeypot.value = "";
+    mcForm.appendChild(honeypot);
+
+    document.body.appendChild(mcForm);
+    mcForm.submit();
+    document.body.removeChild(mcForm);
+
+    form.reset();
+    showMsg("Redirecting to confirm your subscription…", true);
   });
 })();
