@@ -2610,7 +2610,7 @@
     var photoDataUrl = "";
     var lastResult = null;
     var abortCtl = null;
-    var billingMounted = false, pendingUpgrade = false;
+    var billingMounted = false, pendingUpgrade = false, pendingApp = false;
 
     function getPubKey() {
       var k = String((window.APP_CONFIG && window.APP_CONFIG.CLERK_PUBLISHABLE_KEY) || "").trim().replace(/^['"]|['"]$/g, "");
@@ -2636,6 +2636,16 @@
     /* =========================================================== */
     function openApp(opts) {
       opts = opts || {};
+      // Require a signed-in account to open the full app. If auth is disabled
+      // (no Clerk key / dev mode) we skip the gate so local dev still works.
+      if (authEnabled && !isAuthed) {
+        pendingApp = true;
+        // Push #app into the URL so a redirect-based sign-in lands back here.
+        if (location.hash !== "#app") history.pushState(null, "", "#app");
+        startSignIn("use the full app");
+        return;
+      }
+      pendingApp = false;
       appView.classList.remove("hidden");
       appView.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
@@ -3023,8 +3033,11 @@
           var was = isAuthed;
           isAuthed = Boolean(window.Clerk.user);
           refreshAuthUi();
-          // user just finished signing in for an upgrade → open Clerk checkout
-          if (isAuthed && !was && pendingUpgrade) openBillingModal();
+          if (isAuthed && !was) {
+            // User just finished signing in — open whatever was pending.
+            if (pendingApp) { pendingApp = false; openApp(); }
+            else if (pendingUpgrade) openBillingModal();
+          }
         });
       } catch (e) {}
     }
