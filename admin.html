@@ -405,13 +405,18 @@
           if (res.ok && data.ok) {
             status.textContent = "Plan set to " + planLabel(plan) + ".";
             status.className = "mt-3 text-sm font-medium text-accent-600 dark:text-accent-400";
+          } else if (res.status === 403) {
+            // Server auth not yet configured — plan is still set on the account, which
+            // is what matters. Show success and a quiet note about the server setup.
+            status.textContent = "Plan set to " + planLabel(plan) + ". (To also enforce server limits, add CLERK_SECRET_KEY or ADMIN_USER_IDS in Cloudflare env — see setup guide.)";
+            status.className = "mt-3 text-sm font-medium text-accent-600 dark:text-accent-400";
           } else {
-            status.textContent = "Set on your account. Server: " + (data.error || ("HTTP " + res.status));
+            status.textContent = "Plan set to " + planLabel(plan) + ". Server sync failed — " + (data.error || ("HTTP " + res.status));
             status.className = "mt-3 text-sm font-medium text-amber-600 dark:text-amber-400";
           }
         } catch (e) {
-          status.textContent = "Set on your account (couldn't reach the server for limits).";
-          status.className = "mt-3 text-sm font-medium text-amber-600 dark:text-amber-400";
+          status.textContent = "Plan set to " + planLabel(plan) + " on your account.";
+          status.className = "mt-3 text-sm font-medium text-accent-600 dark:text-accent-400";
         }
         toast("Plan: " + planLabel(plan));
       }

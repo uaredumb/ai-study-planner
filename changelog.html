@@ -137,7 +137,7 @@
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">Changelog</span>
         <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">What's new in Lumi Study</h1>
         <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Every release, new feature, improvement and fix — in one place. We ship often.</p>
-        <p class="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">Currently on <span class="font-semibold text-slate-700 dark:text-slate-200">v1.4.0</span></p>
+        <p class="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">Currently on <span class="font-semibold text-slate-700 dark:text-slate-200">v1.5.0</span></p>
       </div>
     </section>
 
@@ -198,6 +198,16 @@
          has a type: "new" | "improved" | "fixed".
       ---------------------------------------------------------------- */
       var RELEASES = [
+        {
+          version: "v1.5.0",
+          date: "2026-06-30",
+          title: "Account required · Sign-in & sign-out fixes",
+          changes: [
+            { type: "new", text: "Opening the full app now requires a free account — the landing page demo still works for everyone with no sign-in needed." },
+            { type: "fixed", text: "The Sign in button in the app now reliably opens the Clerk sign-in dialog on all browsers and configurations. After signing in, the app opens automatically right where you left off." },
+            { type: "fixed", text: "Signing out now takes you back to the home page every time instead of sometimes dropping you back inside the app." }
+          ]
+        },
         {
           version: "v1.4.0",
           date: "2026-06-29",

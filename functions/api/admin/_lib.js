@@ -145,6 +145,25 @@ function emailFromClaims(claims) {
   return typeof candidate === "string" ? candidate.trim().toLowerCase() : "";
 }
 
+// Try the Clerk OIDC userinfo endpoint — works without CLERK_SECRET_KEY.
+// Clerk is a certified OIDC provider; session tokens may be used as access
+// tokens against {iss}/oauth/userinfo. Fails gracefully if not supported.
+async function fetchEmailViaUserinfo(rawToken, claims) {
+  const iss = String(claims && claims.iss || "").replace(/\/$/, "");
+  if (!iss || !rawToken) return "";
+  try {
+    const res = await fetch(iss + "/oauth/userinfo", {
+      headers: { Authorization: "Bearer " + rawToken }
+    });
+    if (!res.ok) return "";
+    const data = await res.json();
+    const email = String(data.email || data.email_address || "").trim().toLowerCase();
+    return email;
+  } catch (_error) {
+    return "";
+  }
+}
+
 // Fetch the user's primary email from the Clerk Backend API (needs CLERK_SECRET_KEY).
 async function fetchClerkEmail(userId, env) {
   const secret = env && env.CLERK_SECRET_KEY;
@@ -173,19 +192,23 @@ export function adminEmails(env) {
   return configured.length ? configured : DEFAULT_ADMIN_EMAILS.slice();
 }
 
-// Decide whether the verified requester is an admin. Three layered checks so it
-// works regardless of how the Clerk JWT is configured:
+// Decide whether the verified requester is an admin. Four layered checks:
 //   1) email claim in the token matches ADMIN_EMAILS
-//   2) the user id (sub) is listed in ADMIN_USER_IDS
-//   3) CLERK_SECRET_KEY is set -> look the email up via the Clerk Backend API
-export async function isAdmin(claims, env) {
+//   2) sub is listed in ADMIN_USER_IDS env var
+//   3) Clerk OIDC userinfo endpoint (no extra env var needed)
+//   4) Clerk Backend API (requires CLERK_SECRET_KEY)
+export async function isAdmin(claims, env, rawToken) {
   if (!claims || !claims.sub) return false;
   const emails = adminEmails(env);
+
   const claimEmail = emailFromClaims(claims);
   if (claimEmail && emails.includes(claimEmail)) return true;
 
   const ids = normalizeList(env && env.ADMIN_USER_IDS);
   if (ids.includes(String(claims.sub).toLowerCase())) return true;
+
+  const userinfoEmail = await fetchEmailViaUserinfo(rawToken, claims);
+  if (userinfoEmail && emails.includes(userinfoEmail)) return true;
 
   const fetched = await fetchClerkEmail(claims.sub, env);
   if (fetched && emails.includes(fetched)) return true;
@@ -196,9 +219,13 @@ export async function isAdmin(claims, env) {
 // Verify the request AND that it's an admin. Returns { claims } on success or
 // { error, status } describing why it failed.
 export async function requireAdmin(request, env) {
-  const claims = await getVerifiedClaims(request, env);
+  const auth = request.headers.get("Authorization") || "";
+  const match = auth.match(/^Bearer\s+(.+)$/i);
+  if (!match) return { error: "Sign in required.", status: 401 };
+  const rawToken = match[1];
+  const claims = await verifyClerkJwt(rawToken, env);
   if (!claims) return { error: "Sign in required.", status: 401 };
-  if (!(await isAdmin(claims, env))) return { error: "Not authorized.", status: 403 };
+  if (!(await isAdmin(claims, env, rawToken))) return { error: "Not authorized.", status: 403 };
   return { claims };
 }
 
