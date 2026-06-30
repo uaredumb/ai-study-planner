@@ -186,6 +186,8 @@ async function fetchClerkEmail(userId, env) {
 
 // Default owner email so the panel works out-of-the-box; override with ADMIN_EMAILS.
 const DEFAULT_ADMIN_EMAILS = ["mavrick.blackburn@gmail.com"];
+// Default owner Clerk user ID — checked against the verified JWT sub claim.
+const DEFAULT_ADMIN_USER_IDS = ["user_3B976SCTl5K3OApyQh2r5OaJwuj"];
 
 export function adminEmails(env) {
   const configured = normalizeList(env && env.ADMIN_EMAILS);
@@ -204,8 +206,8 @@ export async function isAdmin(claims, env, rawToken) {
   const claimEmail = emailFromClaims(claims);
   if (claimEmail && emails.includes(claimEmail)) return true;
 
-  const ids = normalizeList(env && env.ADMIN_USER_IDS);
-  if (ids.includes(String(claims.sub).toLowerCase())) return true;
+  const ids = [...DEFAULT_ADMIN_USER_IDS, ...normalizeList(env && env.ADMIN_USER_IDS)];
+  if (ids.includes(String(claims.sub))) return true;
 
   const userinfoEmail = await fetchEmailViaUserinfo(rawToken, claims);
   if (userinfoEmail && emails.includes(userinfoEmail)) return true;
