@@ -2954,8 +2954,12 @@
     }
     function refreshAllUserMenus() { lumiMenus.forEach(updateUserMenu); }
     function doSignOut(after) {
+      // Close the app view first so there's no flash of the app before the redirect.
+      if (!appView.classList.contains("hidden")) closeApp();
       if (window.Clerk && typeof window.Clerk.signOut === "function") {
-        try { window.Clerk.signOut({ redirectUrl: after || location.pathname }); return; } catch (e) {}
+        // Always land on the landing page after sign-out.
+        var dest = location.pathname.replace(/#.*$/, "");
+        try { window.Clerk.signOut({ redirectUrl: dest }); return; } catch (e) {}
         try { window.Clerk.signOut(); return; } catch (e2) {}
       }
     }
@@ -2974,7 +2978,7 @@
       if (authed) {
         els.appAccountBtn.classList.add("hidden");
         els.appUserButton.classList.remove("hidden");
-        renderUserMenu(els.appUserButton, { afterSignOutUrl: location.pathname + "#app" });
+        renderUserMenu(els.appUserButton, { afterSignOutUrl: location.pathname });
       } else {
         els.appAccountBtn.classList.remove("hidden");
         els.appUserButton.classList.add("hidden");
@@ -3030,15 +3034,32 @@
       return false;
     }
     function startSignIn(reason, stayHome) {
-      if (window.Clerk && typeof window.Clerk.openSignIn === "function") {
+      if (window.Clerk) {
         var after = stayHome ? (location.pathname + location.search) : (location.pathname + "#app");
-        try { window.Clerk.openSignIn({ afterSignInUrl: after, afterSignUpUrl: after }); return; } catch (e) {}
+        // Try openSignIn with both Clerk v5 params and legacy v4 aliases.
+        if (typeof window.Clerk.openSignIn === "function") {
+          try {
+            window.Clerk.openSignIn({
+              forceRedirectUrl: after,
+              fallbackRedirectUrl: after,
+              signUpForceRedirectUrl: after,
+              signUpFallbackRedirectUrl: after,
+              afterSignInUrl: after,
+              afterSignUpUrl: after
+            });
+            return;
+          } catch (e) {}
+        }
+        // Fallback: full-page redirect to Clerk sign-in.
+        if (typeof window.Clerk.redirectToSignIn === "function") {
+          try { window.Clerk.redirectToSignIn({ redirectUrl: after }); return; } catch (e) {}
+        }
       }
       // Clerk not ready yet — surface a hint where the user can see it.
       if (appView && !appView.classList.contains("hidden") && els.appStatus) {
         els.appStatus.textContent = reason ? ("Sign in to " + reason + ".") : "Sign in to continue.";
       } else {
-        alert("Sign-in is still loading — please try again in a moment.");
+        alert("Sign-in is loading — please try again in a moment.");
       }
     }
     // Homepage "Sign in" entry points → open the Clerk dialog (stay on the homepage).
