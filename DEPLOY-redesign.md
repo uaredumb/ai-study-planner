@@ -63,3 +63,30 @@ To turn it on:
 How it works: the requester is identified from a **signature-verified** Clerk session JWT (`sub` + plan from the `pla` claim); guests are limited by IP at the Free tier. Counts are stored per-user-per-day and per-month in KV with TTL. Over-limit returns HTTP 429 with a friendly message that the app surfaces in its status line.
 
 **Test after enabling** (limits are low, so it's quick): on a Free/guest session, generate 4 packs — the 4th should return the 429 message. Verify a Pro/Power test account gets the higher cap. (If a paid user is wrongly throttled to Free, the `pla` claim isn't reaching the token — check Clerk Billing is enabled for that instance.)
+
+## Admin panel (`admin.html`)
+
+A private owner-only panel at **`/admin.html`** to (1) set your own plan to Free / Pro / Power / **God** (God = no limits) and (2) create / list / delete **promo codes** that users redeem in-app (Account menu → Promo code). Codes carry a tier (Pro / Power / God), optional max-uses, and optional expiry.
+
+Backend lives in `functions/api/admin/` (`plan.js`, `promos.js`, shared `_lib.js`) and a small extension to `functions/api/pro/redeem.js` (now also honors admin-created codes) and `functions/api/chat.js` (now honors admin plan overrides; **God bypasses the generation rate limit**).
+
+### Setup
+1. **Bind a KV namespace named `ADMIN_KV`** — Pages → Settings → Functions → KV namespace bindings. Create a namespace (e.g. `lumi-admin`) and bind it as **`ADMIN_KV`** (Production **and** Preview). This stores promo codes (`promo:<CODE>`) and plan overrides (`override:<userId>`).
+   - For God Mode to bypass the *server* generation cap, `chat.js` reads `ADMIN_KV` too, so bind it even if you skip `RATE_LIMIT`.
+2. **Admin identity** — pick ONE (the panel + every admin API call is gated server-side, not just in the browser):
+   - **Easiest:** set env **`CLERK_SECRET_KEY`** (Clerk dashboard → API keys → Secret key). The default admin email is `mavrick.blackburn@gmail.com`; override with **`ADMIN_EMAILS`** (comma/space separated) if needed. The server looks up your email via the Clerk Backend API.
+   - **No secret key:** set env **`ADMIN_USER_IDS`** to your Clerk user id (`user_…`). The panel shows "Your user id" once you sign in — copy it in.
+   - *(Also works automatically if your Clerk JWT template includes an `email` claim.)*
+3. The client gate uses `APP_CONFIG.ADMIN_EMAIL` (defaults to `mavrick.blackburn@gmail.com`, set in `config.js`). Keep it in sync with `ADMIN_EMAILS`.
+4. Redeploy.
+
+### How it fits together
+- **Set my plan** writes `unsafeMetadata.planOverride` (instant UI via `syncPlan`) **and** `POST /api/admin/plan` → KV `override:<you>` (server limits). "Free" clears the override.
+- **Promo codes** are stored in KV; redeeming a **Power/God** code also writes a server override for that user so their limits match. Pro codes keep the existing Clerk-metadata path.
+- Existing static env-hash codes (`PRO_CODE_HASHES` / `GOD_MODE_CODE_HASHES`) and the emergency `GUEST_GOD_MODE_CODE` still work unchanged.
+
+### Verify after deploy
+- [ ] Sign in as the owner → the **Admin** link appears in the account menu, and `/admin.html` shows the panel (a non-owner account gets "Not authorized").
+- [ ] Click **God** → badge shows God; generate a long pack with no character cap.
+- [ ] Create a **Power** code, redeem it from a second account (Account menu → Promo code) → that account becomes Power.
+- [ ] If you see "Promo storage isn't set up yet," the `ADMIN_KV` binding is missing.

@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en" class="preload">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Lumi Admin</title>
+  <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#020617" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=20260304" />
+  <link rel="apple-touch-icon" sizes="180x180" href="LumiStudy logo with glowing orb (1).png?v=20260313" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: { sans: ["Outfit", "ui-sans-serif", "system-ui", "sans-serif"] },
+          colors: {
+            brand: { 50:"#eef2ff",100:"#e0e7ff",200:"#c7d2fe",300:"#a5b4fc",400:"#818cf8",500:"#6366f1",600:"#4f46e5",700:"#4338ca",800:"#3730a3",900:"#312e81",950:"#1e1b4b" },
+            accent: { 50:"#ecfdf5",100:"#d1fae5",200:"#a7f3d0",300:"#6ee7b7",400:"#34d399",500:"#10b981",600:"#059669",700:"#047857",800:"#065f46",900:"#064e3b" }
+          },
+          boxShadow: {
+            soft: "0 1px 2px rgba(15,23,42,.04), 0 8px 24px -8px rgba(15,23,42,.12)",
+            lift: "0 2px 4px rgba(15,23,42,.04), 0 24px 48px -16px rgba(49,46,129,.28)"
+          }
+        }
+      }
+    };
+  </script>
+
+  <script>
+    (function initTheme() {
+      try {
+        var saved = localStorage.getItem("lumi-theme");
+        if (saved === "dark") document.documentElement.classList.add("dark");
+        else document.documentElement.classList.remove("dark");
+      } catch (e) {}
+    })();
+  </script>
+
+  <script>
+    window.APP_CONFIG = window.APP_CONFIG || { CANONICAL_HOST: "", CLERK_PUBLISHABLE_KEY: "" };
+  </script>
+  <script src="config.js" onerror="this.remove()"></script>
+  <script src="/runtime-config" onerror="this.remove()"></script>
+  <script>
+    (function preloadClerk() {
+      var key = String((window.APP_CONFIG && window.APP_CONFIG.CLERK_PUBLISHABLE_KEY) || "").trim().replace(/^['"]|['"]$/g, "");
+      if (!/^pk_(test|live)_/.test(key)) return;
+      window.__clerk_publishable_key = key;
+      window.__CLERK_PUBLISHABLE_KEY__ = key;
+      var meta = document.querySelector('meta[name="clerk-publishable-key"]');
+      if (!meta) { meta = document.createElement("meta"); meta.setAttribute("name", "clerk-publishable-key"); document.head.appendChild(meta); }
+      meta.setAttribute("content", key);
+      if (document.querySelector('script[data-clerk-loader="admin"]')) return;
+      var script = document.createElement("script");
+      script.async = true; script.crossOrigin = "anonymous"; script.type = "text/javascript";
+      script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
+      script.setAttribute("data-clerk-loader", "admin");
+      script.setAttribute("data-clerk-publishable-key", key);
+      document.head.appendChild(script);
+    })();
+  </script>
+
+  <style>
+    html:not(.preload) body, html:not(.preload) body * {
+      transition: background-color .35s ease, border-color .35s ease, color .25s ease, box-shadow .35s ease;
+    }
+    body { font-feature-settings: "ss01","cv01"; -webkit-font-smoothing: antialiased; }
+  </style>
+</head>
+
+<body class="font-sans bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen">
+  <!-- ====== NAV ====== -->
+  <header class="sticky top-0 z-30 backdrop-blur bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/70 dark:border-white/10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2.5 group">
+        <img src="LumiStudy logo with glowing orb (1).png?v=20260313" alt="Lumi" class="h-8 w-8 rounded-lg" />
+        <span class="font-bold text-lg tracking-tight">Lumi <span class="text-brand-500">Admin</span></span>
+      </a>
+      <div class="flex items-center gap-2">
+        <button id="themeToggle" type="button" aria-label="Toggle theme" class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition">
+          <svg class="h-4 w-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36 6.36-1.42-1.42M7.05 7.05 5.64 5.64m12.72 0-1.42 1.42M7.05 16.95l-1.41 1.41"/><circle cx="12" cy="12" r="4"/></svg>
+          <svg class="h-4 w-4 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <a href="index.html#app" class="hidden sm:inline-flex items-center rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-3.5 py-2 transition">Open app</a>
+        <button id="signOutBtn" type="button" class="hidden inline-flex items-center rounded-lg border border-slate-200 dark:border-white/10 text-sm font-semibold px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-white/5 transition">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+
+    <!-- LOADING -->
+    <section id="stateLoading" class="py-24 text-center">
+      <div class="inline-block h-8 w-8 rounded-full border-2 border-brand-300 border-t-brand-600 animate-spin"></div>
+      <p class="mt-4 text-slate-500 dark:text-slate-400 text-sm">Loading admin…</p>
+    </section>
+
+    <!-- SIGNED OUT -->
+    <section id="stateSignedOut" class="hidden py-20 max-w-md mx-auto text-center">
+      <h1 class="text-2xl font-bold">Admin sign in</h1>
+      <p class="mt-2 text-slate-500 dark:text-slate-400">Sign in with the owner account to manage plans and promo codes.</p>
+      <button id="signInBtn" type="button" class="mt-6 inline-flex items-center rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold px-5 py-2.5 transition">Sign in</button>
+      <p id="signInHint" class="mt-4 text-xs text-slate-400"></p>
+    </section>
+
+    <!-- NOT AUTHORIZED -->
+    <section id="stateDenied" class="hidden py-20 max-w-md mx-auto text-center">
+      <div class="mx-auto h-12 w-12 grid place-items-center rounded-full bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.42 0z"/></svg>
+      </div>
+      <h1 class="mt-4 text-2xl font-bold">Not authorized</h1>
+      <p class="mt-2 text-slate-500 dark:text-slate-400">This account isn't the Lumi owner. <span id="deniedEmail" class="font-medium"></span></p>
+      <button data-signout class="mt-6 inline-flex items-center rounded-xl border border-slate-200 dark:border-white/10 font-semibold px-5 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 transition">Sign out</button>
+    </section>
+
+    <!-- ADMIN PANEL -->
+    <section id="statePanel" class="hidden space-y-8">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Admin panel</h1>
+        <p class="mt-1 text-slate-500 dark:text-slate-400 text-sm">Signed in as <span id="adminEmail" class="font-semibold text-slate-700 dark:text-slate-200"></span></p>
+      </div>
+
+      <!-- config / setup banner -->
+      <div id="setupBanner" class="hidden rounded-xl border border-amber-300/70 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-4 text-sm text-amber-800 dark:text-amber-200"></div>
+
+      <!-- MY PLAN -->
+      <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-soft p-5 sm:p-6">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 class="text-lg font-bold">My plan</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Set the plan on your own account. <span class="font-semibold">God</span> removes all limits.</p>
+          </div>
+          <span class="inline-flex items-center gap-2 text-sm">
+            <span class="text-slate-400">Current:</span>
+            <span id="currentPlanBadge" class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold bg-slate-100 dark:bg-white/10">—</span>
+          </span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="planButtons">
+          <button data-plan="free"  class="plan-btn">Free</button>
+          <button data-plan="pro"   class="plan-btn">Pro</button>
+          <button data-plan="power" class="plan-btn">Power</button>
+          <button data-plan="god"   class="plan-btn">God <span class="text-[10px] align-top opacity-70">∞</span></button>
+        </div>
+        <p id="planStatus" class="mt-3 text-sm font-medium min-h-[1.25rem]"></p>
+        <p class="mt-1 text-xs text-slate-400">Your user id: <code id="adminUserId" class="select-all">—</code></p>
+      </div>
+
+      <!-- PROMO CODES -->
+      <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-soft p-5 sm:p-6">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 class="text-lg font-bold">Promo codes</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Create codes people redeem in the app (Account menu → Promo code).</p>
+          </div>
+          <button id="reloadCodes" type="button" class="text-sm font-semibold text-brand-600 dark:text-brand-300 hover:underline">Refresh</button>
+        </div>
+
+        <!-- create form -->
+        <form id="promoForm" class="mt-4 grid sm:grid-cols-[1fr_1fr_1fr] gap-3">
+          <label class="block">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Type</span>
+            <select id="promoType" class="mt-1 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+              <option value="pro">Pro</option>
+              <option value="power">Power</option>
+              <option value="god">God (no limits)</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Custom code (optional)</span>
+            <input id="promoCode" type="text" placeholder="auto-generate" autocomplete="off" class="mt-1 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-sm uppercase placeholder:normal-case" />
+          </label>
+          <label class="block">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Max uses (0 = ∞)</span>
+            <input id="promoMaxUses" type="number" min="0" step="1" value="0" class="mt-1 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-sm" />
+          </label>
+          <label class="block">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Expires in days (0 = never)</span>
+            <input id="promoExpiry" type="number" min="0" step="1" value="0" class="mt-1 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-sm" />
+          </label>
+          <label class="block sm:col-span-2">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Note (optional)</span>
+            <input id="promoNote" type="text" maxlength="120" placeholder="e.g. Instagram giveaway" class="mt-1 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-sm" />
+          </label>
+          <div class="sm:col-span-3 flex items-center gap-3">
+            <button type="submit" id="promoCreate" class="inline-flex items-center rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 transition">Create code</button>
+            <span id="promoStatus" class="text-sm font-medium"></span>
+          </div>
+        </form>
+
+        <!-- list -->
+        <div class="mt-6 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wide text-slate-400 border-b border-slate-200 dark:border-white/10">
+                <th class="py-2 pr-3 font-semibold">Code</th>
+                <th class="py-2 pr-3 font-semibold">Type</th>
+                <th class="py-2 pr-3 font-semibold">Uses</th>
+                <th class="py-2 pr-3 font-semibold">Expires</th>
+                <th class="py-2 pr-3 font-semibold">Status</th>
+                <th class="py-2 pr-3 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="codesBody">
+              <tr><td colspan="6" class="py-6 text-center text-slate-400">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- toast -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden">
+    <div class="rounded-xl bg-slate-900 text-white text-sm font-medium px-4 py-2.5 shadow-lift dark:bg-white dark:text-slate-900"></div>
+  </div>
+
+  <style type="text/tailwindcss">
+    .plan-btn { @apply rounded-xl border px-3 py-2.5 text-sm font-semibold border-slate-200 dark:border-white/10 hover:border-brand-400 hover:bg-brand-50 dark:hover:bg-white/5 transition; }
+    .plan-btn.active { @apply border-brand-500 bg-brand-600 text-white hover:bg-brand-600; }
+  </style>
+
+  <script>
+    (function () {
+      "use strict";
+      var $ = function (id) { return document.getElementById(id); };
+      var ADMIN_EMAIL_DEFAULT = "mavrick.blackburn@gmail.com";
+      function configuredAdminEmail() {
+        var e = String((window.APP_CONFIG && window.APP_CONFIG.ADMIN_EMAIL) || "").trim().toLowerCase();
+        return e || ADMIN_EMAIL_DEFAULT;
+      }
+
+      /* ---- theme ---- */
+      (function () {
+        document.documentElement.classList.remove("preload");
+        var btn = $("themeToggle");
+        if (btn) btn.addEventListener("click", function () {
+          var dark = document.documentElement.classList.toggle("dark");
+          try { localStorage.setItem("lumi-theme", dark ? "dark" : "light"); } catch (e) {}
+        });
+      })();
+
+      function show(stateId) {
+        ["stateLoading", "stateSignedOut", "stateDenied", "statePanel"].forEach(function (id) {
+          var el = $(id); if (el) el.classList.toggle("hidden", id !== stateId);
+        });
+      }
+      function toast(msg) {
+        var t = $("toast"); if (!t) return;
+        t.firstElementChild.textContent = msg;
+        t.classList.remove("hidden");
+        clearTimeout(toast._t);
+        toast._t = setTimeout(function () { t.classList.add("hidden"); }, 2600);
+      }
+      function getPubKey() {
+        var k = String((window.APP_CONFIG && window.APP_CONFIG.CLERK_PUBLISHABLE_KEY) || "").trim().replace(/^['"]|['"]$/g, "");
+        return /^pk_(test|live)_/.test(k) ? k : "";
+      }
+
+      /* ---- Clerk bootstrap ---- */
+      function waitForClerk(cb) {
+        var tries = 0;
+        (function poll() {
+          if (window.Clerk && typeof window.Clerk.load === "function") return cb(window.Clerk);
+          if (tries++ > 160) return cb(null); // ~8s
+          setTimeout(poll, 50);
+        })();
+      }
+
+      if (!getPubKey()) {
+        show("stateSignedOut");
+        $("signInHint").textContent = "Auth isn't configured on this site (no Clerk key).";
+        $("signInBtn").disabled = true;
+        return;
+      }
+
+      waitForClerk(function (Clerk) {
+        if (!Clerk) { show("stateSignedOut"); $("signInHint").textContent = "Couldn't load Clerk. Refresh to try again."; return; }
+        Clerk.load().then(function () {
+          render();
+          Clerk.addListener(function () { render(); });
+        }).catch(function () {
+          show("stateSignedOut");
+          $("signInHint").textContent = "Couldn't initialize auth. Refresh to try again.";
+        });
+
+        $("signInBtn").addEventListener("click", function () {
+          try { Clerk.openSignIn({ afterSignInUrl: location.href, redirectUrl: location.href }); }
+          catch (e) { try { Clerk.redirectToSignIn(); } catch (e2) {} }
+        });
+        function doSignOut() { try { Clerk.signOut(); } catch (e) {} }
+        $("signOutBtn").addEventListener("click", doSignOut);
+        document.querySelectorAll("[data-signout]").forEach(function (b) { b.addEventListener("click", doSignOut); });
+
+        var rendered = false;
+        function render() {
+          var u = Clerk.user;
+          $("signOutBtn").classList.toggle("hidden", !u);
+          if (!u) { show("stateSignedOut"); return; }
+          var email = (u.primaryEmailAddress && u.primaryEmailAddress.emailAddress || "").toLowerCase();
+          if (email !== configuredAdminEmail()) {
+            $("deniedEmail").textContent = email ? "(" + email + ")" : "";
+            show("stateDenied");
+            return;
+          }
+          $("adminEmail").textContent = email;
+          $("adminUserId").textContent = u.id || "—";
+          show("statePanel");
+          if (!rendered) { rendered = true; initPanel(Clerk); }
+          else { refreshPlanBadge(Clerk); }
+        }
+      });
+
+      /* ---- auth header ---- */
+      async function authHeaders(Clerk) {
+        try {
+          var t = await Clerk.session.getToken({ skipCache: true });
+          return t ? { Authorization: "Bearer " + t } : {};
+        } catch (e) {
+          try { var f = await Clerk.session.getToken(); return f ? { Authorization: "Bearer " + f } : {}; }
+          catch (e2) { return {}; }
+        }
+      }
+
+      function planLabel(p) { return ({ free: "Free", pro: "Pro", power: "Power", god: "God" })[p] || p; }
+      function badgeClass(p) {
+        return ({
+          free: "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300",
+          pro: "bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-200",
+          power: "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-200",
+          god: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200"
+        })[p] || "bg-slate-100";
+      }
+
+      function currentClientPlan(Clerk) {
+        var meta = (Clerk.user && Clerk.user.unsafeMetadata) || {};
+        var ov = String(meta.planOverride || "").toLowerCase();
+        if (["free", "pro", "power", "god"].includes(ov)) return ov;
+        if (meta.godMode) return "god";
+        if (meta.powerUnlocked) return "power";
+        if (meta.proUnlocked) return "pro";
+        return "free";
+      }
+
+      function paintPlan(p) {
+        var badge = $("currentPlanBadge");
+        badge.textContent = planLabel(p);
+        badge.className = "inline-flex items-center rounded-full px-3 py-1 text-xs font-bold " + badgeClass(p);
+        document.querySelectorAll("#planButtons .plan-btn").forEach(function (b) {
+          b.classList.toggle("active", b.getAttribute("data-plan") === p);
+        });
+      }
+      function refreshPlanBadge(Clerk) { paintPlan(currentClientPlan(Clerk)); }
+
+      function initPanel(Clerk) {
+        paintPlan(currentClientPlan(Clerk));
+
+        /* ---- My plan buttons ---- */
+        document.querySelectorAll("#planButtons .plan-btn").forEach(function (btn) {
+          btn.addEventListener("click", function () { setPlan(Clerk, btn.getAttribute("data-plan")); });
+        });
+
+        /* ---- Promo form ---- */
+        $("promoForm").addEventListener("submit", function (e) { e.preventDefault(); createPromo(Clerk); });
+        $("reloadCodes").addEventListener("click", function () { loadCodes(Clerk); });
+        loadCodes(Clerk);
+      }
+
+      async function setPlan(Clerk, plan) {
+        var status = $("planStatus");
+        status.textContent = "Saving…";
+        status.className = "mt-3 text-sm font-medium text-slate-500";
+        // 1) Client metadata so the app reflects it instantly.
+        try {
+          var existing = (Clerk.user.unsafeMetadata) || {};
+          var patch = Object.assign({}, existing, {
+            planOverride: plan,
+            godMode: plan === "god",
+            powerUnlocked: plan === "power" || plan === "god",
+            proUnlocked: plan !== "free"
+          });
+          await Clerk.user.update({ unsafeMetadata: patch });
+        } catch (e) {
+          status.textContent = "Couldn't update your account metadata.";
+          status.className = "mt-3 text-sm font-medium text-rose-600 dark:text-rose-400";
+          return;
+        }
+        paintPlan(plan);
+        // 2) Server override (KV) so generation limits match. Best-effort.
+        try {
+          var res = await fetch("/api/admin/plan", {
+            method: "POST",
+            headers: Object.assign({ "Content-Type": "application/json" }, await authHeaders(Clerk)),
+            body: JSON.stringify({ plan: plan })
+          });
+          var data = await res.json().catch(function () { return {}; });
+          if (res.ok && data.ok) {
+            status.textContent = "Plan set to " + planLabel(plan) + ".";
+            status.className = "mt-3 text-sm font-medium text-accent-600 dark:text-accent-400";
+          } else {
+            status.textContent = "Set on your account. Server: " + (data.error || ("HTTP " + res.status));
+            status.className = "mt-3 text-sm font-medium text-amber-600 dark:text-amber-400";
+          }
+        } catch (e) {
+          status.textContent = "Set on your account (couldn't reach the server for limits).";
+          status.className = "mt-3 text-sm font-medium text-amber-600 dark:text-amber-400";
+        }
+        toast("Plan: " + planLabel(plan));
+      }
+
+      function setPromoStatus(msg, kind) {
+        var el = $("promoStatus");
+        el.textContent = msg || "";
+        el.className = "text-sm font-medium " + (kind === "error" ? "text-rose-600 dark:text-rose-400" : kind === "success" ? "text-accent-600 dark:text-accent-400" : "text-slate-500");
+      }
+
+      async function createPromo(Clerk) {
+        var type = $("promoType").value;
+        var code = $("promoCode").value.trim();
+        var maxUses = parseInt($("promoMaxUses").value, 10) || 0;
+        var expiresInDays = parseInt($("promoExpiry").value, 10) || 0;
+        var note = $("promoNote").value.trim();
+        var btn = $("promoCreate");
+        btn.disabled = true;
+        setPromoStatus("Creating…");
+        try {
+          var res = await fetch("/api/admin/promos", {
+            method: "POST",
+            headers: Object.assign({ "Content-Type": "application/json" }, await authHeaders(Clerk)),
+            body: JSON.stringify({ type: type, code: code, maxUses: maxUses, expiresInDays: expiresInDays, note: note })
+          });
+          var data = await res.json().catch(function () { return {}; });
+          if (res.ok && data.ok) {
+            setPromoStatus("Created " + data.code.code + " (" + planLabel(data.code.type) + ").", "success");
+            $("promoCode").value = ""; $("promoNote").value = "";
+            toast("Code created: " + data.code.code);
+            loadCodes(Clerk);
+          } else {
+            setPromoStatus(data.error || ("Failed (HTTP " + res.status + ")."), "error");
+          }
+        } catch (e) {
+          setPromoStatus("Couldn't reach the server.", "error");
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+          return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+        });
+      }
+      function fmtExpiry(ms) {
+        if (!ms) return "Never";
+        try { return new Date(ms).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }); }
+        catch (e) { return "—"; }
+      }
+      function statusPill(s) {
+        var map = {
+          active: "bg-accent-100 text-accent-700 dark:bg-accent-500/15 dark:text-accent-300",
+          expired: "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400",
+          "used up": "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400",
+          disabled: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300"
+        };
+        return '<span class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold ' + (map[s] || map.active) + '">' + escapeHtml(s) + '</span>';
+      }
+
+      async function loadCodes(Clerk) {
+        var body = $("codesBody");
+        body.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Loading…</td></tr>';
+        try {
+          var res = await fetch("/api/admin/promos", { headers: await authHeaders(Clerk) });
+          var data = await res.json().catch(function () { return {}; });
+          if (!res.ok || !data.ok) {
+            body.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-rose-500">' + escapeHtml(data.error || ("HTTP " + res.status)) + '</td></tr>';
+            return;
+          }
+          var banner = $("setupBanner");
+          if (data.kvBound === false) {
+            banner.classList.remove("hidden");
+            banner.innerHTML = "<b>Promo storage isn't set up yet.</b> Add a KV namespace binding named <code>ADMIN_KV</code> in Cloudflare Pages → Settings → Functions, then redeploy. (Plan changes still apply to your account.)";
+          } else {
+            banner.classList.add("hidden");
+          }
+          var codes = data.codes || [];
+          if (!codes.length) {
+            body.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">No codes yet. Create one above.</td></tr>';
+            return;
+          }
+          body.innerHTML = codes.map(function (c) {
+            var uses = (c.uses || 0) + " / " + (c.maxUses ? c.maxUses : "∞");
+            return '<tr class="border-b border-slate-100 dark:border-white/5">' +
+              '<td class="py-2.5 pr-3"><button class="font-mono font-semibold hover:text-brand-600" data-copy="' + escapeHtml(c.code) + '" title="Copy">' + escapeHtml(c.code) + '</button>' +
+                (c.note ? '<div class="text-[11px] text-slate-400">' + escapeHtml(c.note) + '</div>' : '') + '</td>' +
+              '<td class="py-2.5 pr-3"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ' + badgeClass(c.type) + '">' + planLabel(c.type) + '</span></td>' +
+              '<td class="py-2.5 pr-3 tabular-nums">' + uses + '</td>' +
+              '<td class="py-2.5 pr-3 text-slate-500 dark:text-slate-400">' + fmtExpiry(c.expiresAt) + '</td>' +
+              '<td class="py-2.5 pr-3">' + statusPill(c.status) + '</td>' +
+              '<td class="py-2.5 pr-3 text-right"><button class="text-rose-600 hover:underline text-xs font-semibold" data-del="' + escapeHtml(c.code) + '">Delete</button></td>' +
+              '</tr>';
+          }).join("");
+          body.querySelectorAll("[data-copy]").forEach(function (b) {
+            b.addEventListener("click", function () {
+              var v = b.getAttribute("data-copy");
+              try { navigator.clipboard.writeText(v); toast("Copied " + v); } catch (e) {}
+            });
+          });
+          body.querySelectorAll("[data-del]").forEach(function (b) {
+            b.addEventListener("click", function () { deleteCode(Clerk, b.getAttribute("data-del")); });
+          });
+        } catch (e) {
+          body.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-rose-500">Couldn\'t reach the server.</td></tr>';
+        }
+      }
+
+      async function deleteCode(Clerk, code) {
+        if (!confirm("Delete code " + code + "? People can no longer redeem it.")) return;
+        try {
+          var res = await fetch("/api/admin/promos?code=" + encodeURIComponent(code), {
+            method: "DELETE",
+            headers: await authHeaders(Clerk)
+          });
+          var data = await res.json().catch(function () { return {}; });
+          if (res.ok && data.ok) { toast("Deleted " + code); loadCodes(Clerk); }
+          else toast(data.error || "Delete failed");
+        } catch (e) { toast("Couldn't reach the server."); }
+      }
+    })();
+  </script>
+</body>
+</html>

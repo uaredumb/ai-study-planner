@@ -143,7 +143,11 @@ async function identifyRequester(request, env) {
         // Clerk Billing puts active plans in `pla` (e.g. "u:pro"). String-match
         // is format-agnostic and safe because the JWT signature is verified.
         const pla = String(claims.pla || claims.plan || "");
-        const plan = /power/i.test(pla) ? "power" : /pro/i.test(pla) ? "pro" : "free";
+        let plan = /power/i.test(pla) ? "power" : /pro/i.test(pla) ? "pro" : "free";
+        // An admin-set plan override (KV, written by /api/admin/plan or a
+        // power/god promo redemption) takes precedence. "god" = no limits.
+        const override = await readPlanOverride(claims.sub, env);
+        if (override) plan = override;
         return { id: "u:" + claims.sub, plan };
       }
     } catch (_error) {
@@ -152,6 +156,19 @@ async function identifyRequester(request, env) {
   }
   const ip = request.headers.get("CF-Connecting-IP") || "anon";
   return { id: "ip:" + ip, plan: "free" };
+}
+
+// Read a server-side plan override (free|pro|power|god) for a user from the
+// ADMIN_KV namespace. Returns "" when none / not configured. Fails open.
+async function readPlanOverride(userId, env) {
+  const kv = env && env.ADMIN_KV;
+  if (!kv) return "";
+  try {
+    const value = String((await kv.get("override:" + userId)) || "").toLowerCase();
+    return ["free", "pro", "power", "god"].includes(value) ? value : "";
+  } catch (_error) {
+    return "";
+  }
 }
 
 function rateLimitResponse(message) {
@@ -164,6 +181,7 @@ async function checkRateLimit(request, env) {
   if (!kv) return null; // not configured -> never blocks
   try {
     const { id, plan } = await identifyRequester(request, env);
+    if (plan === "god") return null; // God Mode = no generation limits.
     const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
     const iso = new Date().toISOString();
     const dayKey = `rl:${id}:d:${iso.slice(0, 10)}`;

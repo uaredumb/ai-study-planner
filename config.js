@@ -19,3 +19,6 @@ window.APP_CONFIG.ULTIMATE_PLAN_NAME = window.APP_CONFIG.ULTIMATE_PLAN_NAME || "
 window.APP_CONFIG.ULTIMATE_PLAN_PRICE = window.APP_CONFIG.ULTIMATE_PLAN_PRICE || "$12.99 / month";
 // Temporary emergency guest God Mode code while account auth is unavailable.
 window.APP_CONFIG.GUEST_GOD_MODE_CODE = window.APP_CONFIG.GUEST_GOD_MODE_CODE || "LUMI-ULTIMATE-031526";
+// Owner email that can access the admin panel (admin.html). The server also
+// enforces this via ADMIN_EMAILS / CLERK_SECRET_KEY — see DEPLOY-redesign.md.
+window.APP_CONFIG.ADMIN_EMAIL = window.APP_CONFIG.ADMIN_EMAIL || "mavrick.blackburn@gmail.com";
