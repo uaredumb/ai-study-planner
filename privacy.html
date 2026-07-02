@@ -52,8 +52,9 @@
   <script>
     (function initTheme() {
       try {
-        if (localStorage.getItem("lumi-theme") === "dark") document.documentElement.classList.add("dark");
-        else document.documentElement.classList.remove("dark");
+        var saved = localStorage.getItem("lumi-theme");
+        var dark = saved === "dark" || (saved === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
       } catch (e) {}
     })();
   </script>

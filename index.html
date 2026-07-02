@@ -83,8 +83,9 @@
       try {
         var saved = localStorage.getItem("lumi-theme");
         // Default light per product decision; honor an explicit saved choice.
-        if (saved === "dark") document.documentElement.classList.add("dark");
-        else document.documentElement.classList.remove("dark");
+        var dark = saved === "dark" ||
+          (saved === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
       } catch (e) {}
     })();
   </script>
@@ -1200,11 +1201,12 @@
             <div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[.03] px-4 py-3.5">
               <div>
                 <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">Theme</p>
-                <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Switch between light and dark.</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Switch between light, dark, or match your device.</p>
               </div>
               <div class="inline-flex rounded-lg bg-slate-100 dark:bg-white/5 p-1" role="group" aria-label="Theme">
                 <button type="button" data-theme-set="light" class="settings-theme-btn px-3 py-1.5 rounded-md text-xs font-bold transition">Light</button>
                 <button type="button" data-theme-set="dark" class="settings-theme-btn px-3 py-1.5 rounded-md text-xs font-bold transition">Dark</button>
+                <button type="button" data-theme-set="system" class="settings-theme-btn px-3 py-1.5 rounded-md text-xs font-bold transition">Auto</button>
               </div>
             </div>
           </section>
@@ -3269,17 +3271,31 @@
     }
 
     /* ---- theme control (shared lumi-theme key) ---- */
-    function setTheme(mode) {
-      var dark = mode === "dark";
+    var themeMediaQuery = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+    function getThemeMode() {
+      try { return localStorage.getItem("lumi-theme") || "light"; } catch (e) { return "light"; }
+    }
+    function applyThemeMode(mode) {
+      var dark = mode === "dark" || (mode === "system" && !!(themeMediaQuery && themeMediaQuery.matches));
       document.documentElement.classList.toggle("dark", dark);
-      try { localStorage.setItem("lumi-theme", dark ? "dark" : "light"); } catch (e) {}
+    }
+    function setTheme(mode) {
+      try { localStorage.setItem("lumi-theme", mode); } catch (e) {}
+      applyThemeMode(mode);
       reflectThemeButtons();
+    }
+    if (themeMediaQuery) {
+      var handleSystemThemeChange = function () {
+        if (getThemeMode() === "system") applyThemeMode("system");
+      };
+      if (themeMediaQuery.addEventListener) themeMediaQuery.addEventListener("change", handleSystemThemeChange);
+      else if (themeMediaQuery.addListener) themeMediaQuery.addListener(handleSystemThemeChange);
     }
     function reflectThemeButtons() {
       if (!settingsModal) return;
-      var dark = document.documentElement.classList.contains("dark");
+      var mode = getThemeMode();
       settingsModal.querySelectorAll("[data-theme-set]").forEach(function (b) {
-        var active = b.getAttribute("data-theme-set") === (dark ? "dark" : "light");
+        var active = b.getAttribute("data-theme-set") === mode;
         b.className = "settings-theme-btn px-3 py-1.5 rounded-md text-xs font-bold transition " +
           (active ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200");
       });
