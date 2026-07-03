@@ -13,8 +13,8 @@
   <meta property="og:image" content="https://lumistudy.org/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://lumistudy.org/og-image.png" />
-  <!-- If JS is unavailable, reveal-on-scroll content must still be visible. -->
-  <noscript><style>.reveal,.reveal-left,.reveal-right,.reveal-scale,.reveal-blur,.stagger>*{opacity:1 !important;transform:none !important;filter:none !important}</style></noscript>
+  <!-- If JS is unavailable, reveal-on-scroll content (custom + AOS) must still be visible. -->
+  <noscript><style>.reveal,.reveal-left,.reveal-right,.reveal-scale,.reveal-blur,.stagger>*,[data-aos]{opacity:1 !important;transform:none !important;filter:none !important}</style></noscript>
 
   <!-- Brand assets (reused from the live site) -->
   <link rel="icon" type="image/png" sizes="32x32" href="logo.png?v=20260701" />
@@ -25,6 +25,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- AOS — scroll-triggered animations (lightweight ~14KB, loaded from CDN like Tailwind/Clerk) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
 
   <!-- Tailwind via CDN (no build step) -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -136,10 +139,18 @@
     .aurora::before {
       content: ""; position: absolute; inset: -20% -10% auto -10%; height: 680px; z-index: 0;
       background:
-        radial-gradient(48% 60% at 18% 22%, rgba(99,102,241,.28), transparent 60%),
-        radial-gradient(42% 55% at 82% 14%, rgba(16,185,129,.20), transparent 62%),
-        radial-gradient(50% 60% at 60% 80%, rgba(129,140,248,.18), transparent 60%);
-      filter: blur(8px); pointer-events: none;
+        radial-gradient(48% 60% at 18% 22%, rgba(99,102,241,.20), transparent 60%),
+        radial-gradient(42% 55% at 82% 14%, rgba(16,185,129,.15), transparent 62%),
+        radial-gradient(50% 60% at 60% 80%, rgba(129,140,248,.12), transparent 60%);
+      filter: blur(10px); pointer-events: none;
+      -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent);
+              mask-image: linear-gradient(180deg, #000 55%, transparent);
+    }
+    /* Even softer aurora in dark mode so it doesn't muddy the deep background */
+    .dark .aurora::before {
+      background:
+        radial-gradient(48% 60% at 18% 22%, rgba(99,102,241,.16), transparent 62%),
+        radial-gradient(46% 58% at 82% 16%, rgba(16,185,129,.10), transparent 64%);
     }
     .dotgrid {
       background-image: radial-gradient(currentColor 1px, transparent 1px);
@@ -333,6 +344,90 @@
     @media (prefers-reduced-motion: reduce) { .sc-caret { animation: none; } }
   </style>
 
+  <!-- ============================================================= -->
+  <!-- REDESIGN 2026 — premium visuals + interaction polish          -->
+  <!-- ============================================================= -->
+  <style>
+    /* Keep AOS snappy + never let it hold content hidden too long */
+    [data-aos] { pointer-events: auto; }
+
+    /* ---- Animated gradient wordmark for the hero headline ---- */
+    .text-gradient-animate {
+      background: linear-gradient(100deg, #4f46e5, #6366f1, #10b981, #6366f1, #4f46e5);
+      background-size: 260% 100%;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: gradient-pan 9s ease-in-out infinite;
+    }
+    @keyframes gradient-pan { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    @media (prefers-reduced-motion: reduce) { .text-gradient-animate { animation: none; } }
+
+    /* ---- Premium card hover: lift + deeper shadow + brand-tinted border ---- */
+    .lift-card { transition: transform .38s cubic-bezier(.16,1,.3,1), box-shadow .38s ease, border-color .38s ease; }
+    @media (prefers-reduced-motion: no-preference) {
+      .lift-card:hover { transform: translateY(-6px); box-shadow: 0 2px 4px rgba(15,23,42,.04), 0 30px 55px -22px rgba(49,46,129,.34); border-color: rgba(99,102,241,.42); }
+    }
+
+    /* ---- Cursor-following spotlight glow on cards (updated via --mx/--my) ---- */
+    .spotlight { position: relative; isolation: isolate; }
+    .spotlight::after {
+      content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none;
+      background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(99,102,241,.14), transparent 62%);
+      opacity: 0; transition: opacity .35s ease;
+    }
+    .spotlight:hover::after { opacity: 1; }
+    .dark .spotlight::after { background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(129,140,248,.20), transparent 62%); }
+
+    /* ---- Stronger showcase hover (adds shadow to the existing rise) ---- */
+    @media (prefers-reduced-motion: no-preference) {
+      .hover-rise:hover { box-shadow: 0 4px 8px rgba(15,23,42,.05), 0 40px 80px -30px rgba(49,46,129,.45); }
+    }
+
+    /* ---- Animated counters (metric band) ---- */
+    .stat-num { font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+
+    /* ---- Subjects marquee (infinite, pauses on hover, mask-faded edges) ---- */
+    .marquee-mask { -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+    .marquee-track { display: flex; width: max-content; gap: .75rem; animation: marquee 34s linear infinite; }
+    .marquee:hover .marquee-track { animation-play-state: paused; }
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; flex-wrap: wrap; justify-content: center; } }
+
+    /* ---- Interactive showcase pack tabs ---- */
+    .sc-tab { padding: .3rem .7rem; border-radius: 9999px; font-size: .7rem; font-weight: 700; letter-spacing: .02em; color: #64748b; border: 1px solid transparent; transition: all .18s; }
+    .dark .sc-tab { color: #94a3b8; }
+    .sc-tab:hover { color: #4338ca; background: #eef2ff; }
+    .dark .sc-tab:hover { color: #c7d2fe; background: rgba(99,102,241,.14); }
+    .sc-tab.is-active { color: #fff; background: #4f46e5; box-shadow: 0 6px 16px -8px rgba(79,70,229,.7); }
+    .dark .sc-tab.is-active { background: #6366f1; }
+    .sc-panel { display: none; }
+    .sc-panel.is-active { display: block; animation: sc-pop .4s cubic-bezier(.16,1,.3,1) both; }
+    @keyframes sc-pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .sc-panel.is-active { animation: none; } }
+
+    /* ---- Example subject tabs: add the missing hover state ---- */
+    .ex-tab:hover { border-color: #c7d2fe; color: #4338ca; }
+    .dark .ex-tab:hover { border-color: rgba(99,102,241,.5); color: #c7d2fe; }
+    .ex-tab.is-active:hover { color: #fff; border-color: #4f46e5; }
+
+    /* ---- 3D tilt wrapper for the hero visual (updated via JS) ---- */
+    .tilt { transition: transform .3s cubic-bezier(.16,1,.3,1); transform-style: preserve-3d; will-change: transform; }
+    @media (prefers-reduced-motion: reduce) { .tilt { transform: none !important; } }
+
+    /* ---- FAQ chevron + row hover ---- */
+    .faq-item { transition: border-color .3s ease, box-shadow .3s ease; }
+    .faq-item:hover { border-color: rgba(99,102,241,.4); }
+    .faq-q:hover .faq-icon { color: #6366f1; }
+
+    /* ---- Pricing: make Pro the unmistakable winner ---- */
+    .plan-pro { background: linear-gradient(180deg, #eef2ff 0%, #ffffff 42%); transition: transform .38s cubic-bezier(.16,1,.3,1), box-shadow .38s ease; }
+    .dark .plan-pro { background: linear-gradient(180deg, rgba(99,102,241,.14) 0%, rgba(2,6,23,.2) 46%); }
+    @media (min-width: 768px) { .plan-pro { transform: scale(1.045); } .plan-pro:hover { transform: scale(1.045) translateY(-4px); } }
+
+    /* ---- Testimonial card ---- */
+    .testi { transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s ease; }
+    @media (prefers-reduced-motion: no-preference) { .testi:hover { transform: translateY(-4px); box-shadow: 0 24px 48px -20px rgba(49,46,129,.3); } }
+  </style>
+
   <!-- Mailchimp Connected Site (tracking + pop-up forms) -->
   <script id="mcjs">!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/f977eb32eb487d8c218893089/5259053cb92f7d6fee3bad4d3.js");</script>
 </head>
@@ -411,33 +506,47 @@
         <div class="relative z-10 text-center lg:text-left">
           <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-semibold text-brand-700 dark:text-brand-300 shadow-soft animate-fade-in">
             <span class="h-1.5 w-1.5 rounded-full bg-accent-500 animate-pulse"></span>
-            One input → a full study pack
+            One input → a full study pack in ~10 seconds
           </span>
 
           <h1 class="mt-5 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.05] animate-fade-up">
             Stop re-reading.
-            <span class="block bg-gradient-to-r from-brand-600 via-brand-500 to-accent-500 bg-clip-text text-transparent">Start actually learning.</span>
+            <span class="block text-gradient-animate">Start actually learning.</span>
           </h1>
 
           <p class="mt-5 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-xl mx-auto lg:mx-0 animate-fade-up" style="animation-delay:.08s">
-            Paste your notes, drop in an article, or snap a photo of your textbook. Lumi turns it into <strong class="text-slate-800 dark:text-white font-semibold">clean notes, a study plan, flashcards, and a quiz</strong> — in seconds.
+            Hand Lumi your messy notes, an article link, or a photo of your textbook — and get back <strong class="text-slate-800 dark:text-white font-semibold">a study pack you can learn from tonight</strong>: clean notes, a plan, flashcards, and a quiz.
           </p>
 
-          <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start animate-fade-up" style="animation-delay:.16s">
+          <div class="mt-8 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center lg:justify-start animate-fade-up" style="animation-delay:.16s">
             <a href="#app" class="btn-shine btn-lift inline-flex items-center justify-center gap-2 px-6 py-3.5 text-base font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-glow transition">
-              Generate my first study pack — free
+              Get my free study pack
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
-            <a href="#how" class="btn-lift inline-flex items-center justify-center gap-2 px-6 py-3.5 text-base font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-brand-300 dark:hover:border-white/20 rounded-xl shadow-soft transition">
-              <svg class="h-5 w-5 text-brand-500" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-              See how it works
+            <a href="#demo" class="group inline-flex items-center justify-center gap-2 px-2 py-2 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white transition">
+              <span class="grid place-items-center h-9 w-9 rounded-full bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 shadow-soft group-hover:border-brand-300 transition">
+                <svg class="h-4 w-4 text-brand-500 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              Try the live demo
             </a>
+          </div>
+
+          <!-- Reassurance / rating row -->
+          <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 justify-center lg:justify-start text-sm text-slate-500 dark:text-slate-400 animate-fade-up" style="animation-delay:.22s">
+            <span class="inline-flex items-center gap-1.5">
+              <span class="flex text-amber-400" aria-hidden="true">
+                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg>
+              </span>
+              Loved by students
+            </span>
+            <span class="inline-flex items-center gap-1.5"><svg class="h-4 w-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> No credit card</span>
+            <span class="inline-flex items-center gap-1.5"><svg class="h-4 w-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> No login to try the demo</span>
           </div>
         </div>
 
         <!-- Hero visual: a floating study-pack stack built in pure markup -->
-        <div class="relative z-10 animate-fade-up" style="animation-delay:.12s" aria-hidden="true">
-          <div class="relative mx-auto max-w-md lg:max-w-none">
+        <div class="relative z-10 animate-fade-up [perspective:1200px]" style="animation-delay:.12s" aria-hidden="true">
+          <div class="tilt relative mx-auto max-w-md lg:max-w-none" data-tilt>
             <!-- clean stacked sheets behind the pack: pure depth, no clutter -->
             <div class="absolute -top-7 left-1/2 -translate-x-1/2 w-[86%] h-full rounded-2xl bg-white/55 dark:bg-slate-900/45 border border-slate-200/70 dark:border-white/5 shadow-soft"></div>
             <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 w-[93%] h-full rounded-2xl bg-white/80 dark:bg-slate-900/70 border border-slate-200 dark:border-white/10 shadow-soft"></div>
@@ -494,6 +603,42 @@
     </section>
 
     <!-- ============================================================= -->
+    <!-- 2b. METRIC BAND — animated counters + subjects marquee        -->
+    <!-- ============================================================= -->
+    <section class="relative pt-2 pb-6 sm:pb-10" aria-label="At a glance">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div data-aos="fade-up" class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-white/[.03] backdrop-blur shadow-soft px-6 py-8 sm:px-10 sm:py-9">
+          <dl class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-8" id="statBand">
+            <div class="text-center">
+              <dd class="stat-num text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white" data-count-to="5">0</dd>
+              <dt class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">learning tools<br class="hidden sm:block"> in every pack</dt>
+            </div>
+            <div class="text-center">
+              <dd class="stat-num text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white" data-count-to="10" data-count-prefix="~" data-count-suffix="s">0</dd>
+              <dt class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">to generate<br class="hidden sm:block"> a full pack</dt>
+            </div>
+            <div class="text-center">
+              <dd class="stat-num text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white" data-count-to="3">0</dd>
+              <dt class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">ways to add<br class="hidden sm:block"> your material</dt>
+            </div>
+            <div class="text-center">
+              <dd class="stat-num text-4xl sm:text-5xl font-extrabold bg-gradient-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent" data-count-to="100" data-count-suffix="%">0</dd>
+              <dt class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">free to<br class="hidden sm:block"> get started</dt>
+            </div>
+          </dl>
+
+          <!-- Subjects marquee: “works for anything you're studying” -->
+          <div class="mt-8 pt-7 border-t border-slate-200/70 dark:border-white/10">
+            <p class="text-center text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4">Made for whatever you're studying</p>
+            <div class="marquee marquee-mask overflow-hidden">
+              <div class="marquee-track" id="subjectsTrack"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
     <!-- 3. PRODUCT SHOWCASE — browser-chrome framed app screens       -->
     <!-- ============================================================= -->
     <section id="showcase" class="relative py-20 sm:py-28">
@@ -502,17 +647,17 @@
       </div>
 
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-2xl mx-auto text-center reveal">
+        <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
           <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">A look inside</p>
-          <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">See your study pack come together</h2>
-          <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Paste your notes on the left, and Lumi builds a complete pack on the right — clean notes, a plan, flashcards, and a quiz.</p>
+          <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Hours of rewriting → an organized pack in seconds</h2>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Paste your notes on the left, and Lumi builds a complete pack on the right. <span class="text-slate-700 dark:text-slate-200 font-medium">Try the tabs on the finished pack →</span></p>
         </div>
 
         <!-- Two equal-size browser windows: the generator + the finished pack -->
-        <div class="mt-14 grid lg:grid-cols-2 gap-6 lg:gap-7 items-stretch mx-auto max-w-6xl reveal-scale">
+        <div class="mt-14 grid lg:grid-cols-2 gap-6 lg:gap-7 items-stretch mx-auto max-w-6xl">
 
           <!-- WINDOW 1: the generator -->
-          <div class="browser-chrome hover-rise flex flex-col">
+          <div class="browser-chrome hover-rise flex flex-col" data-aos="fade-up">
             <div class="bc-bar">
               <div class="bc-dots"><span class="bc-dot" style="background:#ff5f57"></span><span class="bc-dot" style="background:#febc2e"></span><span class="bc-dot" style="background:#28c840"></span></div>
               <div class="bc-url"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2"/><path stroke-linecap="round" d="M8 11V8a4 4 0 018 0v3"/></svg> lumistudy.org/app</div>
@@ -555,8 +700,8 @@
             </div>
           </div>
 
-          <!-- WINDOW 2: the finished study pack -->
-          <div class="browser-chrome hover-rise flex flex-col">
+          <!-- WINDOW 2: the finished study pack (interactive tabs) -->
+          <div class="browser-chrome hover-rise flex flex-col" data-aos="fade-up" data-aos-delay="120">
             <div class="bc-bar">
               <div class="bc-dots"><span class="bc-dot" style="background:#ff5f57"></span><span class="bc-dot" style="background:#febc2e"></span><span class="bc-dot" style="background:#28c840"></span></div>
               <div class="bc-url"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2"/><path stroke-linecap="round" d="M8 11V8a4 4 0 018 0v3"/></svg> lumistudy.org/app</div>
@@ -573,33 +718,66 @@
                   <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Done
                 </span>
               </div>
-              <div class="space-y-3">
-                <div class="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-3.5 shadow-soft">
-                  <p class="text-[10px] font-bold text-brand-500 mb-2">CLEAN NOTES</p>
-                  <ul class="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 list-disc pl-4">
-                    <li>Light reactions occur in the <strong class="text-slate-800 dark:text-white">thylakoid membrane</strong>.</li>
-                    <li>The <strong class="text-slate-800 dark:text-white">Calvin cycle</strong> runs in the stroma.</li>
-                    <li>Inputs: CO₂ + H₂O + light → glucose + O₂.</li>
-                  </ul>
-                </div>
-                <div class="rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 p-3.5 text-white shadow-soft">
-                  <p class="text-[10px] font-bold opacity-90 mb-1">FLASHCARD 1 / 8</p>
-                  <p class="text-sm font-semibold leading-snug">Where do the light reactions occur?</p>
-                  <p class="text-[11px] opacity-80 mt-2">Tap to flip ↻</p>
-                </div>
-                <div class="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-3.5 shadow-soft">
-                  <div class="flex items-center justify-between">
-                    <p class="text-[10px] font-bold text-amber-500">QUIZ · QUESTION 2 / 6</p>
-                    <span class="text-[10px] font-semibold text-slate-400">1 correct</span>
+              <!-- interactive preview tabs -->
+              <div class="flex items-center gap-1 mb-3 rounded-full bg-slate-100 dark:bg-white/5 p-1 w-max" role="tablist" aria-label="Study pack preview" data-sc-tabs>
+                <button type="button" class="sc-tab is-active" data-sc-tab="notes" role="tab" aria-selected="true">Notes</button>
+                <button type="button" class="sc-tab" data-sc-tab="cards" role="tab" aria-selected="false">Flashcards</button>
+                <button type="button" class="sc-tab" data-sc-tab="quiz" role="tab" aria-selected="false">Quiz</button>
+              </div>
+
+              <div class="min-h-[12.5rem]">
+                <!-- NOTES panel -->
+                <div class="sc-panel is-active" data-sc-panel="notes" role="tabpanel">
+                  <div class="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-4 shadow-soft">
+                    <p class="text-[10px] font-bold text-brand-500 mb-2">CLEAN NOTES</p>
+                    <ul class="space-y-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 list-disc pl-4">
+                      <li>Light reactions occur in the <strong class="text-slate-800 dark:text-white">thylakoid membrane</strong>.</li>
+                      <li>The <strong class="text-slate-800 dark:text-white">Calvin cycle</strong> runs in the stroma.</li>
+                      <li>Inputs: CO₂ + H₂O + light → glucose + O₂.</li>
+                      <li>Chlorophyll absorbs mainly <strong class="text-slate-800 dark:text-white">red and blue</strong> light.</li>
+                    </ul>
                   </div>
-                  <div class="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden"><div class="h-full w-1/3 rounded-full bg-gradient-to-r from-brand-500 to-accent-500"></div></div>
+                </div>
+
+                <!-- FLASHCARDS panel (clickable flip) -->
+                <div class="sc-panel" data-sc-panel="cards" role="tabpanel">
+                  <div class="flip mx-auto max-w-[19rem] h-44" data-flip role="button" tabindex="0" aria-label="Flip flashcard to see the answer">
+                    <div class="flip-inner">
+                      <div class="flip-face absolute inset-0 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 p-4 text-white shadow-soft grid place-content-center text-center">
+                        <p class="text-[10px] font-bold opacity-90 mb-2">FLASHCARD 1 / 8</p>
+                        <p class="text-sm font-semibold leading-snug">Where do the light reactions occur?</p>
+                        <p class="text-[11px] opacity-80 mt-3">Tap to flip ↻</p>
+                      </div>
+                      <div class="flip-face flip-back rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-4 grid place-content-center text-center shadow-soft">
+                        <p class="text-[10px] font-bold text-brand-500 mb-2">ANSWER</p>
+                        <p class="text-sm font-semibold text-slate-800 dark:text-white leading-snug">In the thylakoid membranes of the chloroplast.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- QUIZ panel -->
+                <div class="sc-panel" data-sc-panel="quiz" role="tabpanel">
+                  <div class="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-4 shadow-soft">
+                    <div class="flex items-center justify-between mb-2">
+                      <p class="text-[10px] font-bold text-amber-500">QUIZ · QUESTION 2 / 6</p>
+                      <span class="text-[10px] font-semibold text-slate-400">1 correct</span>
+                    </div>
+                    <div class="h-1.5 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden mb-3"><div class="h-full w-1/3 rounded-full bg-gradient-to-r from-brand-500 to-accent-500"></div></div>
+                    <p class="text-xs sm:text-sm font-semibold text-slate-800 dark:text-white mb-2.5">The Calvin cycle takes place in the…</p>
+                    <div class="space-y-1.5 text-xs">
+                      <div class="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-slate-600 dark:text-slate-300">Thylakoid membrane</div>
+                      <div class="rounded-lg border border-accent-300 dark:border-accent-500/40 bg-accent-50 dark:bg-accent-500/15 px-3 py-2 font-semibold text-accent-700 dark:text-accent-200 flex items-center justify-between">Stroma <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+                      <div class="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-slate-600 dark:text-slate-300">Mitochondria</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="mt-2 text-center reveal">
+        <div class="mt-8 text-center" data-aos="fade-up">
           <a href="#app" class="btn-shine btn-lift inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-glow transition">
             Try it yourself — free
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -613,7 +791,7 @@
     <!-- ============================================================= -->
     <section id="how" class="py-20 sm:py-28">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-2xl mx-auto text-center reveal">
+        <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
           <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">How it works</p>
           <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">From chaos to clarity in three steps</h2>
           <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">No setup, no template wrangling. Give Lumi something to work with and pick what you want back.</p>
@@ -623,8 +801,8 @@
           <!-- connecting line -->
           <div class="hidden md:block absolute top-12 left-[16%] right-[16%] h-px bg-gradient-to-r from-brand-200 via-accent-200 to-brand-200 dark:from-white/10 dark:via-white/10 dark:to-white/10"></div>
 
-          <div class="reveal relative">
-            <div class="relative z-10 mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-glow">
+          <div class="group relative" data-aos="fade-up">
+            <div class="relative z-10 mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-glow transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
               <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h2M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
             </div>
             <span class="absolute -top-2 left-1/2 -translate-x-[3.4rem] z-20 h-7 w-7 grid place-items-center rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold text-brand-600">1</span>
@@ -632,8 +810,8 @@
             <p class="mt-2 text-center text-slate-600 dark:text-slate-300">Paste notes, summarize an article by URL, or upload a photo or PDF of your textbook. Messy is fine — that's the point.</p>
           </div>
 
-          <div class="reveal relative" style="transition-delay:.1s">
-            <div class="relative z-10 mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-accent-500 to-accent-600 text-white shadow-glow">
+          <div class="group relative" data-aos="fade-up" data-aos-delay="120">
+            <div class="relative z-10 mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-accent-500 to-accent-600 text-white shadow-glow transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
               <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h10M4 12h16M4 17h7"/><circle cx="18" cy="7" r="2"/><circle cx="14" cy="17" r="2"/></svg>
             </div>
             <span class="absolute -top-2 left-1/2 -translate-x-[3.4rem] z-20 h-7 w-7 grid place-items-center rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold text-accent-600">2</span>
@@ -641,8 +819,8 @@
             <p class="mt-2 text-center text-slate-600 dark:text-slate-300">Toggle exactly what you need: clean notes, a study plan, flashcards (you choose how many), and a quiz.</p>
           </div>
 
-          <div class="reveal relative" style="transition-delay:.2s">
-            <div class="relative z-10 mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white shadow-glow">
+          <div class="group relative" data-aos="fade-up" data-aos-delay="240">
+            <div class="relative z-10 mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white shadow-glow transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
               <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h7l-1 7 9-11h-7l1-7z"/></svg>
             </div>
             <span class="absolute -top-2 left-1/2 -translate-x-[3.4rem] z-20 h-7 w-7 grid place-items-center rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold text-fuchsia-500">3</span>
@@ -658,7 +836,7 @@
     <!-- ============================================================= -->
     <section id="features" class="py-20 sm:py-28 bg-white dark:bg-white/[.02] border-y border-slate-200/70 dark:border-white/10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-2xl mx-auto text-center reveal">
+        <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
           <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">What's in a study pack</p>
           <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Five ways to learn it — from one input</h2>
           <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Every study pack is built around how memory actually works: organize, plan, recall, test, act.</p>
@@ -666,9 +844,9 @@
 
         <div class="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           <!-- Clean Notes (wide) -->
-          <article class="reveal group sm:col-span-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-gradient-to-br from-brand-50 to-white dark:from-brand-500/10 dark:to-transparent p-6 shadow-soft hover:shadow-lift transition">
+          <article class="spotlight lift-card group sm:col-span-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-gradient-to-br from-brand-50 to-white dark:from-brand-500/10 dark:to-transparent p-6 shadow-soft" data-aos="fade-up">
             <div class="flex items-start gap-4">
-              <span class="shrink-0 h-12 w-12 grid place-items-center rounded-xl bg-brand-600 text-white shadow-soft"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h2M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg></span>
+              <span class="shrink-0 h-12 w-12 grid place-items-center rounded-xl bg-brand-600 text-white shadow-soft transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h2M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg></span>
               <div>
                 <h3 class="text-lg font-bold text-slate-900 dark:text-white">Clean Notes</h3>
                 <p class="mt-1.5 text-slate-600 dark:text-slate-300">Your scattered notes, rewritten into clear, organized bullet points grouped by topic — with the fluff cut and the key ideas bolded. The version you wish you'd taken in class.</p>
@@ -677,22 +855,22 @@
           </article>
 
           <!-- Study Plan -->
-          <article class="reveal group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition" style="transition-delay:.05s">
-            <span class="h-12 w-12 grid place-items-center rounded-xl bg-accent-100 dark:bg-accent-500/15 text-accent-600 dark:text-accent-300 shadow-soft"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3M16 7V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span>
+          <article class="spotlight lift-card group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="80">
+            <span class="h-12 w-12 grid place-items-center rounded-xl bg-accent-100 dark:bg-accent-500/15 text-accent-600 dark:text-accent-300 shadow-soft transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3M16 7V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span>
             <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">Study Plan</h3>
             <p class="mt-1.5 text-slate-600 dark:text-slate-300">A sensible order to tackle everything, so you always know what to do next instead of staring at the pile.</p>
           </article>
 
           <!-- Flashcards -->
-          <article class="reveal group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition" style="transition-delay:.1s">
-            <span class="h-12 w-12 grid place-items-center rounded-xl bg-indigo-100 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 shadow-soft"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="13" height="10" rx="2"/><rect x="8" y="9" width="13" height="10" rx="2" fill="currentColor" fill-opacity=".12"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 9h11a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V9z"/></svg></span>
+          <article class="spotlight lift-card group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="160">
+            <span class="h-12 w-12 grid place-items-center rounded-xl bg-indigo-100 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 shadow-soft transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="13" height="10" rx="2"/><rect x="8" y="9" width="13" height="10" rx="2" fill="currentColor" fill-opacity=".12"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 9h11a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V9z"/></svg></span>
             <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">Flashcards</h3>
             <p class="mt-1.5 text-slate-600 dark:text-slate-300">Active-recall cards you can flip in Study Mode. Pick how many you want, then drill until it sticks.</p>
           </article>
 
           <!-- Quiz -->
-          <article class="reveal group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition" style="transition-delay:.05s">
-            <span class="h-12 w-12 grid place-items-center rounded-xl bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300 shadow-soft"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9.5a2.5 2.5 0 113.5 2.3c-.8.4-1 .9-1 1.7M12 17h.01"/></svg></span>
+          <article class="spotlight lift-card group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="240">
+            <span class="h-12 w-12 grid place-items-center rounded-xl bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300 shadow-soft transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9.5a2.5 2.5 0 113.5 2.3c-.8.4-1 .9-1 1.7M12 17h.01"/></svg></span>
             <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">Quiz Questions</h3>
             <p class="mt-1.5 text-slate-600 dark:text-slate-300">An interactive quiz that checks whether you actually get it — with instant feedback and a final score.</p>
           </article>
@@ -706,21 +884,21 @@
     <!-- ============================================================= -->
     <section id="examples" class="py-20 sm:py-28">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-2xl mx-auto text-center reveal">
+        <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
           <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Real examples</p>
           <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">See a finished study pack</h2>
           <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Three real subjects, fully generated. Switch between them to get a feel for what you'll get.</p>
         </div>
 
         <!-- subject tabs -->
-        <div class="mt-10 flex flex-wrap justify-center gap-2 reveal" role="tablist" aria-label="Example subjects">
-          <button class="ex-tab is-active inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition" data-ex="bio" role="tab" aria-selected="true"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3c0 4 10 6 10 9s-10 5-10 9M17 3c0 4-10 6-10 9s10 5 10 9M8.5 6h7M8.5 18h7M10 9.2h4M10 14.8h4"/></svg> Biology</button>
-          <button class="ex-tab inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition" data-ex="history" role="tab" aria-selected="false"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M4 9l8-5 8 5M5 9v8M19 9v8M9 9v8M15 9v8M3 21h18M4 9h16"/></svg> History</button>
-          <button class="ex-tab inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition" data-ex="chem" role="tab" aria-selected="false"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6M10 3v6l-4.6 8.4A1.6 1.6 0 006.8 20h10.4a1.6 1.6 0 001.4-2.6L14 9V3M7.5 14.5h9"/></svg> Chemistry</button>
+        <div class="mt-10 flex flex-wrap justify-center gap-2" role="tablist" aria-label="Example subjects" data-aos="fade-up">
+          <button class="ex-tab is-active inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition" id="exTab-bio" aria-controls="examplePack" data-ex="bio" role="tab" aria-selected="true"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3c0 4 10 6 10 9s-10 5-10 9M17 3c0 4-10 6-10 9s10 5 10 9M8.5 6h7M8.5 18h7M10 9.2h4M10 14.8h4"/></svg> Biology</button>
+          <button class="ex-tab inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition" id="exTab-history" aria-controls="examplePack" data-ex="history" role="tab" aria-selected="false"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M4 9l8-5 8 5M5 9v8M19 9v8M9 9v8M15 9v8M3 21h18M4 9h16"/></svg> History</button>
+          <button class="ex-tab inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition" id="exTab-chem" aria-controls="examplePack" data-ex="chem" role="tab" aria-selected="false"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6M10 3v6l-4.6 8.4A1.6 1.6 0 006.8 20h10.4a1.6 1.6 0 001.4-2.6L14 9V3M7.5 14.5h9"/></svg> Chemistry</button>
         </div>
 
         <!-- pack render target -->
-        <div id="examplePack" class="mt-8 reveal"></div>
+        <div id="examplePack" class="mt-8" role="tabpanel" aria-labelledby="exTab-bio" aria-live="polite" tabindex="0" data-aos="fade-up"></div>
       </div>
     </section>
 
@@ -729,13 +907,13 @@
     <!-- ============================================================= -->
     <section id="demo" class="py-20 sm:py-28 bg-gradient-to-b from-brand-50/60 to-white dark:from-brand-500/5 dark:to-transparent border-y border-slate-200/70 dark:border-white/10">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-2xl mx-auto text-center reveal">
+        <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
           <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Try it right now</p>
           <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Generate a study pack — no sign-up</h2>
           <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Paste your own notes or pick a topic. This live preview runs right here in your browser.</p>
         </div>
 
-        <div class="mt-10 rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-lift overflow-hidden reveal">
+        <div class="mt-10 rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-lift overflow-hidden" data-aos="fade-up">
           <!-- input panel -->
           <div class="p-5 sm:p-7">
             <div class="flex flex-wrap items-center gap-2 mb-3">
@@ -766,7 +944,7 @@
           </div>
 
           <!-- output panel -->
-          <div id="demoOutput" class="border-t border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[.02] p-5 sm:p-7 min-h-[180px]">
+          <div id="demoOutput" class="border-t border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[.02] p-5 sm:p-7 min-h-[180px]" aria-live="polite">
             <!-- empty state -->
             <div id="demoEmpty" class="text-center py-8">
               <div class="mx-auto h-14 w-14 grid place-items-center rounded-2xl bg-brand-100 dark:bg-brand-500/15 text-brand-500 mb-4">
@@ -777,7 +955,56 @@
             </div>
           </div>
         </div>
-        <p class="mt-4 text-center text-xs text-slate-400 dark:text-slate-500">This is a self-contained preview. The full app uses AI to generate from <em>your</em> material and saves it to your account.</p>
+        <p class="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">Like what you get? <a href="#app" class="font-semibold text-brand-600 dark:text-brand-300 hover:underline">Create a free account</a> to generate from <em>your own</em> notes, photos &amp; PDFs — and save every pack across your devices.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- 7b. TESTIMONIALS                                              -->
+    <!-- NOTE: placeholder quotes — replace with real student reviews. -->
+    <!-- ============================================================= -->
+    <section class="py-20 sm:py-28 bg-white dark:bg-white/[.02] border-y border-slate-200/70 dark:border-white/10">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
+          <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Loved by students</p>
+          <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Study smarter, not longer</h2>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Students use Lumi to turn the pile of notes into something they can actually revise from.</p>
+        </div>
+
+        <div class="mt-12 grid md:grid-cols-3 gap-6">
+          <figure class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up">
+            <div class="flex text-amber-400 mb-3" aria-hidden="true">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg>
+            </div>
+            <blockquote class="text-slate-700 dark:text-slate-200 leading-relaxed">"I pasted three weeks of messy bio notes and had clean notes, flashcards, and a quiz before I finished my coffee."</blockquote>
+            <figcaption class="mt-5 flex items-center gap-3">
+              <span class="h-10 w-10 grid place-items-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white text-sm font-bold shadow-soft">MK</span>
+              <span><span class="block text-sm font-bold text-slate-900 dark:text-white">Maya K.</span><span class="block text-xs text-slate-400">11th grade · Biology</span></span>
+            </figcaption>
+          </figure>
+
+          <figure class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="120">
+            <div class="flex text-amber-400 mb-3" aria-hidden="true">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg>
+            </div>
+            <blockquote class="text-slate-700 dark:text-slate-200 leading-relaxed">"The photo upload is unreal — I snap a page of my textbook and it just builds the whole study pack. Saved my finals week."</blockquote>
+            <figcaption class="mt-5 flex items-center gap-3">
+              <span class="h-10 w-10 grid place-items-center rounded-full bg-gradient-to-br from-accent-500 to-accent-700 text-white text-sm font-bold shadow-soft">DR</span>
+              <span><span class="block text-sm font-bold text-slate-900 dark:text-white">Devin R.</span><span class="block text-xs text-slate-400">College freshman</span></span>
+            </figcaption>
+          </figure>
+
+          <figure class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="240">
+            <div class="flex text-amber-400 mb-3" aria-hidden="true">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg>
+            </div>
+            <blockquote class="text-slate-700 dark:text-slate-200 leading-relaxed">"I stopped rewriting notes for hours. Now I spend that time actually quizzing myself — my grades went up."</blockquote>
+            <figcaption class="mt-5 flex items-center gap-3">
+              <span class="h-10 w-10 grid place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white text-sm font-bold shadow-soft">PS</span>
+              <span><span class="block text-sm font-bold text-slate-900 dark:text-white">Priya S.</span><span class="block text-xs text-slate-400">AP Chemistry</span></span>
+            </figcaption>
+          </figure>
+        </div>
       </div>
     </section>
 
@@ -786,16 +1013,16 @@
     <!-- ============================================================= -->
     <section id="pricing" class="py-20 sm:py-28">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-2xl mx-auto text-center reveal">
+        <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
           <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Pricing</p>
           <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Plans that scale with how hard you study</h2>
           <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Start free, no card needed. Paid plans include a <strong class="text-slate-800 dark:text-white">3-day free trial</strong> and cancel anytime. Save with annual billing.</p>
         </div>
 
         <!-- Custom plan cards (overview only — no checkout here; the full table + checkout live on pricing.html) -->
-        <div class="mt-12 grid md:grid-cols-3 gap-6 stagger">
+        <div class="mt-12 grid md:grid-cols-3 gap-6 md:gap-5 items-stretch">
           <!-- Free -->
-          <article class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col">
+          <article class="lift-card rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col" data-aos="fade-up">
             <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Free</h3>
             <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$0</span><span class="text-sm font-medium text-slate-400">/forever</span></p>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For trying Lumi out.</p>
@@ -807,9 +1034,9 @@
               <li class="flex gap-2.5"><span class="check"></span>3 study packs per day</li>
             </ul>
           </article>
-          <!-- Pro (highlighted) -->
-          <article class="relative rounded-3xl border-2 border-amber-400 bg-white dark:bg-slate-900 p-6 shadow-glow flex flex-col">
-            <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide text-amber-950 bg-gradient-to-r from-amber-300 to-yellow-400 shadow-soft">BEST VALUE</span>
+          <!-- Pro (highlighted — the recommended plan) -->
+          <article class="plan-pro relative z-10 rounded-3xl border-2 border-brand-500 dark:border-brand-400 p-6 shadow-glow flex flex-col" data-aos="fade-up" data-aos-delay="100">
+            <span class="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide text-white bg-gradient-to-r from-brand-600 to-brand-500 shadow-lift"><svg class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.7 5.6L19 9l-5.3 1.4L12 16l-1.7-5.6L5 9l5.3-1.4L12 2z"/></svg> MOST POPULAR</span>
             <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Pro</h3>
             <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$6.99</span><span class="text-sm font-medium text-slate-400">/month</span></p>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For everyday studying. <span class="text-brand-600 dark:text-brand-300 font-semibold">$4.99/mo billed annually.</span></p>
@@ -822,7 +1049,7 @@
             </ul>
           </article>
           <!-- Power -->
-          <article class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col">
+          <article class="lift-card rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col" data-aos="fade-up" data-aos-delay="200">
             <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Power</h3>
             <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$12.99</span><span class="text-sm font-medium text-slate-400">/month</span></p>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For heavy course loads. <span class="text-brand-600 dark:text-brand-300 font-semibold">$8.99/mo billed annually.</span></p>
@@ -837,7 +1064,7 @@
         </div>
 
         <!-- Single CTA under all the cards → full pricing page -->
-        <div class="mt-10 text-center reveal">
+        <div class="mt-10 text-center" data-aos="fade-up">
           <a href="pricing.html" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-glow hover:-translate-y-0.5 transition">
             See full pricing &amp; compare plans in detail
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
@@ -852,12 +1079,12 @@
     <!-- ============================================================= -->
     <section class="py-20 sm:py-28">
       <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center reveal">
+        <div class="text-center" data-aos="fade-up">
           <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">FAQ</p>
           <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Good questions, honest answers</h2>
         </div>
 
-        <div class="mt-10 space-y-3 reveal" id="faq">
+        <div class="mt-10 space-y-3" id="faq" data-aos="fade-up">
           <!-- items injected for consistency, but written out for SEO/no-JS -->
           <div class="faq-item rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-soft overflow-hidden">
             <button class="faq-q w-full flex items-center justify-between gap-4 text-left px-5 py-4" aria-expanded="false">
@@ -906,7 +1133,7 @@
     <!-- 11. FINAL CTA BANNER                                          -->
     <!-- ============================================================= -->
     <section class="px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28">
-      <div class="max-w-6xl mx-auto reveal">
+      <div class="max-w-6xl mx-auto" data-aos="zoom-in">
         <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-600 to-brand-800 px-6 py-14 sm:px-14 sm:py-16 text-center shadow-glow">
           <div class="absolute -top-16 -right-10 h-56 w-56 bg-accent-400/30 rounded-full blur-3xl"></div>
           <div class="absolute -bottom-16 -left-10 h-56 w-56 bg-brand-300/30 rounded-full blur-3xl"></div>
@@ -931,7 +1158,7 @@
   <!-- ============================================================= -->
   <footer class="border-t border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-950">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 stagger">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8" data-aos="fade-up">
         <div class="lg:col-span-1">
           <a href="#top" class="flex items-center gap-2.5">
             <img src="logo.png?v=20260701" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft" />
@@ -1658,7 +1885,9 @@
     /* ---------- NAV: shadow on scroll + scroll progress + mobile menu ---------- */
     var navBg = document.getElementById("navBg");
     var scrollProgress = document.getElementById("scrollProgress");
-    function onScroll() {
+    var navTicking = false;
+    function paintScroll() {
+      navTicking = false;
       if (navBg) navBg.style.opacity = window.scrollY > 8 ? "1" : "0";
       if (scrollProgress) {
         var doc = document.documentElement;
@@ -1666,9 +1895,10 @@
         scrollProgress.style.width = (max > 0 ? Math.min(100, (doc.scrollTop / max) * 100) : 0) + "%";
       }
     }
+    function onScroll() { if (!navTicking) { navTicking = true; requestAnimationFrame(paintScroll); } }
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
-    onScroll();
+    paintScroll();
 
     var menuBtn = document.getElementById("mobileMenuBtn");
     var menu = document.getElementById("mobileMenu");
@@ -1688,18 +1918,28 @@
     }, { threshold: 0.1 });
     document.querySelectorAll(".reveal, .reveal-left, .reveal-right, .reveal-scale, .reveal-blur, .stagger").forEach(function (el) { io.observe(el); });
 
-    /* ---------- FAQ ACCORDION ---------- */
+    /* ---------- FAQ ACCORDION (a11y: aria-hidden + resize-safe height) ---------- */
     document.querySelectorAll(".faq-q").forEach(function (btn) {
+      var item = btn.closest(".faq-item");
+      var body = item ? item.querySelector(".faq-body") : null;
+      var icon = btn.querySelector(".faq-icon");
+      if (body) body.setAttribute("aria-hidden", "true");
       btn.addEventListener("click", function () {
-        var item = btn.closest(".faq-item");
-        var body = item.querySelector(".faq-body");
-        var icon = btn.querySelector(".faq-icon");
         var open = btn.getAttribute("aria-expanded") === "true";
         btn.setAttribute("aria-expanded", String(!open));
-        if (open) { body.style.maxHeight = "0px"; icon.style.transform = "rotate(0deg)"; }
-        else { body.style.maxHeight = body.scrollHeight + "px"; icon.style.transform = "rotate(180deg)"; }
+        if (body) body.setAttribute("aria-hidden", String(open));
+        if (open) { if (body) body.style.maxHeight = "0px"; if (icon) icon.style.transform = "rotate(0deg)"; }
+        else { if (body) body.style.maxHeight = body.scrollHeight + "px"; if (icon) icon.style.transform = "rotate(180deg)"; }
       });
     });
+    // Keep any open answer sized correctly when the viewport reflows.
+    window.addEventListener("resize", function () {
+      document.querySelectorAll('.faq-q[aria-expanded="true"]').forEach(function (btn) {
+        var item = btn.closest(".faq-item");
+        var body = item ? item.querySelector(".faq-body") : null;
+        if (body) body.style.maxHeight = body.scrollHeight + "px";
+      });
+    }, { passive: true });
 
     /* =========================================================== */
     /* SAMPLE STUDY-PACK DATA (realistic content, no lorem ipsum)  */
@@ -1971,11 +2211,21 @@
       examplePack.innerHTML = "";
       examplePack.appendChild(renderPack(PACKS[key], {}));
     }
-    document.querySelectorAll(".ex-tab").forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        document.querySelectorAll(".ex-tab").forEach(function (t) { t.classList.remove("is-active"); t.setAttribute("aria-selected", "false"); });
-        tab.classList.add("is-active"); tab.setAttribute("aria-selected", "true");
-        showExample(tab.getAttribute("data-ex"));
+    var exTabs = Array.prototype.slice.call(document.querySelectorAll(".ex-tab"));
+    function activateExTab(tab, focus) {
+      exTabs.forEach(function (t) { t.classList.remove("is-active"); t.setAttribute("aria-selected", "false"); t.setAttribute("tabindex", "-1"); });
+      tab.classList.add("is-active"); tab.setAttribute("aria-selected", "true"); tab.setAttribute("tabindex", "0");
+      if (examplePack && tab.id) examplePack.setAttribute("aria-labelledby", tab.id);
+      showExample(tab.getAttribute("data-ex"));
+      if (focus) tab.focus();
+    }
+    exTabs.forEach(function (tab, i) {
+      tab.addEventListener("click", function () { activateExTab(tab, false); });
+      tab.addEventListener("keydown", function (e) {
+        var dir = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!dir) return;
+        e.preventDefault();
+        activateExTab(exTabs[(i + dir + exTabs.length) % exTabs.length], true);
       });
     });
     showExample("bio"); // default
@@ -2058,6 +2308,7 @@
     function setDemoBusy(on, hasRun) {
       if (!demoGenerate) return;
       demoGenerate.disabled = on;
+      demoGenerate.setAttribute("aria-busy", String(on));
       demoGenerate.innerHTML = on
         ? SPINNER_SVG + " Generating…"
         : SPARK_SVG + (hasRun ? " Regenerate" : " Generate Study Pack");
@@ -4128,5 +4379,105 @@
 
   <!-- Newsletter signup handler (shared) → Mailchimp embedded form (JSONP, no backend) -->
   <script src="newsletter.js?v=3" defer></script>
+
+  <!-- AOS library (scroll animations) -->
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+
+  <!-- ============================================================= -->
+  <!-- REDESIGN 2026 — AOS init + landing micro-interactions          -->
+  <!-- (self-contained; does not touch the generator app / Clerk)     -->
+  <!-- ============================================================= -->
+  <script>
+  (function () {
+    var reduceMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+    /* ---- AOS: scroll-triggered reveals across the marketing sections ---- */
+    if (window.AOS) {
+      AOS.init({ duration: 650, easing: "ease-out-cubic", once: true, offset: 80, disable: reduceMotion });
+      // Recompute positions once fonts/late content settle.
+      window.addEventListener("load", function () { try { AOS.refresh(); } catch (e) {} });
+    }
+
+    /* ---- Animated counters in the metric band ---- */
+    function runCounter(el) {
+      var to = parseFloat(el.getAttribute("data-count-to")) || 0;
+      var prefix = el.getAttribute("data-count-prefix") || "";
+      var suffix = el.getAttribute("data-count-suffix") || "";
+      if (reduceMotion) { el.textContent = prefix + to + suffix; return; }
+      var dur = 1400, start = null;
+      function frame(ts) {
+        if (start === null) start = ts;
+        var p = Math.min((ts - start) / dur, 1);
+        var eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = prefix + Math.round(to * eased) + suffix;
+        if (p < 1) requestAnimationFrame(frame);
+        else el.textContent = prefix + to + suffix;
+      }
+      requestAnimationFrame(frame);
+    }
+    var counters = document.querySelectorAll("#statBand [data-count-to]");
+    if (counters.length) {
+      if (!("IntersectionObserver" in window)) {
+        counters.forEach(runCounter);
+      } else {
+        var cio = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) { if (e.isIntersecting) { runCounter(e.target); cio.unobserve(e.target); } });
+        }, { threshold: 0.5 });
+        counters.forEach(function (el) { cio.observe(el); });
+      }
+    }
+
+    /* ---- Subjects marquee (infinite scroll, decorative) ---- */
+    var track = document.getElementById("subjectsTrack");
+    if (track) {
+      var SUBJECTS = ["Biology","Chemistry","Physics","History","Calculus","Psychology","Economics","Literature","Spanish","Anatomy","Computer Science","Statistics","Geography","Business"];
+      function chipHtml(s) {
+        return '<span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-sm font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">' +
+          '<span class="h-1.5 w-1.5 rounded-full bg-brand-400"></span>' + s + '</span>';
+      }
+      var one = SUBJECTS.map(chipHtml).join("");
+      track.innerHTML = one + one; // duplicate for a seamless -50% loop
+      var mq = track.closest(".marquee");
+      if (mq) mq.setAttribute("aria-hidden", "true");
+    }
+
+    /* ---- Hero visual 3D tilt (fine-pointer devices only) ---- */
+    var canHover = window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    var tiltEl = document.querySelector("[data-tilt]");
+    if (tiltEl && canHover && !reduceMotion) {
+      var stage = tiltEl.parentElement;
+      stage.addEventListener("pointermove", function (e) {
+        var r = tiltEl.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width - 0.5;
+        var py = (e.clientY - r.top) / r.height - 0.5;
+        tiltEl.style.transform = "rotateY(" + (px * 7).toFixed(2) + "deg) rotateX(" + (-py * 7).toFixed(2) + "deg)";
+      });
+      stage.addEventListener("pointerleave", function () { tiltEl.style.transform = ""; });
+    }
+
+    /* ---- Interactive showcase pack tabs (Notes / Flashcards / Quiz) ---- */
+    document.querySelectorAll("[data-sc-tabs]").forEach(function (group) {
+      var scope = group.closest(".bc-body") || group.parentElement;
+      var tabs = group.querySelectorAll(".sc-tab");
+      var panels = scope.querySelectorAll(".sc-panel");
+      tabs.forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          var name = tab.getAttribute("data-sc-tab");
+          tabs.forEach(function (t) { var on = t === tab; t.classList.toggle("is-active", on); t.setAttribute("aria-selected", String(on)); });
+          panels.forEach(function (p) { p.classList.toggle("is-active", p.getAttribute("data-sc-panel") === name); });
+        });
+      });
+    });
+
+    /* ---- Clickable flip cards in the showcase ---- */
+    document.querySelectorAll("[data-flip]").forEach(function (card) {
+      function toggle() { card.classList.toggle("is-flipped"); }
+      card.addEventListener("click", toggle);
+      card.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+      });
+    });
+  })();
+  </script>
 </body>
 </html>
