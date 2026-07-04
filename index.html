@@ -29,56 +29,10 @@
   <!-- AOS — scroll-triggered animations (lightweight ~14KB, loaded from CDN like Tailwind/Clerk) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
 
-  <!-- Tailwind via CDN (no build step) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    // Theme is class-based so the toggle can flip <html class="dark"> instantly.
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ["Outfit", "ui-sans-serif", "system-ui", "sans-serif"],
-          },
-          colors: {
-            // Primary: deep indigo / soft blue
-            brand: {
-              50: "#eef2ff", 100: "#e0e7ff", 200: "#c7d2fe", 300: "#a5b4fc",
-              400: "#818cf8", 500: "#6366f1", 600: "#4f46e5", 700: "#4338ca",
-              800: "#3730a3", 900: "#312e81", 950: "#1e1b4b",
-            },
-            // Accent: teal / emerald for success + delight
-            accent: {
-              50: "#ecfdf5", 100: "#d1fae5", 200: "#a7f3d0", 300: "#6ee7b7",
-              400: "#34d399", 500: "#10b981", 600: "#059669", 700: "#047857",
-              800: "#065f46", 900: "#064e3b",
-            },
-          },
-          boxShadow: {
-            soft: "0 1px 2px rgba(15,23,42,.04), 0 8px 24px -8px rgba(15,23,42,.12)",
-            lift: "0 2px 4px rgba(15,23,42,.04), 0 24px 48px -16px rgba(49,46,129,.28)",
-            glow: "0 0 0 1px rgba(99,102,241,.18), 0 20px 60px -20px rgba(99,102,241,.55)",
-          },
-          keyframes: {
-            "fade-up": { "0%": { opacity: 0, transform: "translateY(14px)" }, "100%": { opacity: 1, transform: "translateY(0)" } },
-            "fade-in": { "0%": { opacity: 0 }, "100%": { opacity: 1 } },
-            float: { "0%,100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-8px)" } },
-            shimmer: { "100%": { transform: "translateX(100%)" } },
-            /* Opacity-only on purpose: animating transform here leaves a retained
-               matrix on the card wrapper (fill: both), which flattens the 3D context
-               of the flashcard inside and stops the flip from rotating. */
-            "pop-in": { "0%": { opacity: 0 }, "100%": { opacity: 1 } },
-          },
-          animation: {
-            "fade-up": "fade-up .85s cubic-bezier(.16,1,.3,1) both",
-            "fade-in": "fade-in .85s ease both",
-            float: "float 7s ease-in-out infinite",
-            "pop-in": "pop-in .5s cubic-bezier(.16,1,.3,1) both",
-          },
-        },
-      },
-    };
-  </script>
+  <!-- Precompiled Tailwind (replaces the cdn.tailwindcss.com runtime build).
+       Theme/config lives in tailwind.config.js. After changing any Tailwind
+       class, rebuild + commit tailwind.css:  npm run build:css -->
+  <link rel="stylesheet" href="/tailwind.css" />
 
   <!-- Theme bootstrap: runs before paint so there's no flash. Default = light. -->
   <script>
@@ -100,22 +54,42 @@
   <script src="config.js" onerror="this.remove()"></script>
   <script src="/runtime-config" onerror="this.remove()"></script>
   <script>
-    // Preload Clerk exactly like the production app so the generator can use real auth + Pro plan detection.
-    (function preloadClerk() {
+    // Clerk is LAZY-LOADED to keep clerk.browser.js off the first-paint critical path.
+    // window.__ensureClerk() injects it on demand (idempotent) and is fired on the FIRST
+    // of: an #app/#buy deep link, the first user interaction, or browser idle. initClerk()
+    // (in the app IIFE) then polls for window.Clerk exactly as before — so session detection
+    // and Pro/Power plan checks are unchanged; they just resolve a beat later instead of
+    // competing with first paint. When no publishable key is present, __ensureClerk is a no-op.
+    (function () {
       var key = String((window.APP_CONFIG && window.APP_CONFIG.CLERK_PUBLISHABLE_KEY) || "").trim().replace(/^['"]|['"]$/g, "");
-      if (!/^pk_(test|live)_/.test(key)) return;
-      window.__clerk_publishable_key = key;
-      window.__CLERK_PUBLISHABLE_KEY__ = key;
-      var meta = document.querySelector('meta[name="clerk-publishable-key"]');
-      if (!meta) { meta = document.createElement("meta"); meta.setAttribute("name", "clerk-publishable-key"); document.head.appendChild(meta); }
-      meta.setAttribute("content", key);
-      if (document.querySelector('script[data-clerk-loader="app"]')) return;
-      var script = document.createElement("script");
-      script.async = true; script.crossOrigin = "anonymous"; script.type = "text/javascript";
-      script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
-      script.setAttribute("data-clerk-loader", "app");
-      script.setAttribute("data-clerk-publishable-key", key);
-      document.head.appendChild(script);
+      if (!/^pk_(test|live)_/.test(key)) { window.__ensureClerk = function () {}; return; }
+      var started = false;
+      window.__ensureClerk = function ensureClerk() {
+        if (started) return;
+        started = true;
+        window.__clerk_publishable_key = key;
+        window.__CLERK_PUBLISHABLE_KEY__ = key;
+        var meta = document.querySelector('meta[name="clerk-publishable-key"]');
+        if (!meta) { meta = document.createElement("meta"); meta.setAttribute("name", "clerk-publishable-key"); document.head.appendChild(meta); }
+        meta.setAttribute("content", key);
+        if (document.querySelector('script[data-clerk-loader="app"]')) return;
+        var script = document.createElement("script");
+        script.async = true; script.crossOrigin = "anonymous"; script.type = "text/javascript";
+        script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
+        script.setAttribute("data-clerk-loader", "app");
+        script.setAttribute("data-clerk-publishable-key", key);
+        document.head.appendChild(script);
+      };
+      // 1) Deep links that need auth/session load Clerk immediately.
+      if (location.hash === "#app" || location.hash === "#buy") { window.__ensureClerk(); return; }
+      // 2) First real user interaction → start loading before they reach a sign-in button.
+      var once = { once: true, passive: true, capture: true };
+      ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
+        window.addEventListener(ev, window.__ensureClerk, once);
+      });
+      // 3) Idle fallback so a returning signed-in user is still recognised without interacting.
+      if ("requestIdleCallback" in window) { requestIdleCallback(function () { window.__ensureClerk(); }, { timeout: 1800 }); }
+      else { setTimeout(function () { window.__ensureClerk(); }, 1800); }
     })();
   </script>
 
@@ -423,7 +397,13 @@
     .dark .plan-pro { background: linear-gradient(180deg, rgba(99,102,241,.14) 0%, rgba(2,6,23,.2) 46%); }
     @media (min-width: 768px) { .plan-pro { transform: scale(1.045); } .plan-pro:hover { transform: scale(1.045) translateY(-4px); } }
 
-    /* ---- Testimonial card ---- */
+    /* ---- Monthly / Annual billing toggle ---- */
+    .bill-btn { color: #475569; cursor: pointer; }
+    .dark .bill-btn { color: #cbd5e1; }
+    .bill-btn.is-active { background: #fff; color: #4f46e5; box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 12px -4px rgba(49,46,129,.22); }
+    .dark .bill-btn.is-active { background: rgba(99,102,241,.20); color: #c7d2fe; }
+
+    /* ---- Use-case card ---- */
     .testi { transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s ease; }
     @media (prefers-reduced-motion: no-preference) { .testi:hover { transform: translateY(-4px); box-shadow: 0 24px 48px -20px rgba(49,46,129,.3); } }
   </style>
@@ -960,50 +940,49 @@
     </section>
 
     <!-- ============================================================= -->
-    <!-- 7b. TESTIMONIALS                                              -->
-    <!-- NOTE: placeholder quotes — replace with real student reviews. -->
+    <!-- 7b. USE CASES — how students actually use Lumi                -->
+    <!-- Honest, product-true scenarios (NOT invented testimonials).   -->
+    <!-- To add REAL reviews later: swap a card's icon+title+copy for a -->
+    <!-- <blockquote> + a genuine name/handle you have permission to use.-->
     <!-- ============================================================= -->
     <section class="py-20 sm:py-28 bg-white dark:bg-white/[.02] border-y border-slate-200/70 dark:border-white/10">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
-          <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Loved by students</p>
-          <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Study smarter, not longer</h2>
-          <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Students use Lumi to turn the pile of notes into something they can actually revise from.</p>
+          <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Built for how you study</p>
+          <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Made for real study moments</h2>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">However your notes show up — messy, photographed, or buried in an article — Lumi turns them into something you can actually revise from.</p>
         </div>
 
         <div class="mt-12 grid md:grid-cols-3 gap-6">
-          <figure class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up">
-            <div class="flex text-amber-400 mb-3" aria-hidden="true">
-              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg>
-            </div>
-            <blockquote class="text-slate-700 dark:text-slate-200 leading-relaxed">"I pasted three weeks of messy bio notes and had clean notes, flashcards, and a quiz before I finished my coffee."</blockquote>
-            <figcaption class="mt-5 flex items-center gap-3">
-              <span class="h-10 w-10 grid place-items-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white text-sm font-bold shadow-soft">MK</span>
-              <span><span class="block text-sm font-bold text-slate-900 dark:text-white">Maya K.</span><span class="block text-xs text-slate-400">11th grade · Biology</span></span>
-            </figcaption>
-          </figure>
+          <!-- Card 1 — paste messy notes -->
+          <div class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up">
+            <span class="h-11 w-11 grid place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300 shadow-soft">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg>
+            </span>
+            <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">The night before an exam</h3>
+            <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">Paste three weeks of messy notes and get clean notes, flashcards, and a quiz to drill your weak spots — in seconds, not hours.</p>
+            <p class="mt-5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300">Messy notes <svg class="h-3.5 w-3.5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg> full study pack</p>
+          </div>
 
-          <figure class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="120">
-            <div class="flex text-amber-400 mb-3" aria-hidden="true">
-              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg>
-            </div>
-            <blockquote class="text-slate-700 dark:text-slate-200 leading-relaxed">"The photo upload is unreal — I snap a page of my textbook and it just builds the whole study pack. Saved my finals week."</blockquote>
-            <figcaption class="mt-5 flex items-center gap-3">
-              <span class="h-10 w-10 grid place-items-center rounded-full bg-gradient-to-br from-accent-500 to-accent-700 text-white text-sm font-bold shadow-soft">DR</span>
-              <span><span class="block text-sm font-bold text-slate-900 dark:text-white">Devin R.</span><span class="block text-xs text-slate-400">College freshman</span></span>
-            </figcaption>
-          </figure>
+          <!-- Card 2 — snap a photo -->
+          <div class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="120">
+            <span class="h-11 w-11 grid place-items-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-500/15 dark:text-accent-300 shadow-soft">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8a2 2 0 012-2h1l1-2h8l1 2h1a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z"/><circle cx="12" cy="12.5" r="3.2"/></svg>
+            </span>
+            <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">Just a photo of the page</h3>
+            <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">Snap a picture of your textbook or handwritten notes. Lumi reads the image and builds the whole pack from it — no retyping.</p>
+            <p class="mt-5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300">Photo or PDF <svg class="h-3.5 w-3.5 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg> study pack</p>
+          </div>
 
-          <figure class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="240">
-            <div class="flex text-amber-400 mb-3" aria-hidden="true">
-              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg><svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 15l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg>
-            </div>
-            <blockquote class="text-slate-700 dark:text-slate-200 leading-relaxed">"I stopped rewriting notes for hours. Now I spend that time actually quizzing myself — my grades went up."</blockquote>
-            <figcaption class="mt-5 flex items-center gap-3">
-              <span class="h-10 w-10 grid place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white text-sm font-bold shadow-soft">PS</span>
-              <span><span class="block text-sm font-bold text-slate-900 dark:text-white">Priya S.</span><span class="block text-xs text-slate-400">AP Chemistry</span></span>
-            </figcaption>
-          </figure>
+          <!-- Card 3 — from an article link -->
+          <div class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="240">
+            <span class="h-11 w-11 grid place-items-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300 shadow-soft">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+            </span>
+            <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">From reading to real recall</h3>
+            <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">Drop in an article link and walk away with flashcards and a quiz — so your time goes into testing yourself, not re-reading.</p>
+            <p class="mt-5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300">Article link <svg class="h-3.5 w-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg> flashcards &amp; quiz</p>
+          </div>
         </div>
       </div>
     </section>
@@ -1016,7 +995,18 @@
         <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
           <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Pricing</p>
           <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Plans that scale with how hard you study</h2>
-          <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Start free, no card needed. Paid plans include a <strong class="text-slate-800 dark:text-white">3-day free trial</strong> and cancel anytime. Save with annual billing.</p>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Start free, no card needed. Paid plans include a <strong class="text-slate-800 dark:text-white">3-day free trial</strong> and cancel anytime.</p>
+        </div>
+
+        <!-- Monthly / Annual billing toggle (updates the Pro & Power prices) -->
+        <div class="mt-8 flex justify-center" data-aos="fade-up">
+          <div class="inline-flex items-center gap-1 p-1 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10" role="group" aria-label="Billing period">
+            <button type="button" data-billing="monthly" class="bill-btn is-active px-4 py-2 rounded-full text-sm font-semibold transition" aria-pressed="true">Monthly</button>
+            <button type="button" data-billing="annual" class="bill-btn inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition" aria-pressed="false">
+              Annual
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-accent-100 text-accent-700 dark:bg-accent-500/20 dark:text-accent-300">Save ~30%</span>
+            </button>
+          </div>
         </div>
 
         <!-- Custom plan cards (overview only — no checkout here; the full table + checkout live on pricing.html) -->
@@ -1035,11 +1025,13 @@
             </ul>
           </article>
           <!-- Pro (highlighted — the recommended plan) -->
-          <article class="plan-pro relative z-10 rounded-3xl border-2 border-brand-500 dark:border-brand-400 p-6 shadow-glow flex flex-col" data-aos="fade-up" data-aos-delay="100">
+          <article class="plan-pro relative z-10 rounded-3xl border-2 border-brand-500 dark:border-brand-400 p-6 shadow-glow flex flex-col" data-aos="fade-up" data-aos-delay="100"
+            data-price-monthly="$6.99" data-price-annual="$4.99" data-period-monthly="/month" data-period-annual="/mo"
+            data-note-monthly="or $4.99/mo billed annually" data-note-annual="billed annually · $59.88/yr">
             <span class="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide text-white bg-gradient-to-r from-brand-600 to-brand-500 shadow-lift"><svg class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.7 5.6L19 9l-5.3 1.4L12 16l-1.7-5.6L5 9l5.3-1.4L12 2z"/></svg> MOST POPULAR</span>
             <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Pro</h3>
-            <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$6.99</span><span class="text-sm font-medium text-slate-400">/month</span></p>
-            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For everyday studying. <span class="text-brand-600 dark:text-brand-300 font-semibold">$4.99/mo billed annually.</span></p>
+            <p class="mt-2 flex items-baseline gap-1"><span class="plan-price text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$6.99</span><span class="plan-period text-sm font-medium text-slate-400">/month</span></p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For everyday studying. <span class="plan-note text-brand-600 dark:text-brand-300 font-semibold">or $4.99/mo billed annually</span></p>
             <ul class="mt-5 space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
               <li class="flex gap-2.5"><span class="check"></span><span><strong class="font-semibold text-slate-800 dark:text-white">Everything in Free</strong>, plus:</span></li>
               <li class="flex gap-2.5"><span class="check"></span>10,000-character notes · 15 flashcards</li>
@@ -1049,10 +1041,12 @@
             </ul>
           </article>
           <!-- Power -->
-          <article class="lift-card rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col" data-aos="fade-up" data-aos-delay="200">
+          <article class="lift-card rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col" data-aos="fade-up" data-aos-delay="200"
+            data-price-monthly="$12.99" data-price-annual="$8.99" data-period-monthly="/month" data-period-annual="/mo"
+            data-note-monthly="or $8.99/mo billed annually" data-note-annual="billed annually · $107.88/yr">
             <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Power</h3>
-            <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$12.99</span><span class="text-sm font-medium text-slate-400">/month</span></p>
-            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For heavy course loads. <span class="text-brand-600 dark:text-brand-300 font-semibold">$8.99/mo billed annually.</span></p>
+            <p class="mt-2 flex items-baseline gap-1"><span class="plan-price text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$12.99</span><span class="plan-period text-sm font-medium text-slate-400">/month</span></p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For heavy course loads. <span class="plan-note text-brand-600 dark:text-brand-300 font-semibold">or $8.99/mo billed annually</span></p>
             <ul class="mt-5 space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
               <li class="flex gap-2.5"><span class="check"></span><span><strong class="font-semibold text-slate-800 dark:text-white">Everything in Pro</strong>, plus:</span></li>
               <li class="flex gap-2.5"><span class="check"></span>25,000-character notes · 30 flashcards</li>
@@ -2866,7 +2860,7 @@
     var photoDataUrl = "";
     var lastResult = null;
     var abortCtl = null;
-    var billingMounted = false, pendingUpgrade = false, pendingApp = false;
+    var billingMounted = false, pendingUpgrade = false, pendingApp = false, pendingSignIn = null;
 
     function getPubKey() {
       var k = String((window.APP_CONFIG && window.APP_CONFIG.CLERK_PUBLISHABLE_KEY) || "").trim().replace(/^['"]|['"]$/g, "");
@@ -3284,6 +3278,14 @@
       try { if (!window.Clerk.loaded) await window.Clerk.load(); } catch (e) {}
       isAuthed = Boolean(window.Clerk.user);
       refreshAuthUi();
+      // Lazy-load: resolve any intent captured while Clerk was still loading.
+      if (isAuthed) {
+        if (pendingApp) { pendingApp = false; openApp(); }
+        else if (pendingUpgrade) { pendingUpgrade = false; openBillingModal(); }
+        pendingSignIn = null;
+      } else if (pendingSignIn) {
+        var ps = pendingSignIn; pendingSignIn = null; startSignIn(ps.reason, ps.stayHome);
+      }
       try {
         window.Clerk.addListener(function () {
           var was = isAuthed;
@@ -3303,6 +3305,7 @@
       return false;
     }
     function startSignIn(reason, stayHome) {
+      if (window.__ensureClerk) window.__ensureClerk(); // lazy-load: begin loading Clerk on auth intent
       if (window.Clerk) {
         var after = stayHome ? (location.pathname + location.search) : (location.pathname + "#app");
         // Try openSignIn with both Clerk v5 params and legacy v4 aliases.
@@ -3324,11 +3327,10 @@
           try { window.Clerk.redirectToSignIn({ redirectUrl: after }); return; } catch (e) {}
         }
       }
-      // Clerk not ready yet — surface a hint where the user can see it.
+      // Clerk still loading — remember the intent; initClerk() replays it once Clerk is ready.
+      pendingSignIn = { reason: reason, stayHome: stayHome };
       if (appView && !appView.classList.contains("hidden") && els.appStatus) {
-        els.appStatus.textContent = reason ? ("Sign in to " + reason + ".") : "Sign in to continue.";
-      } else {
-        alert("Sign-in is loading — please try again in a moment.");
+        els.appStatus.textContent = reason ? ("Loading sign-in to " + reason + "…") : "Loading sign-in…";
       }
     }
     // Homepage "Sign in" entry points → open the Clerk dialog (stay on the homepage).
@@ -4477,6 +4479,31 @@
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
       });
     });
+
+    /* ---- Pricing: Monthly / Annual billing toggle ---- */
+    (function () {
+      var btns = document.querySelectorAll(".bill-btn");
+      var cards = document.querySelectorAll("[data-price-monthly]");
+      if (!btns.length || !cards.length) return;
+      function apply(mode) {
+        cards.forEach(function (card) {
+          var price = card.querySelector(".plan-price");
+          var period = card.querySelector(".plan-period");
+          var note = card.querySelector(".plan-note");
+          if (price) price.textContent = card.getAttribute("data-price-" + mode);
+          if (period) period.textContent = card.getAttribute("data-period-" + mode);
+          if (note) note.textContent = card.getAttribute("data-note-" + mode);
+        });
+        btns.forEach(function (b) {
+          var on = b.getAttribute("data-billing") === mode;
+          b.classList.toggle("is-active", on);
+          b.setAttribute("aria-pressed", String(on));
+        });
+      }
+      btns.forEach(function (b) {
+        b.addEventListener("click", function () { apply(b.getAttribute("data-billing")); });
+      });
+    })();
   })();
   </script>
 </body>

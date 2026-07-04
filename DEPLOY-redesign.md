@@ -6,6 +6,25 @@ The redesign is a single self-contained file, **`redesign.html`** (marketing sit
 - [ ] **OpenRouter account has credits** (live generation was failing partly because of model issues; confirm billing).
 - [ ] **`OPENROUTER_API_KEY`** is set in Cloudflare Pages → Settings → Environment variables (still required — it's a secret).
 - [ ] You can stop worrying about `OPENROUTER_MODEL` / `OPENROUTER_VISION_MODEL` — the model is now **hardcoded** to `google/gemini-2.5-flash` in `chat.js`. (Old env values are ignored.)
+- [ ] **`tailwind.css` is rebuilt & committed** if you changed any HTML classes (see "CSS build" below).
+
+## CSS build (Tailwind is precompiled)
+The site no longer uses the `cdn.tailwindcss.com` runtime build (it warned in production and rebuilt CSS in every visitor's browser). All 7 pages now link a precompiled **`/tailwind.css`**, generated from `tailwind.input.css` + `tailwind.config.js` (theme = the old inline config, as a superset).
+
+- **After editing any Tailwind class in `index.html`, `pricing.html`, `contact.html`, `privacy.html`, `terms.html`, `changelog.html`, or `admin.html`, rebuild and commit the CSS:**
+  ```powershell
+  npm install        # first time only — installs tailwindcss v3 (dev dependency)
+  npm run build:css  # regenerates tailwind.css (minified)
+  git add tailwind.css
+  ```
+  Classes absent at build time are purged and silently have no effect, so always rebuild before you push.
+- `npm run watch:css` rebuilds on every save while developing locally.
+- `npm run deploy` runs `build:css` automatically before `wrangler pages deploy .`.
+- **Git-push deploys serve the committed `tailwind.css`.** If you'd rather Cloudflare build it, set the Pages build command to `npm run build:css` (publish dir stays the repo root).
+- `redesign.html` and `index.legacy.html` are intentionally left on the old CDN — they're stale and not linked anywhere.
+
+## Clerk is lazy-loaded (faster first paint)
+`clerk.browser.js` is no longer injected on page load. `index.html`'s head defines `window.__ensureClerk()` (idempotent) and calls it on the **first** of: an `#app`/`#buy` deep link, the first user interaction, or browser idle (~1.8s). `initClerk()` still polls for `window.Clerk` and wires session/plan detection exactly as before — so a returning signed-in user is recognised within a second or two of load instead of Clerk blocking first paint. No env/config changes needed. **Verify on the live site** (the local static preview has no publishable key): the signed-in avatar/plan badge appears shortly after load, and Sign in / Open app / Upgrade all still work.
 
 ## 1. Swap in the new page
 From the repo root:
