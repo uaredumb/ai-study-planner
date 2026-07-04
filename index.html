@@ -719,18 +719,19 @@
                   </div>
                 </div>
 
-                <!-- FLASHCARDS panel (clickable flip) -->
+                <!-- FLASHCARDS panel (auto-flipping demo loop, styled like the app's notecard) -->
                 <div class="sc-panel" data-sc-panel="cards" role="tabpanel">
-                  <div class="flip mx-auto max-w-[19rem] h-44" data-flip role="button" tabindex="0" aria-label="Flip flashcard to see the answer">
+                  <div class="flip mx-auto max-w-[19rem] h-44" data-flip data-autoflip aria-hidden="true">
                     <div class="flip-inner">
-                      <div class="flip-face absolute inset-0 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 p-4 text-white shadow-soft grid place-content-center text-center">
-                        <p class="text-[10px] font-bold opacity-90 mb-2">FLASHCARD 1 / 8</p>
-                        <p class="text-sm font-semibold leading-snug">Where do the light reactions occur?</p>
-                        <p class="text-[11px] opacity-80 mt-3">Tap to flip ↻</p>
+                      <div class="flip-face notecard absolute inset-0 rounded-lg p-4 pl-11 flex flex-col justify-center text-left">
+                        <span class="absolute top-2.5 left-11 text-[10px] font-bold uppercase tracking-wider text-rose-400">Question</span>
+                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">Where do the light reactions occur?</p>
+                        <span class="absolute bottom-2.5 right-4 text-[10px] text-slate-400">1 / 8</span>
                       </div>
-                      <div class="flip-face flip-back rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-4 grid place-content-center text-center shadow-soft">
-                        <p class="text-[10px] font-bold text-brand-500 mb-2">ANSWER</p>
-                        <p class="text-sm font-semibold text-slate-800 dark:text-white leading-snug">In the thylakoid membranes of the chloroplast.</p>
+                      <div class="flip-face flip-back notecard rounded-lg p-4 pl-11 flex flex-col justify-center text-left">
+                        <span class="absolute top-2.5 left-11 text-[10px] font-bold uppercase tracking-wider text-emerald-500">Answer</span>
+                        <p class="text-sm font-medium text-slate-700 dark:text-slate-200 leading-snug">In the thylakoid membranes of the chloroplast.</p>
+                        <span class="absolute bottom-2.5 right-4 text-[10px] text-slate-400">1 / 8</span>
                       </div>
                     </div>
                   </div>
@@ -935,7 +936,7 @@
             </div>
           </div>
         </div>
-        <p class="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">Like what you get? <a href="#app" class="font-semibold text-brand-600 dark:text-brand-300 hover:underline">Create a free account</a> to generate from <em>your own</em> notes, photos &amp; PDFs — and save every pack across your devices.</p>
+        <p id="demoCta" class="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">Like what you get? <a href="#app" class="font-semibold text-brand-600 dark:text-brand-300 hover:underline">Create a free account</a> to generate from <em>your own</em> notes, photos &amp; PDFs — and save every pack across your devices.</p>
       </div>
     </section>
 
@@ -2879,7 +2880,7 @@
      "appNotesWrap","appNotes","appCharCount","appCharLimit","appMoreChars","appArticleWrap","appArticleUrl",
      "appPhotoWrap","appDrop","appFileInput","appPhotoPreview","appPhotoThumb","appPhotoName","appPhotoRemove",
      "appChips","appCardCountWrap","appCardCount","appCardLimitHint","appGenerate","appCancel","appStatus",
-     "appStream","appStreamText","appOutput","appEmpty"].forEach(function (id) { els[id] = $(id); });
+     "appStream","appStreamText","appOutput","appEmpty","demoCta"].forEach(function (id) { els[id] = $(id); });
 
     /* =========================================================== */
     /* VIEW OPEN / CLOSE                                            */
@@ -3265,6 +3266,7 @@
         if (els.homeStartBtn) els.homeStartBtn.firstChild.textContent = "Start for free";
         if (els.homeUserButton) { els.homeUserButton.classList.add("hidden"); closeUserMenu(els.homeUserButton); }
       }
+      if (els.demoCta) els.demoCta.classList.toggle("hidden", Boolean(authed));
       syncPlan();
       refreshLumibotGate();
     }
@@ -4472,12 +4474,19 @@
     });
 
     /* ---- Clickable flip cards in the showcase ---- */
-    document.querySelectorAll("[data-flip]").forEach(function (card) {
+    document.querySelectorAll("[data-flip]:not([data-autoflip])").forEach(function (card) {
       function toggle() { card.classList.toggle("is-flipped"); }
       card.addEventListener("click", toggle);
       card.addEventListener("keydown", function (e) {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
       });
+    });
+
+    /* ---- Auto-flipping demo card: loops question ↔ answer on its own,
+       no click required. Paused for reduced-motion users. ---- */
+    document.querySelectorAll("[data-autoflip]").forEach(function (card) {
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      setInterval(function () { card.classList.toggle("is-flipped"); }, 2200);
     });
 
     /* ---- Pricing: Monthly / Annual billing toggle ---- */

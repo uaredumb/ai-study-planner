@@ -120,7 +120,7 @@
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">Changelog</span>
         <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">What's new in Lumi Study</h1>
         <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Every release, new feature, improvement and fix — in one place. We ship often.</p>
-        <p class="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">Currently on <span class="font-semibold text-slate-700 dark:text-slate-200">v1.5.3</span></p>
+        <p class="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">Currently on <span class="font-semibold text-slate-700 dark:text-slate-200">v1.5.4</span></p>
       </div>
     </section>
 
@@ -188,8 +188,18 @@
           changes: [
             { type: "improved", text: "Precompiled Tailwind CSS — the landing page now loads faster with no runtime CSS build, eliminating the production warning. Rebuild with npm run build:css after editing HTML classes." },
             { type: "improved", text: "Clerk authentication now loads lazily on first interaction or idle (~1.8s), speeding up initial page paint while keeping sign-in and plan detection seamless." },
-            { type: "improved", text: "Replaced promotional testimonials with an honest "Built for how you study" use-case section, showing real study moments Lumi supports." },
+            { type: "improved", text: "Replaced promotional testimonials with an honest “Built for how you study” use-case section, showing real study moments Lumi supports." },
             { type: "new", text: "Monthly / Annual pricing toggle on the pricing page — switch billing cycles to see live price updates (Pro $6.99/mo or $4.99/mo annual; Power $12.99/mo or $8.99/mo annual)." }
+          ]
+        },
+        {
+          version: "v1.5.3.1",
+          date: "2026-07-03",
+          title: "Demo polish: flashcard styling & signed-in cleanup",
+          changes: [
+            { type: "improved", text: "The flashcard preview in the “A look inside” showcase now matches the real app's note-card look (ruled paper, red margin line, Question/Answer labels) and flips on its own in a repeating loop instead of waiting for a click." },
+            { type: "fixed", text: "The “Create a free account” prompt under the home page demo no longer shows once you're already signed in." },
+            { type: "fixed", text: "Fixed a broken quote in this changelog's v1.5.4 entry that was silently breaking the release list." }
           ]
         },
         {
