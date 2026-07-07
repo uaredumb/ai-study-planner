@@ -113,7 +113,6 @@
         <a href="index.html#features" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Features</a>
         <a href="index.html#how" class="hover:text-brand-600 dark:hover:text-brand-300 transition">How it works</a>
         <a href="pricing.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Pricing</a>
-        <a href="changelog.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Changelog</a>
         <a href="contact.html" aria-current="page" class="text-brand-700 dark:text-brand-300">Contact</a>
       </div>
       <div class="flex items-center gap-1.5">
@@ -246,37 +245,71 @@
   <!-- ============================================================= -->
   <!-- FOOTER                                                        -->
   <!-- ============================================================= -->
-  <footer class="border-t border-slate-200/70 dark:border-white/10">
-
-    <!-- Newsletter signup → Mailchimp -->
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-10">
-      <form id="newsletterForm" class="mx-auto max-w-md text-center" novalidate>
-        <p class="text-sm font-bold text-slate-900 dark:text-white">Get study tips in your inbox</p>
-        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Occasional updates on new features and smarter ways to study. No spam — unsubscribe anytime.</p>
-        <div class="mt-4 flex gap-2">
-          <label for="newsletterEmail" class="sr-only">Email address</label>
-          <input id="newsletterEmail" name="email" type="email" autocomplete="email" required placeholder="you@example.com"
-            class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition" />
-          <button type="submit" id="newsletterBtn"
-            class="shrink-0 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 transition disabled:opacity-60 disabled:cursor-not-allowed">Subscribe</button>
+  <footer class="border-t border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="lg:col-span-1">
+          <a href="index.html" class="flex items-center gap-2.5">
+            <img src="logo.png?v=20260701" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft" />
+            <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
+          </a>
+          <p class="mt-3 text-sm text-slate-500 dark:text-slate-400 max-w-xs">One input. A full study pack. Faster learning — for students who'd rather understand than memorize.</p>
         </div>
-        <p id="newsletterMsg" class="hidden mt-2 text-sm" role="status" aria-live="polite"></p>
-      </form>
-    </div>
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <a href="index.html" class="flex items-center gap-2.5">
-        <img src="logo.png?v=20260701" alt="" class="h-8 w-8 rounded-lg object-cover" />
-        <span class="font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
-      </a>
-      <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
-        <a href="index.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Home</a>
-        <a href="pricing.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Pricing</a>
-        <a href="changelog.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Changelog</a>
-        <a href="contact.html" class="text-brand-700 dark:text-brand-300" aria-current="page">Contact</a>
-        <a href="privacy.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Privacy</a>
-        <a href="terms.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Terms</a>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Product</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="index.html#features" class="hover:text-brand-600 dark:hover:text-white transition">Features</a></li>
+            <li><a href="index.html#how" class="hover:text-brand-600 dark:hover:text-white transition">How it works</a></li>
+            <li><a href="index.html#demo" class="hover:text-brand-600 dark:hover:text-white transition">Try the demo</a></li>
+            <li><a href="pricing.html" class="hover:text-brand-600 dark:hover:text-white transition">Pricing</a></li>
+            <li><a href="changelog.html" class="hover:text-brand-600 dark:hover:text-white transition">Changelog</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Company</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="index.html#app" class="hover:text-brand-600 dark:hover:text-white transition">Sign in</a></li>
+            <li><a href="contact.html" class="hover:text-brand-600 dark:hover:text-white transition">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Legal</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="privacy.html" class="hover:text-brand-600 dark:hover:text-white transition">Privacy Policy</a></li>
+            <li><a href="terms.html" class="hover:text-brand-600 dark:hover:text-white transition">Terms of Service</a></li>
+          </ul>
+        </div>
       </div>
-      <p class="text-xs text-slate-400 dark:text-slate-500">© <span id="year">2026</span> Lumi Study</p>
+
+      <!-- Newsletter signup → Mailchimp -->
+      <div class="mt-10 pt-8 border-t border-slate-200/70 dark:border-white/10">
+        <div class="grid sm:grid-cols-2 gap-6 items-center">
+          <div>
+            <p class="text-sm font-bold text-slate-900 dark:text-white">Get study tips in your inbox</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm">Occasional updates on new features and smarter ways to study. No spam — unsubscribe anytime.</p>
+          </div>
+          <form id="newsletterForm" class="w-full sm:max-w-sm sm:justify-self-end" novalidate>
+            <div class="flex gap-2">
+              <label for="newsletterEmail" class="sr-only">Email address</label>
+              <input id="newsletterEmail" name="email" type="email" autocomplete="email" required
+                placeholder="you@example.com"
+                class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition" />
+              <button type="submit" id="newsletterBtn"
+                class="shrink-0 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 transition disabled:opacity-60 disabled:cursor-not-allowed">
+                Subscribe
+              </button>
+            </div>
+            <p id="newsletterMsg" class="hidden mt-2 text-sm" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+
+      <div class="mt-10 pt-6 border-t border-slate-200/70 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-sm text-slate-400 dark:text-slate-500">© <span id="year">2026</span> Lumi Study. Made for students, by people who hated cramming.</p>
+        <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <span class="h-2 w-2 rounded-full bg-accent-500"></span> All systems operational
+        </div>
+      </div>
     </div>
   </footer>
 
