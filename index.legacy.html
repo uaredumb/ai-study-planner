@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lumi Study</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="logo.png?v=20260701" />
+  <link rel="icon" type="image/png" sizes="512x512" href="logo.png?v=20260701" />
+  <link rel="shortcut icon" href="logo.png?v=20260701" />
+  <link rel="apple-touch-icon" sizes="180x180" href="LumiStudy logo with glowing orb (1).png?v=20260313" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    window.APP_CONFIG = window.APP_CONFIG || {
+      CANONICAL_HOST: "",
+      CLERK_PUBLISHABLE_KEY: ""
+    };
+  </script>
+  <script src="config.js"></script>
+  <script src="/runtime-config" onerror="this.remove()"></script>
+  <script>
+    (function preloadClerk() {
+      const key = String(window.APP_CONFIG?.CLERK_PUBLISHABLE_KEY || "").trim().replace(/^['"]|['"]$/g, "");
+      if (!/^pk_(test|live)_/.test(key)) return;
+
+      window.__clerk_publishable_key = key;
+      window.__clerk_publishable_key__ = key;
+      window.__CLERK_PUBLISHABLE_KEY__ = key;
+      window.__clerkPublishableKey = key;
+
+      let meta = document.querySelector('meta[name="clerk-publishable-key"]');
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.setAttribute("name", "clerk-publishable-key");
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute("content", key);
+
+      const existingScript = document.querySelector('script[data-clerk-loader="app"]');
+      if (existingScript) {
+        existingScript.setAttribute("data-clerk-publishable-key", key);
+        existingScript.setAttribute("data-clerk-publishableKey", key);
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.async = true;
+      script.crossOrigin = "anonymous";
+      script.type = "text/javascript";
+      script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
+      script.setAttribute("data-clerk-loader", "app");
+      script.setAttribute("data-clerk-publishable-key", key);
+      script.setAttribute("data-clerk-publishableKey", key);
+      document.head.appendChild(script);
+    })();
+  </script>
+  <script>
+    (function redirectDevHostname() {
+      const canonicalHost = window.APP_CONFIG && window.APP_CONFIG.CANONICAL_HOST;
+      if (!canonicalHost) return;
+
+      const host = window.location.hostname;
+      const isDevHost = host.endsWith(".pages.dev") || host.endsWith(".workers.dev");
+      const alreadyCanonical = host === canonicalHost || host === "www." + canonicalHost;
+      if (!isDevHost || alreadyCanonical) return;
+
+      const target = "https://" + canonicalHost + window.location.pathname + window.location.search + window.location.hash;
+      window.location.replace(target);
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css?v=53" />
+</head>
+<body>
+  <div class="bg-shape bg-shape-1" aria-hidden="true"></div>
+  <div class="bg-shape bg-shape-2" aria-hidden="true"></div>
+  <main class="app-shell">
+    <header class="top-bar">
+      <div class="brand-block">
+        <img id="appLogo" class="app-logo" src="LumiStudy logo with glowing orb (1).png?v=20260313" alt="Lumi Study logo" />
+        <h1 class="sr-only">Lumi Study</h1>
+        <p class="eyebrow">One Input. Full Study Pack. Faster Learning.</p>
+      </div>
+      <div class="top-actions">
+        <div id="clerkUserButton" class="clerk-user-button hidden" aria-label="Account"></div>
+        <button id="accountLoginButton" class="theme-btn" type="button" aria-label="Sign in">
+          <img class="btn-icon" src="icons/profile.svg" alt="" aria-hidden="true" />
+          <span class="btn-label">Sign In</span>
+        </button>
+        <button id="tutorialLaunchButton" class="theme-btn" type="button" aria-label="Open help tutorial">
+          <span class="btn-glyph" aria-hidden="true">?</span>
+          <span class="btn-label">Help</span>
+        </button>
+        <button id="proModeButton" class="theme-btn hidden" type="button" aria-label="Open Pro plans">
+          <span class="btn-glyph pro-badge-icon" aria-hidden="true">◆</span>
+          <span class="btn-label">Upgrade</span>
+        </button>
+        <button id="themeToggle" class="theme-btn" aria-label="Toggle color theme">
+          <img class="btn-icon" src="icons/theme-dark.svg" alt="" aria-hidden="true" />
+          <span class="btn-label">Dark Mode</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="card files-card">
+      <div class="files-header">
+        <h2>Study Files</h2>
+        <div class="file-actions">
+          <button id="newFileButton" class="secondary-btn">New File</button>
+          <button id="saveFileButton" class="secondary-btn">Save File</button>
+          <button id="renameFileButton" class="secondary-btn">Rename</button>
+          <button id="deleteFileButton" class="secondary-btn danger-btn">Delete</button>
+        </div>
+      </div>
+      <ul id="filesList" class="files-list"></ul>
+    </section>
+
+    <section class="card summarize-mode-card">
+      <p class="input-label">What would you like to summarize?</p>
+      <div class="mode-row">
+        <button id="notesModeButton" class="secondary-btn mode-btn active" type="button">Summarize Notes</button>
+        <button id="articleModeButton" class="secondary-btn mode-btn" type="button">Summarize Article</button>
+        <button id="photoModeButton" class="secondary-btn mode-btn" type="button">Summarize Notes Photo</button>
+      </div>
+
+      <div id="articleInputWrap" class="article-row hidden">
+        <input
+          id="articleUrlInput"
+          type="url"
+          placeholder="https://example.com/article"
+        />
+      </div>
+      <div class="output-options-wrap">
+        <p class="input-label">Choose outputs for your Study Pack</p>
+        <div class="output-options-grid">
+          <label class="output-option hidden">
+            <input id="outputStudyTasks" type="checkbox" />
+            <img class="output-icon" src="icons/output-tasks.svg" alt="" aria-hidden="true" />
+            <span>Study Tasks</span>
+          </label>
+          <label class="output-option">
+            <input id="outputStudyPlan" type="checkbox" />
+            <img class="output-icon" src="icons/output-plan.svg" alt="" aria-hidden="true" />
+            <span>Study Plan</span>
+          </label>
+          <label class="output-option">
+            <input id="outputCleanNotes" type="checkbox" />
+            <img class="output-icon" src="icons/output-clean-notes.svg" alt="" aria-hidden="true" />
+            <span>Clean Notes</span>
+          </label>
+          <label class="output-option">
+            <input id="outputFlashcards" type="checkbox" />
+            <img class="output-icon" src="icons/output-flashcards.svg" alt="" aria-hidden="true" />
+            <span>Flashcards</span>
+          </label>
+          <label class="output-option">
+            <input id="outputQuizQuestions" type="checkbox" />
+            <img class="output-icon" src="icons/output-quiz.svg" alt="" aria-hidden="true" />
+            <span>Quiz Questions</span>
+          </label>
+        </div>
+        <div id="flashcardsCountWrap" class="flashcards-count-wrap hidden">
+          <label for="flashcardsCountSelect" class="input-label">Number of flashcards</label>
+          <div class="flashcards-count-select-wrap">
+            <select id="flashcardsCountSelect" class="flashcards-count-select">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5" selected>5</option>
+            </select>
+            <span class="flashcards-count-caret" aria-hidden="true">&#9660;</span>
+          </div>
+          <p id="flashcardsLimitHint" class="tutorial-label">Maximum: 5 cards (free)</p>
+          <button id="moreFlashcardsButton" class="secondary-btn more-flashcards-btn" type="button">Want more flash cards? <span class="mini-pro-badge" aria-hidden="true">&#9670;</span></button>
+        </div>
+        <div class="article-generate-row hidden">
+          <button id="summarizeLinkButton" class="primary-btn hidden">Generate Study Pack</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card input-card">
+      <div id="notesInputWrap">
+        <label for="notesInput" class="input-label">Summrize notes</label>
+        <textarea
+          id="notesInput"
+          placeholder="Example: math ch 4?? finish practice, history civil war notes incomplete, science quiz Friday maybe?"
+        ></textarea>
+        <p id="notesLimitHint" class="tutorial-label">0 / 3000 characters</p>
+        <button id="moreNotesCharsButton" class="secondary-btn more-flashcards-btn" type="button">Want more note space? <span class="mini-pro-badge" aria-hidden="true">&#9670;</span></button>
+      </div>
+      <div id="photoInputWrap" class="photo-row hidden">
+        <p class="input-label">Add notes photo or PDF</p>
+        <div class="photo-source-actions">
+          <button id="uploadPhotoButton" class="secondary-btn" type="button">Upload File</button>
+          <span class="photo-or-text">or</span>
+          <button id="takePhotoButton" class="secondary-btn" type="button">Take Photo</button>
+        </div>
+        <input id="notesPhotoUploadInput" class="hidden" type="file" accept="image/*,.pdf,application/pdf" />
+        <input id="notesPhotoCameraInput" class="hidden" type="file" accept="image/*" capture="environment" />
+        <div class="photo-preview-wrap hidden" id="photoPreviewWrap">
+          <img id="notesPhotoPreview" alt="Selected notes photo preview" />
+          <button id="clearPhotoButton" class="secondary-btn" type="button">Remove Photo</button>
+        </div>
+      </div>
+      <div class="actions-row">
+        <button id="cleanButton" class="primary-btn">Generate Study Pack</button>
+        <button id="cancelGenerationButton" class="secondary-btn hidden" type="button">Cancel Generation</button>
+        <p id="statusText" class="status-text">Ready</p>
+      </div>
+      <div id="liveStreamWrap" class="live-stream-wrap hidden" aria-live="polite">
+        <div class="live-stream-head">
+          <p id="liveStreamText" class="live-stream-text"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultsSection" class="results-grid" aria-live="polite">
+      <article id="studyTasksCard" class="card result-card hidden">
+        <div class="result-card-head">
+          <h2>Study Tasks</h2>
+          <div class="result-card-actions">
+            <button id="copyStudyTasksButton" class="secondary-btn copy-btn" type="button">Copy</button>
+            <button id="downloadStudyTasksButton" class="secondary-btn copy-btn" type="button">Download PDF</button>
+          </div>
+        </div>
+        <ul id="studyTasksList" class="result-list">
+          <li>No items generated yet.</li>
+        </ul>
+      </article>
+
+      <article id="studyPlanCard" class="card result-card">
+        <div class="result-card-head">
+          <h2>Study Plan</h2>
+          <div class="result-card-actions">
+            <button id="copyStudyPlanButton" class="secondary-btn copy-btn" type="button">Copy</button>
+            <button id="downloadStudyPlanButton" class="secondary-btn copy-btn" type="button">Download PDF</button>
+          </div>
+        </div>
+        <ol id="studyOrderList" class="result-list ordered-list">
+          <li>No items generated yet.</li>
+        </ol>
+      </article>
+
+      <article id="cleanNotesCard" class="card result-card">
+        <div class="result-card-head">
+          <h2>Clean Notes</h2>
+          <div class="result-card-actions">
+            <button id="copyCleanNotesButton" class="secondary-btn copy-btn" type="button">Copy</button>
+            <button id="downloadCleanNotesButton" class="secondary-btn copy-btn" type="button">Download PDF</button>
+          </div>
+        </div>
+        <ul id="cleanNotesList" class="result-list">
+          <li>No items generated yet.</li>
+        </ul>
+      </article>
+
+      <article id="flashcardsCard" class="card result-card hidden">
+        <div class="result-card-head">
+          <h2>Flashcards</h2>
+          <div class="result-card-actions">
+            <button id="beginFlashcardsButton" class="secondary-btn copy-btn" type="button">Start Flashcards</button>
+            <button id="copyFlashcardsButton" class="secondary-btn copy-btn" type="button">Copy</button>
+            <button id="downloadFlashcardsButton" class="secondary-btn copy-btn" type="button">Download Flashcard Sheets</button>
+            <button id="printFlashcardsButton" class="secondary-btn copy-btn" type="button">Print Flashcard Sheets</button>
+          </div>
+        </div>
+        <div class="study-output-stage">
+          <div id="flashcardsPreviewStage" class="study-output-preview">
+            <p id="flashcardsExportHint" class="flashcards-export-hint">Downloads the full flashcard set, not just the card on screen.</p>
+            <ul id="flashcardsList" class="result-list">
+              <li>No items generated yet.</li>
+            </ul>
+          </div>
+          <div id="flashcardsLaunchPanel" class="study-launch-panel hidden">
+            <p class="study-launch-kicker">Flashcards Ready</p>
+            <p class="study-launch-copy">Your flashcards are loaded. Start when you are ready.</p>
+            <button id="flashcardsLaunchButton" class="primary-btn study-launch-button" type="button">Start Flashcards</button>
+          </div>
+        </div>
+        <div id="flashcardsVisualGrid" class="flashcards-visual-grid hidden"></div>
+        <div id="flashcardsPdfPreviewWrap" class="flashcards-preview-wrap hidden">
+          <div class="flashcards-preview-head">
+            <p class="tutorial-label">Flashcards PDF Preview</p>
+            <div class="flashcards-preview-toggle">
+              <button id="previewFrontsButton" class="secondary-btn preview-toggle-btn active" type="button">Fronts</button>
+              <button id="previewBacksButton" class="secondary-btn preview-toggle-btn" type="button">Backs</button>
+            </div>
+          </div>
+          <iframe id="flashcardsPdfPreview" title="Flashcards PDF preview"></iframe>
+        </div>
+      </article>
+
+      <article id="quizQuestionsCard" class="card result-card hidden">
+        <div class="result-card-head">
+          <h2>Quiz Questions</h2>
+          <div class="result-card-actions">
+            <button id="beginQuizButton" class="secondary-btn copy-btn" type="button">Start Quiz</button>
+            <button id="copyQuizButton" class="secondary-btn copy-btn" type="button">Copy</button>
+            <button id="downloadQuizButton" class="secondary-btn copy-btn" type="button">Download PDF</button>
+          </div>
+        </div>
+        <div class="study-output-stage">
+          <div id="quizPreviewStage" class="study-output-preview">
+            <ol id="quizQuestionsList" class="result-list ordered-list">
+              <li>No items generated yet.</li>
+            </ol>
+          </div>
+          <div id="quizLaunchPanel" class="study-launch-panel hidden">
+            <p class="study-launch-kicker">Quiz Ready</p>
+            <p class="study-launch-copy">Jump straight into your quiz whenever you are ready.</p>
+            <button id="quizLaunchButton" class="primary-btn study-launch-button" type="button">Start Quiz</button>
+          </div>
+        </div>
+        <div id="quizStudyPanel" class="quiz-study-panel hidden"></div>
+      </article>
+    </section>
+  </main>
+
+  <section id="authGate" class="auth-gate hidden" aria-live="polite">
+    <div class="auth-gate-panel card">
+      <button id="authGateCloseButton" type="button" class="modal-close-x auth-gate-close" aria-label="Close sign in dialog">X</button>
+      <p class="auth-kicker">Secure Access</p>
+      <h2 id="authGateTitle">Sign in to continue</h2>
+      <p id="authGateText" class="modal-message">
+        Sign in to save progress across devices, generate outputs, and access personalized tools.
+      </p>
+      <div id="authWelcomeIsland" class="auth-welcome-island">
+        <h3>Welcome to Lumi Study</h3>
+        <p>Sign in to sync study packs and keep your progress across devices.</p>
+        <div class="auth-welcome-actions">
+          <button id="authWelcomeSignIn" class="primary-btn" type="button">Sign In</button>
+          <button id="authWelcomeSignUp" class="secondary-btn" type="button">Create Account</button>
+        </div>
+      </div>
+      <div id="authFormShell" class="auth-form-shell hidden">
+        <div class="auth-switch-row">
+          <button id="authSignInTab" class="secondary-btn auth-tab-btn active" type="button">Sign In</button>
+          <button id="authSignUpTab" class="secondary-btn auth-tab-btn" type="button">Sign Up</button>
+        </div>
+        <div id="authLoadingState" class="auth-loading-state hidden" aria-live="polite">
+          <div class="auth-loading-spinner" aria-hidden="true"></div>
+          <p class="auth-loading-title">Opening secure sign in...</p>
+          <p class="auth-loading-copy">Please wait while Lumi loads your account screen.</p>
+        </div>
+        <div id="clerkAuthStack" class="clerk-auth-stack" data-auth-direction="backward">
+          <div id="clerkSignInMount" class="clerk-auth-mount auth-pane active" aria-hidden="false"></div>
+          <div id="clerkSignUpMount" class="clerk-auth-mount auth-pane hidden" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="auth-guest-actions">
+        <button id="authSkipButton" class="secondary-btn auth-skip-btn" type="button">Continue as guest</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="renameModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
+    <div class="modal-card">
+      <h2 id="renameModalTitle">Rename Study File</h2>
+      <form id="renameForm" class="modal-form">
+        <label for="renameInput" class="input-label">File name</label>
+        <input id="renameInput" class="modal-input" type="text" maxlength="80" />
+        <div class="modal-actions">
+          <button id="renameCancelButton" type="button" class="secondary-btn">Cancel</button>
+          <button id="renameSaveButton" type="submit" class="primary-btn">Save Name</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="newFileModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="newFileModalTitle">
+    <div class="modal-card">
+      <h2 id="newFileModalTitle">Create New Study File</h2>
+      <form id="newFileForm" class="modal-form">
+        <label for="newFileInput" class="input-label">File name</label>
+        <input id="newFileInput" class="modal-input" type="text" maxlength="80" />
+        <div class="modal-actions">
+          <button id="newFileCancelButton" type="button" class="secondary-btn">Cancel</button>
+          <button id="newFileSaveButton" type="submit" class="primary-btn">Create File</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="deleteFileModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="deleteFileModalTitle">
+    <div class="modal-card">
+      <h2 id="deleteFileModalTitle">Delete Study File</h2>
+      <p id="deleteFileMessage" class="modal-message">Are you sure you want to delete this file?</p>
+      <div class="modal-actions">
+        <button id="deleteFileCancelButton" type="button" class="secondary-btn">Cancel</button>
+        <button id="deleteFileConfirmButton" type="button" class="secondary-btn danger-btn">Delete File</button>
+      </div>
+    </div>
+  </div>
+
+  <aside id="tutorialCoach" class="tutorial-coach hidden" aria-live="polite">
+    <div class="tutorial-step" id="tutorialStepCounter">Step 1 of 5</div>
+    <h2 id="tutorialTitle">Get Started</h2>
+    <p id="tutorialText" class="modal-message">Welcome! Let's walk through Lumi Study in under a minute.</p>
+    <div class="tutorial-example-wrap">
+      <p id="tutorialExampleLabel" class="tutorial-label">Assignment</p>
+      <pre id="tutorialExample" class="tutorial-example"></pre>
+    </div>
+    <div class="tutorial-actions">
+      <button id="tutorialBackButton" type="button" class="secondary-btn">Back</button>
+      <button id="tutorialNextButton" type="button" class="primary-btn">Next</button>
+      <button id="tutorialCloseButton" type="button" class="secondary-btn tutorial-close-btn">Skip</button>
+    </div>
+  </aside>
+
+  <div id="tutorialSkipConfirmModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="tutorialSkipConfirmTitle">
+    <div class="modal-card">
+      <h2 id="tutorialSkipConfirmTitle">Skip Tutorial?</h2>
+      <p class="modal-message">Are you sure you want to skip the tutorial?</p>
+      <div class="modal-actions">
+        <button id="tutorialSkipCancelButton" type="button" class="secondary-btn">Stay in Tutorial</button>
+        <button id="tutorialSkipConfirmButton" type="button" class="secondary-btn danger-btn">Skip Tutorial</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="regenerateConfirmModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="regenerateConfirmTitle">
+    <div class="modal-card">
+      <h2 id="regenerateConfirmTitle">Replace Current Results?</h2>
+      <p class="modal-message">This file already has generated study content. Continue to erase current generated results and create a new study pack?</p>
+      <div class="modal-actions">
+        <button id="regenerateCancelButton" type="button" class="secondary-btn">Cancel</button>
+        <button id="regenerateConfirmButton" type="button" class="secondary-btn danger-btn">Yes, Replace</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="moreFlashcardsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="moreFlashcardsTitle">
+    <div class="modal-card">
+      <h2 id="moreFlashcardsTitle">More Flashcards</h2>
+      <p class="modal-message">Pro mode is active. Use the flashcards count selector to choose up to 10 cards.</p>
+      <div class="modal-actions">
+        <button id="moreFlashcardsCloseButton" type="button" class="secondary-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="proModeModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="proModeTitle">
+    <div class="modal-card">
+      <button id="proModeCloseXButton" type="button" class="modal-close-x" aria-label="Close Pro modal">X</button>
+      <h2 id="proModeTitle">Unlock Pro Mode Beta</h2>
+      <p id="proModeMessage" class="modal-message">
+        Pro Mode is currently in beta and unlocks higher limits for larger study sessions.
+      </p>
+      <ul id="proModeBenefits" class="modal-message">
+        <li>Pro subscription: $1.50 per month.</li>
+        <li>Up to 10 flashcards per generation (instead of 5).</li>
+        <li>Up to 8000 notes characters (instead of 3000).</li>
+        <li>Up to 5 study files (instead of 2).</li>
+        <li>God Mode code: up to 50 flashcards, 50000 notes characters, and 100 files.</li>
+      </ul>
+      <div id="proModeIntroActions" class="modal-actions">
+        <button id="proModeCloseIntroButton" type="button" class="secondary-btn">Close</button>
+        <button id="proModeHaveCodeButton" type="button" class="primary-btn">Use Unlock Code</button>
+      </div>
+      <form id="proModeForm" class="modal-form hidden">
+        <label for="proCodeInput" class="input-label">Enter Unlock Code</label>
+        <input id="proCodeInput" class="modal-input" type="password" maxlength="80" autocomplete="off" />
+        <p id="proCodeError" class="modal-error hidden" aria-live="polite"></p>
+        <div class="modal-actions">
+          <button id="proModeBackButton" type="button" class="secondary-btn">Back</button>
+          <button id="proModeUnlockButton" type="submit" class="primary-btn">Unlock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="webcamCaptureModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="webcamCaptureTitle">
+    <div class="modal-card webcam-modal-card">
+      <h2 id="webcamCaptureTitle">Take Photo</h2>
+      <p class="modal-message">Allow camera access, frame your notes, then capture.</p>
+      <video id="webcamVideo" autoplay playsinline muted></video>
+      <canvas id="webcamCanvas" class="hidden"></canvas>
+      <div class="modal-actions">
+        <button id="webcamCancelButton" type="button" class="secondary-btn">Cancel</button>
+        <button id="webcamCaptureButton" type="button" class="primary-btn">Capture</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="main.js?v=61"></script>
+</body>
+</html>
+
+
+
+
+

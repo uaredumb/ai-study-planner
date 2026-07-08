@@ -8,14 +8,17 @@ window.APP_CONFIG.CLERK_PUBLISHABLE_KEY = window.APP_CONFIG.CLERK_PUBLISHABLE_KE
 window.APP_CONFIG.PRICING_PAGE_PATH = window.APP_CONFIG.PRICING_PAGE_PATH || "pricing.html";
 // Clerk plan slug for Lumi Pro.
 window.APP_CONFIG.PRO_PLAN_SLUG = window.APP_CONFIG.PRO_PLAN_SLUG || "pro";
-// Display label for the current Pro price.
-window.APP_CONFIG.PRO_PLAN_PRICE = window.APP_CONFIG.PRO_PLAN_PRICE || "$1.50 / month";
+// Display label for the current Pro price (matches Clerk Billing).
+window.APP_CONFIG.PRO_PLAN_PRICE = window.APP_CONFIG.PRO_PLAN_PRICE || "$6.99 / month";
 // Optional: public yearly price label shown on the pricing page.
-window.APP_CONFIG.PRO_PLAN_YEARLY_PRICE = window.APP_CONFIG.PRO_PLAN_YEARLY_PRICE || "$12.00 / year";
+window.APP_CONFIG.PRO_PLAN_YEARLY_PRICE = window.APP_CONFIG.PRO_PLAN_YEARLY_PRICE || "$4.99 / month billed annually";
 // Optional: free trial label shown on the pricing page.
-window.APP_CONFIG.PRO_PLAN_TRIAL_DAYS = window.APP_CONFIG.PRO_PLAN_TRIAL_DAYS || "14 days";
-// Optional: coming-soon plan copy for the pricing page.
-window.APP_CONFIG.ULTIMATE_PLAN_NAME = window.APP_CONFIG.ULTIMATE_PLAN_NAME || "Ultimate";
-window.APP_CONFIG.ULTIMATE_PLAN_PRICE = window.APP_CONFIG.ULTIMATE_PLAN_PRICE || "$4.99 / month planned";
+window.APP_CONFIG.PRO_PLAN_TRIAL_DAYS = window.APP_CONFIG.PRO_PLAN_TRIAL_DAYS || "3 days";
+// Optional: higher-tier plan copy (matches Clerk Billing "Power").
+window.APP_CONFIG.ULTIMATE_PLAN_NAME = window.APP_CONFIG.ULTIMATE_PLAN_NAME || "Power";
+window.APP_CONFIG.ULTIMATE_PLAN_PRICE = window.APP_CONFIG.ULTIMATE_PLAN_PRICE || "$12.99 / month";
 // Temporary emergency guest God Mode code while account auth is unavailable.
 window.APP_CONFIG.GUEST_GOD_MODE_CODE = window.APP_CONFIG.GUEST_GOD_MODE_CODE || "LUMI-ULTIMATE-031526";
+// Owner email that can access the admin panel (admin.html). The server also
+// enforces this via ADMIN_EMAILS / CLERK_SECRET_KEY — see DEPLOY-redesign.md.
+window.APP_CONFIG.ADMIN_EMAIL = window.APP_CONFIG.ADMIN_EMAIL || "mavrick.blackburn@gmail.com";

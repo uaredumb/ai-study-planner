@@ -1,0 +1,396 @@
+<!doctype html>
+<!--
+  ───────────────────────────────────────────────────────────────────────────
+  Contact — Lumi Study
+  Powered by Formspree (no backend needed). To go live:
+    1. Open your form in the Formspree dashboard.
+    2. Copy its endpoint — it looks like  https://formspree.io/f/abcwxyz
+    3. Replace YOUR_FORM_ID below (in the <form action="..."> ) with that id.
+  The first real submission triggers Formspree's one-time email confirmation.
+  ───────────────────────────────────────────────────────────────────────────
+-->
+<html lang="en" class="preload">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact — Lumi Study</title>
+  <meta name="description" content="Get in touch with the Lumi Study team. Questions, feedback, bug reports, billing help — we usually reply within one business day." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://lumistudy.org/contact.html" />
+  <link rel="icon" type="image/png" sizes="32x32" href="logo.png?v=20260701" />
+  <link rel="apple-touch-icon" sizes="180x180" href="logo.png?v=20260701" />
+
+  <!-- Brand font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Precompiled Tailwind (replaces the cdn.tailwindcss.com runtime build).
+       Theme/config lives in tailwind.config.js. Rebuild after class changes: npm run build:css -->
+  <link rel="stylesheet" href="/tailwind.css" />
+
+  <!-- Theme bootstrap: runs before paint so there's no flash. Default = light, honors saved choice. -->
+  <script>
+    (function initTheme() {
+      try {
+        var saved = localStorage.getItem("lumi-theme");
+        var dark = saved === "dark" || (saved === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+      } catch (e) {}
+    })();
+  </script>
+
+  <style>
+    html:not(.preload) body, html:not(.preload) body * { transition: background-color .35s ease, border-color .35s ease, color .25s ease, box-shadow .35s ease; }
+    html { scroll-behavior: smooth; }
+    body { font-feature-settings: "ss01","cv01"; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .aurora::before {
+      content: ""; position: absolute; inset: -30% -10% auto -10%; height: 460px; z-index: 0;
+      background:
+        radial-gradient(48% 60% at 18% 22%, rgba(99,102,241,.24), transparent 60%),
+        radial-gradient(42% 55% at 82% 14%, rgba(16,185,129,.16), transparent 62%);
+      filter: blur(8px); pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    :focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; border-radius: 6px; }
+
+    /* Native form control inputs share one look */
+    .field {
+      width: 100%; border-radius: 0.75rem; padding: 0.7rem 0.9rem; font-size: 0.95rem; line-height: 1.5;
+      background: #fff; color: #0f172a;
+      border: 1px solid rgba(148,163,184,.45);
+      transition: border-color .18s ease, box-shadow .18s ease, background-color .35s ease;
+    }
+    .field::placeholder { color: #94a3b8; }
+    .field:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.18); }
+    .field:user-invalid { border-color: #f43f5e; }
+    .dark .field { background: #0b1220; color: #e2e8f0; border-color: rgba(148,163,184,.22); }
+    .dark .field::placeholder { color: #64748b; }
+    .dark .field:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,.22); }
+    select.field { appearance: none; -webkit-appearance: none; background-repeat: no-repeat; background-position: right 0.8rem center; background-size: 1.1rem;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); padding-right: 2.5rem; }
+
+    /* Honeypot — hidden from humans, catches bots */
+    .gotcha { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+  </style>
+
+  <!-- Site-wide button + transition micro-animations -->
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      a.inline-flex, button {
+        transition: transform .22s cubic-bezier(.34,1.4,.6,1), box-shadow .28s ease,
+                    background-color .25s ease, border-color .25s ease, color .2s ease, filter .2s ease !important;
+      }
+      button:active:not(:disabled), a.inline-flex:active:not(:disabled) { transform: scale(.955); }
+      .btn-lift:hover { transform: translateY(-3px); }
+      .btn-lift:active:not(:disabled) { transform: translateY(-1px) scale(.97); }
+    }
+    .btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+    .btn-shine::after {
+      content: ""; position: absolute; top: 0; bottom: 0; left: -150%; width: 55%;
+      transform: skewX(-22deg); pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+    }
+    @media (prefers-reduced-motion: no-preference) { .btn-shine:hover::after { animation: btn-sheen .85s cubic-bezier(.4,0,.2,1); } }
+    @keyframes btn-sheen { from { left: -150%; } to { left: 170%; } }
+  </style>
+  <!-- Mailchimp Connected Site (tracking + pop-up forms) -->
+  <script id="mcjs">!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/f977eb32eb487d8c218893089/5259053cb92f7d6fee3bad4d3.js");</script>
+</head>
+
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans antialiased selection:bg-brand-200 selection:text-brand-900">
+
+  <!-- ============================================================= -->
+  <!-- NAVBAR                                                        -->
+  <!-- ============================================================= -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/70 dark:border-white/10">
+    <nav class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <a href="index.html" class="flex items-center gap-2.5 group" aria-label="Lumi Study home">
+        <img src="logo.png?v=20260701" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft group-hover:scale-105 transition-transform" />
+        <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600 dark:text-slate-300">
+        <a href="index.html#features" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Features</a>
+        <a href="index.html#how" class="hover:text-brand-600 dark:hover:text-brand-300 transition">How it works</a>
+        <a href="pricing.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Pricing</a>
+        <a href="contact.html" aria-current="page" class="text-brand-700 dark:text-brand-300">Contact</a>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <a href="index.html#app" class="btn-shine inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Open app</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- ============================================================= -->
+    <!-- HERO                                                          -->
+    <!-- ============================================================= -->
+    <section class="relative aurora overflow-hidden">
+      <div class="relative max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-6 text-center">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">Contact</span>
+        <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">Get in touch</h1>
+        <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Questions, feedback, a bug, or billing help — drop us a line and we'll usually reply within one business day.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- BODY: form + sidebar                                          -->
+    <!-- ============================================================= -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-24 grid lg:grid-cols-[minmax(0,1fr)_300px] gap-10 lg:gap-14">
+
+      <!-- ── Form card ─────────────────────────────────────────────── -->
+      <div class="min-w-0">
+        <div class="rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/60 shadow-soft p-6 sm:p-8">
+
+          <!-- Formspree form. Replace YOUR_FORM_ID with your endpoint id. -->
+          <form id="contactForm" action="https://formspree.io/f/xreydvnk" method="POST" novalidate>
+            <div class="grid sm:grid-cols-2 gap-5">
+              <div>
+                <label for="name" class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Name <span class="text-rose-500">*</span></label>
+                <input id="name" name="name" type="text" autocomplete="name" required class="field" placeholder="Ada Lovelace" />
+              </div>
+              <div>
+                <label for="email" class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Email <span class="text-rose-500">*</span></label>
+                <input id="email" name="email" type="email" autocomplete="email" required class="field" placeholder="you@example.com" />
+              </div>
+            </div>
+
+            <div class="mt-5">
+              <label for="topic" class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">What's this about?</label>
+              <select id="topic" name="topic" class="field">
+                <option value="General question">General question</option>
+                <option value="Feedback or feature request">Feedback or feature request</option>
+                <option value="Bug report">Bug report</option>
+                <option value="Billing or subscription">Billing or subscription</option>
+                <option value="Press or partnership">Press or partnership</option>
+                <option value="Something else">Something else</option>
+              </select>
+            </div>
+
+            <div class="mt-5">
+              <label for="message" class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Message <span class="text-rose-500">*</span></label>
+              <textarea id="message" name="message" rows="6" required class="field resize-y" placeholder="Tell us what's on your mind…"></textarea>
+            </div>
+
+            <!-- Honeypot: bots fill this, humans never see it -->
+            <div class="gotcha" aria-hidden="true">
+              <label>Leave this field empty<input type="text" name="_gotcha" tabindex="-1" autocomplete="off" /></label>
+            </div>
+            <!-- Nicer subject line in the email Formspree sends you (set on submit too) -->
+            <input type="hidden" name="_subject" id="_subject" value="New Lumi Study contact message" />
+
+            <div class="mt-6 flex flex-col sm:flex-row sm:items-center gap-4">
+              <button id="submitBtn" type="submit" class="btn-shine btn-lift inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-glow transition disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0">
+                <span id="submitLabel">Send message</span>
+                <svg id="submitSpinner" class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+              </button>
+              <p class="text-xs text-slate-400 dark:text-slate-500">We'll only use your email to reply. No spam, ever.</p>
+            </div>
+
+            <!-- Inline error banner -->
+            <div id="formError" class="hidden mt-5 rounded-xl border border-rose-300/60 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300" role="alert"></div>
+          </form>
+
+          <!-- Success state (swapped in after a successful submit) -->
+          <div id="formSuccess" class="hidden text-center py-6">
+            <div class="mx-auto h-14 w-14 grid place-items-center rounded-full bg-accent-100 dark:bg-accent-500/15">
+              <svg class="h-7 w-7 text-accent-600 dark:text-accent-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h2 class="mt-4 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Message sent — thank you!</h2>
+            <p class="mt-2 text-slate-600 dark:text-slate-300">We've got your note and will get back to you at the email you provided, usually within one business day.</p>
+            <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <a href="index.html" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Back to home</a>
+              <button id="sendAnother" type="button" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition">Send another</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Sidebar ───────────────────────────────────────────────── -->
+      <aside class="space-y-5">
+        <div class="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/60 shadow-soft p-5">
+          <div class="flex items-center gap-2.5">
+            <span class="h-9 w-9 grid place-items-center rounded-lg bg-brand-100 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </span>
+            <h3 class="font-bold text-slate-900 dark:text-white">Prefer email?</h3>
+          </div>
+          <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Write to us directly at</p>
+          <a href="mailto:lumistudy.org@gmail.com" class="mt-1 inline-block font-semibold text-brand-600 dark:text-brand-300 hover:underline break-all">lumistudy.org@gmail.com</a>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/60 shadow-soft p-5">
+          <div class="flex items-center gap-2.5">
+            <span class="h-9 w-9 grid place-items-center rounded-lg bg-accent-100 text-accent-600 dark:bg-accent-500/15 dark:text-accent-300">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </span>
+            <h3 class="font-bold text-slate-900 dark:text-white">Response time</h3>
+          </div>
+          <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">We're a small team and read every message. Expect a reply within <strong class="text-slate-800 dark:text-slate-200">1 business day</strong>.</p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/60 shadow-soft p-5">
+          <h3 class="font-bold text-slate-900 dark:text-white">Quick links</h3>
+          <ul class="mt-3 space-y-2 text-sm font-semibold text-slate-600 dark:text-slate-400">
+            <li><a href="pricing.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Pricing &amp; plans</a></li>
+            <li><a href="changelog.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">What's new</a></li>
+            <li><a href="privacy.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Privacy Policy</a></li>
+            <li><a href="terms.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Terms of Service</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- ============================================================= -->
+  <!-- FOOTER                                                        -->
+  <!-- ============================================================= -->
+  <footer class="border-t border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="lg:col-span-1">
+          <a href="index.html" class="flex items-center gap-2.5">
+            <img src="logo.png?v=20260701" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft" />
+            <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
+          </a>
+          <p class="mt-3 text-sm text-slate-500 dark:text-slate-400 max-w-xs">One input. A full study pack. Faster learning — for students who'd rather understand than memorize.</p>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Product</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="index.html#features" class="hover:text-brand-600 dark:hover:text-white transition">Features</a></li>
+            <li><a href="index.html#how" class="hover:text-brand-600 dark:hover:text-white transition">How it works</a></li>
+            <li><a href="index.html#demo" class="hover:text-brand-600 dark:hover:text-white transition">Try the demo</a></li>
+            <li><a href="pricing.html" class="hover:text-brand-600 dark:hover:text-white transition">Pricing</a></li>
+            <li><a href="changelog.html" class="hover:text-brand-600 dark:hover:text-white transition">Changelog</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Company</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="index.html#app" class="hover:text-brand-600 dark:hover:text-white transition">Sign in</a></li>
+            <li><a href="contact.html" class="hover:text-brand-600 dark:hover:text-white transition">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Legal</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="privacy.html" class="hover:text-brand-600 dark:hover:text-white transition">Privacy Policy</a></li>
+            <li><a href="terms.html" class="hover:text-brand-600 dark:hover:text-white transition">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Newsletter signup → Mailchimp -->
+      <div class="mt-10 pt-8 border-t border-slate-200/70 dark:border-white/10">
+        <div class="grid sm:grid-cols-2 gap-6 items-center">
+          <div>
+            <p class="text-sm font-bold text-slate-900 dark:text-white">Get study tips in your inbox</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm">Occasional updates on new features and smarter ways to study. No spam — unsubscribe anytime.</p>
+          </div>
+          <form id="newsletterForm" class="w-full sm:max-w-sm sm:justify-self-end" novalidate>
+            <div class="flex gap-2">
+              <label for="newsletterEmail" class="sr-only">Email address</label>
+              <input id="newsletterEmail" name="email" type="email" autocomplete="email" required
+                placeholder="you@example.com"
+                class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition" />
+              <button type="submit" id="newsletterBtn"
+                class="shrink-0 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 transition disabled:opacity-60 disabled:cursor-not-allowed">
+                Subscribe
+              </button>
+            </div>
+            <p id="newsletterMsg" class="hidden mt-2 text-sm" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+
+      <div class="mt-10 pt-6 border-t border-slate-200/70 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-sm text-slate-400 dark:text-slate-500">© <span id="year">2026</span> Lumi Study. Made for students, by people who hated cramming.</p>
+        <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <span class="h-2 w-2 rounded-full bg-accent-500"></span> All systems operational
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var $ = function (id) { return document.getElementById(id); };
+      document.documentElement.classList.remove("preload");
+      try { $("year").textContent = String(new Date().getFullYear()); } catch (e) {}
+
+      /* ── Contact form: submit to Formspree over fetch for an inline success state ── */
+      var form = $("contactForm");
+      var btn = $("submitBtn");
+      var label = $("submitLabel");
+      var spinner = $("submitSpinner");
+      var errBox = $("formError");
+
+      function setLoading(on) {
+        btn.disabled = on;
+        spinner.classList.toggle("hidden", !on);
+        label.textContent = on ? "Sending…" : "Send message";
+      }
+      function showError(msg) {
+        errBox.textContent = msg;
+        errBox.classList.remove("hidden");
+      }
+
+      if (form) {
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          errBox.classList.add("hidden");
+
+          // Let the browser surface required/format errors first.
+          if (!form.checkValidity()) { form.reportValidity(); return; }
+
+          // Give the email a descriptive subject based on the chosen topic.
+          var topic = (form.elements["topic"] && form.elements["topic"].value) || "";
+          var subj = $("_subject");
+          if (subj && topic) subj.value = "Lumi Study contact — " + topic;
+
+          setLoading(true);
+          fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            headers: { Accept: "application/json" }
+          })
+            .then(function (res) {
+              return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+            })
+            .then(function (r) {
+              if (r.ok) {
+                form.classList.add("hidden");
+                $("formSuccess").classList.remove("hidden");
+                $("formSuccess").scrollIntoView({ behavior: "smooth", block: "center" });
+              } else {
+                var msg = "Something went wrong sending your message. Please try again, or email lumistudy.org@gmail.com.";
+                if (r.data && Array.isArray(r.data.errors) && r.data.errors.length) {
+                  msg = r.data.errors.map(function (x) { return x.message; }).join(" ");
+                }
+                showError(msg);
+                setLoading(false);
+              }
+            })
+            .catch(function () {
+              showError("Couldn't reach the server. Check your connection and try again, or email lumistudy.org@gmail.com.");
+              setLoading(false);
+            });
+        });
+      }
+
+      /* "Send another" resets the form back to its editable state */
+      var again = $("sendAnother");
+      if (again) again.addEventListener("click", function () {
+        form.reset();
+        setLoading(false);
+        $("formSuccess").classList.add("hidden");
+        form.classList.remove("hidden");
+        form.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    })();
+  </script>
+  <!-- Newsletter signup handler (shared) → Mailchimp embedded form -->
+  <script src="newsletter.js?v=3" defer></script>
+</body>
+</html>

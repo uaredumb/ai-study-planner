@@ -3637,3 +3637,6 @@ body.ios-optimized .mode-content-pop {
     transform: translateY(0);
   }
 }
+
+/* Fix select option text visibility — browser-native dropdowns ignore dark-mode text color */
+select option { color: #1e293b; background-color: #ffffff; }

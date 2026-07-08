@@ -1,0 +1,6 @@
+/* Source for the precompiled Tailwind stylesheet.
+   Build:  npm run build:css   →   tailwind.css  (linked by all HTML pages).
+   Do not edit tailwind.css by hand — it is generated from this file + tailwind.config.js. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

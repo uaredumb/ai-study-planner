@@ -1,0 +1,447 @@
+<!doctype html>
+<!--
+  ───────────────────────────────────────────────────────────────────────────
+  Terms of Service — Lumi Study
+  Written to match how the app actually works (Clerk auth, Stripe/Clerk Billing,
+  OpenRouter + Google Gemini AI, Free/Pro/Power plans). Before relying on it
+  publicly you should:
+    • Have it reviewed by a lawyer for your jurisdiction.
+    • Replace the governing-law placeholders in section 17 ("[Your Country/State]"
+      and "[Your Jurisdiction]") with your actual jurisdiction, and decide with
+      counsel whether to add arbitration / class-action-waiver terms.
+    • Fill in the company legal entity / address if you operate under one.
+    • Confirm the "Last updated" date and that prices match your Pricing page.
+  ───────────────────────────────────────────────────────────────────────────
+-->
+<html lang="en" class="preload">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Terms of Service — Lumi Study</title>
+  <meta name="description" content="The terms and conditions for using Lumi Study's AI study tools, including accounts, plans, billing, and acceptable use." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://lumistudy.org/terms.html" />
+  <link rel="icon" type="image/png" sizes="32x32" href="logo.png?v=20260701" />
+  <link rel="apple-touch-icon" sizes="180x180" href="logo.png?v=20260701" />
+
+  <!-- Brand font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Precompiled Tailwind (replaces the cdn.tailwindcss.com runtime build).
+       Theme/config lives in tailwind.config.js. Rebuild after class changes: npm run build:css -->
+  <link rel="stylesheet" href="/tailwind.css" />
+
+  <!-- Theme bootstrap: runs before paint so there's no flash. Default = light, honors saved choice. -->
+  <script>
+    (function initTheme() {
+      try {
+        var saved = localStorage.getItem("lumi-theme");
+        var dark = saved === "dark" || (saved === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+      } catch (e) {}
+    })();
+  </script>
+
+  <style>
+    html:not(.preload) body, html:not(.preload) body * { transition: background-color .35s ease, border-color .35s ease, color .25s ease, box-shadow .35s ease; }
+    html { scroll-behavior: smooth; }
+    body { font-feature-settings: "ss01","cv01"; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .aurora::before {
+      content: ""; position: absolute; inset: -30% -10% auto -10%; height: 460px; z-index: 0;
+      background:
+        radial-gradient(48% 60% at 18% 22%, rgba(99,102,241,.24), transparent 60%),
+        radial-gradient(42% 55% at 82% 14%, rgba(16,185,129,.16), transparent 62%);
+      filter: blur(8px); pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    :focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; border-radius: 6px; }
+
+    /* ── Legal document typography ─────────────────────────────────────── */
+    .prose-legal { max-width: 46rem; }
+    .prose-legal section { scroll-margin-top: 5.5rem; }
+    .prose-legal h2 {
+      font-size: 1.4rem; line-height: 1.3; font-weight: 800; letter-spacing: -0.01em;
+      margin-top: 3rem; color: #0f172a;
+    }
+    .prose-legal section:first-of-type h2 { margin-top: 2.25rem; }
+    .prose-legal h3 { font-size: 1.05rem; font-weight: 700; margin-top: 1.85rem; color: #1e293b; }
+    .prose-legal p { margin-top: 0.9rem; line-height: 1.72; color: #475569; }
+    .prose-legal ul { margin-top: 0.9rem; padding-left: 1.2rem; list-style: disc; }
+    .prose-legal ol { margin-top: 0.9rem; padding-left: 1.3rem; list-style: decimal; }
+    .prose-legal li { margin-top: 0.5rem; line-height: 1.65; color: #475569; }
+    .prose-legal li::marker { color: #818cf8; }
+    .prose-legal strong { font-weight: 700; color: #1e293b; }
+    .prose-legal a { color: #4f46e5; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+    .prose-legal a:hover { color: #4338ca; }
+    .dark .prose-legal h2 { color: #f8fafc; }
+    .dark .prose-legal h3 { color: #e2e8f0; }
+    .dark .prose-legal p, .dark .prose-legal li { color: #94a3b8; }
+    .dark .prose-legal strong { color: #e2e8f0; }
+    .dark .prose-legal a { color: #a5b4fc; }
+    .dark .prose-legal a:hover { color: #c7d2fe; }
+
+    /* ── Table of contents (sticky on desktop) ─────────────────────────── */
+    .toc { border-left: 2px solid rgba(148,163,184,.25); }
+    .toc a {
+      display: block; padding: .32rem 0 .32rem .9rem; margin-left: -2px;
+      border-left: 2px solid transparent; font-size: .82rem; line-height: 1.35; color: #64748b;
+      transition: color .2s ease, border-color .2s ease;
+    }
+    .toc a:hover { color: #4f46e5; }
+    .toc a.active { color: #4338ca; border-color: #6366f1; font-weight: 600; }
+    .dark .toc { border-color: rgba(148,163,184,.18); }
+    .dark .toc a { color: #94a3b8; }
+    .dark .toc a:hover, .dark .toc a.active { color: #a5b4fc; border-color: #818cf8; }
+  </style>
+
+  <!-- Site-wide button + transition micro-animations -->
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      a.inline-flex, button {
+        transition: transform .22s cubic-bezier(.34,1.4,.6,1), box-shadow .28s ease,
+                    background-color .25s ease, border-color .25s ease, color .2s ease, filter .2s ease !important;
+      }
+      button:active:not(:disabled), a.inline-flex:active:not(:disabled) { transform: scale(.955); }
+      .btn-lift:hover { transform: translateY(-3px); }
+      .btn-lift:active:not(:disabled) { transform: translateY(-1px) scale(.97); }
+    }
+    .btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+    .btn-shine::after {
+      content: ""; position: absolute; top: 0; bottom: 0; left: -150%; width: 55%;
+      transform: skewX(-22deg); pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+    }
+    @media (prefers-reduced-motion: no-preference) { .btn-shine:hover::after { animation: btn-sheen .85s cubic-bezier(.4,0,.2,1); } }
+    @keyframes btn-sheen { from { left: -150%; } to { left: 170%; } }
+  </style>
+  <!-- Mailchimp Connected Site (tracking + pop-up forms) -->
+  <script id="mcjs">!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/f977eb32eb487d8c218893089/5259053cb92f7d6fee3bad4d3.js");</script>
+</head>
+
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans antialiased selection:bg-brand-200 selection:text-brand-900">
+
+  <!-- ============================================================= -->
+  <!-- NAVBAR                                                        -->
+  <!-- ============================================================= -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/70 dark:border-white/10">
+    <nav class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <a href="index.html" class="flex items-center gap-2.5 group" aria-label="Lumi Study home">
+        <img src="logo.png?v=20260701" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft group-hover:scale-105 transition-transform" />
+        <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600 dark:text-slate-300">
+        <a href="index.html#features" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Features</a>
+        <a href="index.html#how" class="hover:text-brand-600 dark:hover:text-brand-300 transition">How it works</a>
+        <a href="pricing.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Pricing</a>
+        <a href="contact.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Contact</a>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <a href="index.html#app" class="btn-shine inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Open app</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- ============================================================= -->
+    <!-- HERO                                                          -->
+    <!-- ============================================================= -->
+    <section class="relative aurora overflow-hidden">
+      <div class="relative max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-8 text-center">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">Legal</span>
+        <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">Terms of Service</h1>
+        <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">The rules for using Lumi Study — your account, plans, billing, and the AI.</p>
+        <p class="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">Last updated <time datetime="2026-06-27" class="font-semibold text-slate-700 dark:text-slate-200">June 27, 2026</time></p>
+        <!-- Privacy / Terms switch -->
+        <div class="mt-6 inline-flex rounded-xl bg-slate-100 dark:bg-white/5 p-1 text-sm font-semibold">
+          <a href="privacy.html" class="px-4 py-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-300 transition">Privacy</a>
+          <a href="terms.html" aria-current="page" class="px-4 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-brand-700 dark:text-brand-200 shadow-soft">Terms</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- BODY: sticky TOC + content                                    -->
+    <!-- ============================================================= -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-24 grid lg:grid-cols-[230px_minmax(0,1fr)] gap-10 lg:gap-16">
+
+      <!-- Table of contents -->
+      <aside class="hidden lg:block">
+        <nav class="toc sticky top-24" aria-label="On this page">
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 pl-3.5 mb-2">On this page</p>
+          <a href="#agreement">1. Agreement to terms</a>
+          <a href="#eligibility">2. Eligibility</a>
+          <a href="#account">3. Your account</a>
+          <a href="#service">4. The Service</a>
+          <a href="#billing">5. Plans, billing &amp; subscriptions</a>
+          <a href="#fair-use">6. Fair use &amp; usage limits</a>
+          <a href="#acceptable-use">7. Acceptable use</a>
+          <a href="#your-content">8. Your content &amp; license</a>
+          <a href="#ai-content">9. AI-generated content</a>
+          <a href="#ip">10. Our intellectual property</a>
+          <a href="#third-party">11. Third-party services</a>
+          <a href="#disclaimers">12. Disclaimers</a>
+          <a href="#liability">13. Limitation of liability</a>
+          <a href="#indemnification">14. Indemnification</a>
+          <a href="#termination">15. Termination</a>
+          <a href="#changes">16. Changes</a>
+          <a href="#governing-law">17. Governing law &amp; disputes</a>
+          <a href="#misc">18. Miscellaneous</a>
+          <a href="#contact">19. Contact</a>
+        </nav>
+      </aside>
+
+      <!-- Content -->
+      <article class="prose-legal min-w-0">
+
+        <p class="!mt-0">These Terms of Service ("Terms") are a binding agreement between you and <strong>Lumi Study</strong> ("Lumi Study", "we", "us", or "our") and govern your access to and use of <a href="https://lumistudy.org">lumistudy.org</a> and our AI study tools (together, the "Service"). By accessing or using the Service, you agree to these Terms and to our <a href="privacy.html">Privacy Policy</a>. If you do not agree, please do not use the Service.</p>
+
+        <!-- 1 -->
+        <section id="agreement">
+          <h2>1. Agreement to terms</h2>
+          <p>By creating an account, clicking to accept, or otherwise using the Service, you confirm that you have read and agree to these Terms. If you are using the Service on behalf of a school, organization, or another person, you represent that you are authorized to accept these Terms on their behalf.</p>
+        </section>
+
+        <!-- 2 -->
+        <section id="eligibility">
+          <h2>2. Eligibility</h2>
+          <p>You must be at least <strong>13 years old</strong> to use the Service. If you are under 18 (or the age of majority where you live), you may use the Service only with the involvement and consent of a parent, guardian, or school who agrees to these Terms and is responsible for your use. You represent that the information you provide is accurate and that you are legally permitted to use the Service.</p>
+        </section>
+
+        <!-- 3 -->
+        <section id="account">
+          <h2>3. Your account</h2>
+          <p>Account creation and sign-in are handled by our authentication provider, Clerk. You are responsible for maintaining the confidentiality of your credentials and for all activity that occurs under your account. Keep your password secure, and notify us promptly at <a href="mailto:lumistudy.org@gmail.com">lumistudy.org@gmail.com</a> if you suspect unauthorized use. We may suspend or terminate accounts that violate these Terms.</p>
+        </section>
+
+        <!-- 4 -->
+        <section id="service">
+          <h2>4. The Service</h2>
+          <p>Lumi Study uses artificial intelligence to turn the notes, documents, and photos you provide into study materials — such as clean notes, flashcards, quizzes, and study plans — and offers <strong>LumiBot</strong>, an AI study chat assistant available on paid plans. Available features, limits, and models depend on your plan and may change over time as we improve the Service.</p>
+        </section>
+
+        <!-- 5 -->
+        <section id="billing">
+          <h2>5. Plans, billing &amp; subscriptions</h2>
+          <ul>
+            <li><strong>Plans.</strong> We offer a free plan (<strong>Lumi Free</strong>) and paid subscriptions (<strong>Lumi Pro</strong> and <strong>Lumi Power</strong>) with higher usage limits and additional features. Current prices and features are shown on our <a href="pricing.html">Pricing page</a> — at the time of writing, Pro is $6.99/month (or $4.99/month billed annually) and Power is $12.99/month (or $8.99/month billed annually). Prices are in U.S. dollars unless stated otherwise and may exclude applicable taxes.</li>
+            <li><strong>Payment.</strong> Paid subscriptions are sold and processed through Clerk Billing and Stripe. By subscribing, you authorize us and our payment processors to charge your payment method on a recurring basis.</li>
+            <li><strong>Auto-renewal.</strong> Subscriptions renew automatically at the end of each billing period (monthly or annual) at the then-current price, until you cancel.</li>
+            <li><strong>Free trial.</strong> Pro may include a free trial (currently 3 days). If you do not cancel before the trial ends, your paid subscription begins and your payment method is charged. Trial availability and length may change.</li>
+            <li><strong>Cancellation.</strong> You can cancel at any time from your account or billing settings. Cancellation stops future charges and takes effect at the end of your current billing period; you keep paid access until then.</li>
+            <li><strong>Refunds.</strong> Except where required by law, payments and subscription fees are non-refundable, and partial billing periods are not prorated.</li>
+            <li><strong>Price &amp; plan changes.</strong> We may change prices, plans, or features. We will provide reasonable notice of price increases, and changes take effect at your next billing period. Your continued use after a change takes effect constitutes acceptance.</li>
+          </ul>
+        </section>
+
+        <!-- 6 -->
+        <section id="fair-use">
+          <h2>6. Fair use &amp; usage limits</h2>
+          <p>Each plan includes usage limits — such as daily and monthly generation caps and limits on input length and file count — described on the Pricing page. We use automated rate-limiting to enforce these limits and keep the Service reliable for everyone. You agree not to attempt to circumvent usage limits, share access in order to defeat them, or use automated means (bots, scrapers, or scripts) to access the Service except as we expressly permit.</p>
+        </section>
+
+        <!-- 7 -->
+        <section id="acceptable-use">
+          <h2>7. Acceptable use</h2>
+          <p>You agree not to use the Service to:</p>
+          <ul>
+            <li>Violate any law or infringe the intellectual property, privacy, or other rights of others;</li>
+            <li>Upload or submit content you do not have the right to use, or that is unlawful, harmful, hateful, harassing, deceptive, or otherwise objectionable;</li>
+            <li>Cheat or commit academic dishonesty in violation of your school's or institution's academic-integrity rules;</li>
+            <li>Reverse engineer, decompile, interfere with, disrupt, or place undue load on the Service or the systems of our providers;</li>
+            <li>Probe, scan, or attempt to breach the security or authentication of the Service;</li>
+            <li>Generate content that violates the policies of our AI providers, or that is intended to harm or exploit others.</li>
+          </ul>
+          <p>We may remove content or suspend access for conduct that we reasonably believe violates these Terms or harms the Service or others.</p>
+        </section>
+
+        <!-- 8 -->
+        <section id="your-content">
+          <h2>8. Your content &amp; license</h2>
+          <p>You retain ownership of the notes, files, images, and other material you submit ("Your Content"). You grant Lumi Study and its service providers a limited, worldwide, non-exclusive, royalty-free license to host, store transiently, process, transmit, and display Your Content <strong>solely to operate and provide the Service to you</strong> — including sending it to our AI providers (OpenRouter and Google) to generate your results.</p>
+          <p>You represent and warrant that you own or have the necessary rights to Your Content and that it does not violate these Terms or any law. Do not submit other people's personal or confidential information without permission, or any content you are not allowed to share. We do not claim ownership of Your Content and do not use it to train our own AI models.</p>
+        </section>
+
+        <!-- 9 -->
+        <section id="ai-content">
+          <h2>9. AI-generated content &amp; disclaimer</h2>
+          <p>The study materials and LumiBot replies are generated by artificial intelligence and <strong>may be inaccurate, incomplete, or out of date</strong>. They are provided for study assistance only and are not professional, academic, legal, medical, financial, or other advice. Always verify important information against reliable sources before relying on it.</p>
+          <p>You are responsible for how you use the output, including complying with your school's or institution's academic-honesty policies. Subject to applicable law and these Terms, you may use the outputs you generate for your personal study. Because of how AI works, we cannot guarantee that outputs are unique, and similar inputs may produce similar results for other users.</p>
+        </section>
+
+        <!-- 10 -->
+        <section id="ip">
+          <h2>10. Our intellectual property</h2>
+          <p>The Service — including the Lumi Study name, logo, website, design, text, graphics, and software — is owned by Lumi Study or its licensors and is protected by intellectual property laws. We grant you a limited, personal, non-transferable, non-exclusive, revocable license to use the Service for its intended purpose. Except as permitted by law or with our prior written consent, you may not copy, modify, distribute, sell, lease, or create derivative works of the Service.</p>
+        </section>
+
+        <!-- 11 -->
+        <section id="third-party">
+          <h2>11. Third-party services</h2>
+          <p>The Service relies on third-party providers, including Clerk (accounts), Stripe (payments), OpenRouter and Google (AI), and Cloudflare (hosting). Your use of the Service may be subject to those providers' terms, and we are not responsible for their acts, omissions, content, or availability.</p>
+        </section>
+
+        <!-- 12 -->
+        <section id="disclaimers">
+          <h2>12. Disclaimers</h2>
+          <p>The Service is provided on an "<strong>as is</strong>" and "<strong>as available</strong>" basis, without warranties of any kind, whether express, implied, or statutory, including implied warranties of merchantability, fitness for a particular purpose, title, and non-infringement, and any warranty that the Service will be uninterrupted, timely, secure, or error-free. To the extent a warranty cannot be disclaimed under applicable law, it is limited to the minimum permitted.</p>
+        </section>
+
+        <!-- 13 -->
+        <section id="liability">
+          <h2>13. Limitation of liability</h2>
+          <p>To the maximum extent permitted by law, Lumi Study and its providers will not be liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, or for any loss of data, profits, revenue, or goodwill, arising out of or related to your use of (or inability to use) the Service. To the maximum extent permitted by law, our total aggregate liability for any claim relating to the Service is limited to the greater of (a) the amount you paid us for the Service in the 12 months before the claim, or (b) USD $50. Some jurisdictions do not allow certain limitations, so some of the above may not apply to you.</p>
+        </section>
+
+        <!-- 14 -->
+        <section id="indemnification">
+          <h2>14. Indemnification</h2>
+          <p>You agree to indemnify, defend, and hold harmless Lumi Study and its officers, employees, and providers from and against any claims, losses, liabilities, and expenses (including reasonable legal fees) arising out of or related to Your Content, your use of the Service, or your violation of these Terms or applicable law.</p>
+        </section>
+
+        <!-- 15 -->
+        <section id="termination">
+          <h2>15. Termination</h2>
+          <p>You may stop using the Service and delete your account at any time. We may suspend or terminate your access, with or without notice, if you violate these Terms or to protect the Service, our users, or third parties. Upon termination, your right to use the Service ends. Provisions that by their nature should survive termination — including content licenses to the extent needed to provide and wind down the Service, disclaimers, limitations of liability, indemnification, and governing law — will survive.</p>
+        </section>
+
+        <!-- 16 -->
+        <section id="changes">
+          <h2>16. Changes to the Service &amp; these Terms</h2>
+          <p>We may modify or discontinue the Service (or any part of it) at any time. We may also update these Terms; when we make material changes, we will revise the "Last updated" date above and, where appropriate, provide additional notice. Your continued use of the Service after changes take effect means you accept the updated Terms.</p>
+        </section>
+
+        <!-- 17 -->
+        <section id="governing-law">
+          <h2>17. Governing law &amp; disputes</h2>
+          <p>These Terms are governed by the laws of <strong>[Your Country/State]</strong>, without regard to its conflict-of-laws rules. You agree that the courts located in <strong>[Your Jurisdiction]</strong> will have exclusive jurisdiction over any dispute arising out of or relating to these Terms or the Service, except that applicable consumer-protection law may give you the right to bring proceedings in your local courts. Nothing in these Terms limits any mandatory consumer rights you have under the laws of your country of residence.</p>
+        </section>
+
+        <!-- 18 -->
+        <section id="misc">
+          <h2>18. Miscellaneous</h2>
+          <ul>
+            <li><strong>Entire agreement.</strong> These Terms and our Privacy Policy are the entire agreement between you and Lumi Study regarding the Service and supersede any prior agreements.</li>
+            <li><strong>Severability.</strong> If any provision is found unenforceable, the remaining provisions stay in full effect.</li>
+            <li><strong>No waiver.</strong> Our failure to enforce any provision is not a waiver of our right to do so later.</li>
+            <li><strong>Assignment.</strong> You may not assign these Terms without our consent; we may assign them in connection with a merger, acquisition, or sale of assets.</li>
+            <li><strong>No agency.</strong> These Terms do not create any partnership, agency, or employment relationship between you and us.</li>
+          </ul>
+        </section>
+
+        <!-- 19 -->
+        <section id="contact">
+          <h2>19. Contact</h2>
+          <p>Questions about these Terms? Contact us at <a href="mailto:lumistudy.org@gmail.com">lumistudy.org@gmail.com</a>.</p>
+          <p>See also our <a href="privacy.html">Privacy Policy</a>.</p>
+        </section>
+
+      </article>
+    </div>
+  </main>
+
+  <!-- ============================================================= -->
+  <!-- FOOTER                                                        -->
+  <!-- ============================================================= -->
+  <footer class="border-t border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="lg:col-span-1">
+          <a href="index.html" class="flex items-center gap-2.5">
+            <img src="logo.png?v=20260701" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft" />
+            <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
+          </a>
+          <p class="mt-3 text-sm text-slate-500 dark:text-slate-400 max-w-xs">One input. A full study pack. Faster learning — for students who'd rather understand than memorize.</p>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Product</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="index.html#features" class="hover:text-brand-600 dark:hover:text-white transition">Features</a></li>
+            <li><a href="index.html#how" class="hover:text-brand-600 dark:hover:text-white transition">How it works</a></li>
+            <li><a href="index.html#demo" class="hover:text-brand-600 dark:hover:text-white transition">Try the demo</a></li>
+            <li><a href="pricing.html" class="hover:text-brand-600 dark:hover:text-white transition">Pricing</a></li>
+            <li><a href="changelog.html" class="hover:text-brand-600 dark:hover:text-white transition">Changelog</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Company</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="index.html#app" class="hover:text-brand-600 dark:hover:text-white transition">Sign in</a></li>
+            <li><a href="contact.html" class="hover:text-brand-600 dark:hover:text-white transition">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Legal</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="privacy.html" class="hover:text-brand-600 dark:hover:text-white transition">Privacy Policy</a></li>
+            <li><a href="terms.html" class="hover:text-brand-600 dark:hover:text-white transition">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Newsletter signup → Mailchimp -->
+      <div class="mt-10 pt-8 border-t border-slate-200/70 dark:border-white/10">
+        <div class="grid sm:grid-cols-2 gap-6 items-center">
+          <div>
+            <p class="text-sm font-bold text-slate-900 dark:text-white">Get study tips in your inbox</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm">Occasional updates on new features and smarter ways to study. No spam — unsubscribe anytime.</p>
+          </div>
+          <form id="newsletterForm" class="w-full sm:max-w-sm sm:justify-self-end" novalidate>
+            <div class="flex gap-2">
+              <label for="newsletterEmail" class="sr-only">Email address</label>
+              <input id="newsletterEmail" name="email" type="email" autocomplete="email" required
+                placeholder="you@example.com"
+                class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition" />
+              <button type="submit" id="newsletterBtn"
+                class="shrink-0 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 transition disabled:opacity-60 disabled:cursor-not-allowed">
+                Subscribe
+              </button>
+            </div>
+            <p id="newsletterMsg" class="hidden mt-2 text-sm" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+
+      <div class="mt-10 pt-6 border-t border-slate-200/70 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-sm text-slate-400 dark:text-slate-500">© <span id="year">2026</span> Lumi Study. Made for students, by people who hated cramming.</p>
+        <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <span class="h-2 w-2 rounded-full bg-accent-500"></span> All systems operational
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var $ = function (id) { return document.getElementById(id); };
+      document.documentElement.classList.remove("preload");
+      try { $("year").textContent = String(new Date().getFullYear()); } catch (e) {}
+
+      /* TOC scrollspy — highlight the section currently in view */
+      var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+      var byId = {};
+      links.forEach(function (a) { byId[a.getAttribute("href").slice(1)] = a; });
+      var sections = links
+        .map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); })
+        .filter(Boolean);
+
+      if ("IntersectionObserver" in window && sections.length) {
+        var current = null;
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) {
+              if (current) current.classList.remove("active");
+              current = byId[e.target.id];
+              if (current) current.classList.add("active");
+            }
+          });
+        }, { rootMargin: "-20% 0px -70% 0px", threshold: 0 });
+        sections.forEach(function (s) { io.observe(s); });
+      }
+    })();
+  </script>
+  <!-- Newsletter signup handler (shared) → Mailchimp embedded form -->
+  <script src="newsletter.js?v=3" defer></script>
+</body>
+</html>

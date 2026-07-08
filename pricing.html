@@ -1,220 +1,447 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="preload">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lumi Pro</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=20260304" />
-  <link rel="icon" type="image/png" sizes="512x512" href="favicon-512.png?v=20260304" />
-  <link rel="shortcut icon" href="favicon-32.png?v=20260304" />
-  <link rel="apple-touch-icon" sizes="180x180" href="LumiStudy logo with glowing orb (1).png?v=20260313" />
+  <title>Pricing & Plans — Lumi Study</title>
+  <meta name="description" content="Simple, honest pricing for Lumi Study. Start free, upgrade to Pro or Power when you're ready. 3-day free trial, cancel anytime." />
+  <link rel="canonical" href="https://lumistudy.org/pricing.html" />
+  <link rel="icon" type="image/png" sizes="32x32" href="logo.png?v=20260701" />
+  <link rel="apple-touch-icon" sizes="180x180" href="logo.png?v=20260701" />
+
+  <!-- Brand font -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Precompiled Tailwind (replaces the cdn.tailwindcss.com runtime build).
+       Theme/config lives in tailwind.config.js. Rebuild after class changes: npm run build:css -->
+  <link rel="stylesheet" href="/tailwind.css" />
+
+  <!-- Theme bootstrap: runs before paint so there's no flash. Default = light, honors saved choice. -->
   <script>
-    window.APP_CONFIG = window.APP_CONFIG || {
-      CANONICAL_HOST: "",
-      CLERK_PUBLISHABLE_KEY: ""
-    };
+    (function initTheme() {
+      try {
+        var saved = localStorage.getItem("lumi-theme");
+        var dark = saved === "dark" || (saved === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+      } catch (e) {}
+    })();
   </script>
-  <script src="config.js"></script>
+
+  <!-- App config + Clerk bootstrap (same contract as index.html) -->
+  <script>window.APP_CONFIG = window.APP_CONFIG || { CANONICAL_HOST: "", CLERK_PUBLISHABLE_KEY: "" };</script>
+  <script src="config.js" onerror="this.remove()"></script>
   <script src="/runtime-config" onerror="this.remove()"></script>
   <script>
+    // Preload Clerk exactly like the app so the pricing table + secure checkout work here too.
     (function preloadClerk() {
-      const key = String(window.APP_CONFIG?.CLERK_PUBLISHABLE_KEY || "").trim().replace(/^['"]|['"]$/g, "");
+      var key = String((window.APP_CONFIG && window.APP_CONFIG.CLERK_PUBLISHABLE_KEY) || "").trim().replace(/^['"]|['"]$/g, "");
       if (!/^pk_(test|live)_/.test(key)) return;
-
       window.__clerk_publishable_key = key;
-      window.__clerk_publishable_key__ = key;
       window.__CLERK_PUBLISHABLE_KEY__ = key;
-      window.__clerkPublishableKey = key;
-
-      let meta = document.querySelector('meta[name="clerk-publishable-key"]');
-      if (!meta) {
-        meta = document.createElement("meta");
-        meta.setAttribute("name", "clerk-publishable-key");
-        document.head.appendChild(meta);
-      }
+      var meta = document.querySelector('meta[name="clerk-publishable-key"]');
+      if (!meta) { meta = document.createElement("meta"); meta.setAttribute("name", "clerk-publishable-key"); document.head.appendChild(meta); }
       meta.setAttribute("content", key);
-
-      const existingScript = document.querySelector('script[data-clerk-loader="app"]');
-      if (existingScript) {
-        existingScript.setAttribute("data-clerk-publishable-key", key);
-        existingScript.setAttribute("data-clerk-publishableKey", key);
-        return;
-      }
-
-      const script = document.createElement("script");
-      script.async = true;
-      script.crossOrigin = "anonymous";
-      script.type = "text/javascript";
+      if (document.querySelector('script[data-clerk-loader="app"]')) return;
+      var script = document.createElement("script");
+      script.async = true; script.crossOrigin = "anonymous"; script.type = "text/javascript";
       script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
       script.setAttribute("data-clerk-loader", "app");
       script.setAttribute("data-clerk-publishable-key", key);
-      script.setAttribute("data-clerk-publishableKey", key);
       document.head.appendChild(script);
     })();
   </script>
-  <script>
-    (function redirectDevHostname() {
-      const canonicalHost = window.APP_CONFIG && window.APP_CONFIG.CANONICAL_HOST;
-      if (!canonicalHost) return;
 
-      const host = window.location.hostname;
-      const isDevHost = host.endsWith(".pages.dev") || host.endsWith(".workers.dev");
-      const alreadyCanonical = host === canonicalHost || host === "www." + canonicalHost;
-      if (!isDevHost || alreadyCanonical) return;
+  <style>
+    html:not(.preload) body, html:not(.preload) body * { transition: background-color .35s ease, border-color .35s ease, color .25s ease, box-shadow .35s ease; }
+    html { scroll-behavior: smooth; }
+    section[id] { scroll-margin-top: 5rem; }
+    body { font-feature-settings: "ss01","cv01"; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .aurora::before {
+      content: ""; position: absolute; inset: -30% -10% auto -10%; height: 520px; z-index: 0;
+      background:
+        radial-gradient(48% 60% at 18% 22%, rgba(99,102,241,.26), transparent 60%),
+        radial-gradient(42% 55% at 82% 14%, rgba(16,185,129,.18), transparent 62%);
+      filter: blur(8px); pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    :focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; border-radius: 6px; }
+    /* feature checkmarks on plan cards */
+    .pchk { position: relative; flex: 0 0 auto; height: 20px; width: 20px; border-radius: 9999px; margin-top: 1px; background: #d1fae5; }
+    .dark .pchk { background: rgba(16,185,129,.2); }
+    .pchk::after { content: ""; position: absolute; left: 6px; top: 4px; width: 5px; height: 9px; border: solid #059669; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+    .dark .pchk::after { border-color: #34d399; }
+    /* The sticky navbar uses backdrop-blur (its own stacking context at z-40), which
+       can bleed over the top of the Clerk billing checkout drawer/modal — cutting off
+       the plan details and the top of the payment form. Force every Clerk portal layer
+       (backdrop, modal, drawer, checkout) above the navbar so it's never clipped. */
+    .cl-modalBackdrop, .cl-modalContent, .cl-modal,
+    .cl-drawerBackdrop, .cl-drawerContent, .cl-drawerRoot,
+    .cl-checkout, .cl-checkoutDrawer,
+    [class*="cl-modalBackdrop"], [class*="cl-modalContent"],
+    [class*="cl-drawerBackdrop"], [class*="cl-drawerContent"],
+    [class*="cl-drawerRoot"], [class*="cl-checkout"] {
+      z-index: 2147483600 !important;
+    }
+  </style>
 
-      const target = "https://" + canonicalHost + window.location.pathname + window.location.search + window.location.hash;
-      window.location.replace(target);
-    })();
-  </script>
-  <link rel="stylesheet" href="style.css?v=54" />
+  <!-- Site-wide button + transition micro-animations -->
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      a.inline-flex, button {
+        transition: transform .22s cubic-bezier(.34,1.4,.6,1), box-shadow .28s ease,
+                    background-color .25s ease, border-color .25s ease, color .2s ease, filter .2s ease !important;
+      }
+      button:active:not(:disabled), a.inline-flex:active:not(:disabled) { transform: scale(.955); }
+      .btn-lift:hover { transform: translateY(-3px); }
+      .btn-lift:active:not(:disabled) { transform: translateY(-1px) scale(.97); }
+    }
+    .btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+    .btn-shine::after {
+      content: ""; position: absolute; top: 0; bottom: 0; left: -150%; width: 55%;
+      transform: skewX(-22deg); pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+    }
+    @media (prefers-reduced-motion: no-preference) { .btn-shine:hover::after { animation: btn-sheen .85s cubic-bezier(.4,0,.2,1); } }
+    @keyframes btn-sheen { from { left: -150%; } to { left: 170%; } }
+  </style>
+  <!-- Mailchimp Connected Site (tracking + pop-up forms) -->
+  <script id="mcjs">!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/f977eb32eb487d8c218893089/5259053cb92f7d6fee3bad4d3.js");</script>
 </head>
-<body>
-  <div class="bg-shape bg-shape-1" aria-hidden="true"></div>
-  <div class="bg-shape bg-shape-2" aria-hidden="true"></div>
 
-  <main class="pricing-shell">
-    <header class="pricing-topbar">
-      <a id="pricingBackLink" class="theme-btn" href="index.html">
-        <span class="btn-glyph" aria-hidden="true">&#8592;</span>
-        <span class="btn-label">Back to App</span>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans antialiased selection:bg-brand-200 selection:text-brand-900">
+
+  <!-- ============================================================= -->
+  <!-- NAVBAR                                                        -->
+  <!-- ============================================================= -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/70 dark:border-white/10">
+    <nav class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <a href="index.html" class="flex items-center gap-2.5 group" aria-label="Lumi Study home">
+        <img src="logo.png?v=20260701" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft group-hover:scale-105 transition-transform" />
+        <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
       </a>
-      <div class="pricing-top-actions">
-        <div id="pricingUserButton" class="clerk-user-button hidden" aria-label="Account"></div>
-        <button id="pricingSignInButton" class="theme-btn" type="button" aria-label="Sign in to billing">
-          <span class="btn-glyph" aria-hidden="true">&#9673;</span>
-          <span class="btn-label">Sign In</span>
+      <div class="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600 dark:text-slate-300">
+        <a href="index.html#features" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Features</a>
+        <a href="index.html#how" class="hover:text-brand-600 dark:hover:text-brand-300 transition">How it works</a>
+        <a href="pricing.html" class="text-brand-700 dark:text-brand-300" aria-current="page">Pricing</a>
+        <a href="contact.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Contact</a>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button id="themeToggle" type="button" aria-label="Toggle dark mode" class="h-9 w-9 grid place-items-center rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition">
+          <svg class="hidden dark:block h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="block dark:hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
         </button>
+        <a href="index.html#app" class="btn-shine inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Open app</a>
       </div>
-    </header>
+    </nav>
+  </header>
 
-    <section class="card pricing-hero-card">
-      <div class="pricing-hero-copy">
-        <p class="eyebrow">Lumi Pricing</p>
-        <h1>Choose the study plan that keeps you moving.</h1>
-        <p class="pricing-hero-text">
-          Start free, upgrade when you want more room, and keep every study pack tied to your account across devices.
-        </p>
-        <div class="pricing-chip-row">
-          <span class="pricing-chip">Monthly or yearly</span>
-          <span class="pricing-chip">Free trial available</span>
-          <span class="pricing-chip">Secure account billing</span>
-        </div>
-      </div>
-      <div class="pricing-hero-status">
-        <p class="pricing-small-label">Your plan</p>
-        <p id="pricingStatusChip" class="pricing-status-chip">Free</p>
-        <p id="pricingStatusText" class="modal-message">Sign in to unlock secure checkout and manage your plan.</p>
-        <div class="pricing-status-points">
-          <p>Save study packs across devices</p>
-          <p>Upgrade without leaving Lumi</p>
-          <p>Keep access tied to your account</p>
+  <main id="main">
+    <!-- ============================================================= -->
+    <!-- HERO                                                          -->
+    <!-- ============================================================= -->
+    <section class="relative aurora overflow-hidden">
+      <div class="relative max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-6 text-center">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">Pricing</span>
+        <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">Simple, honest pricing</h1>
+        <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Start free. Upgrade to Pro or Power whenever you're ready — and unlock <strong class="text-slate-800 dark:text-white">LumiBot</strong>, your AI study chat that answers questions about your notes and edits them for you.</p>
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-500 dark:text-slate-400">
+          <span class="inline-flex items-center gap-1.5"><svg class="h-4 w-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>3-day free trial on the Pro plan</span>
+          <span class="inline-flex items-center gap-1.5"><svg class="h-4 w-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Cancel anytime</span>
+          <span class="inline-flex items-center gap-1.5"><svg class="h-4 w-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Secure checkout by Stripe</span>
         </div>
       </div>
     </section>
 
-    <section class="pricing-grid">
-      <article class="card pricing-plan-card pricing-plan-card-featured">
-        <div class="pricing-plan-head">
-          <div>
-            <p class="pricing-small-label">Most popular</p>
-            <h2 id="pricingPlanName">Pro</h2>
+    <!-- ============================================================= -->
+    <!-- CLERK PRICING TABLE                                           -->
+    <!-- ============================================================= -->
+    <section id="plans" class="relative px-4 sm:px-6 pb-10 pt-4">
+      <div class="max-w-5xl mx-auto">
+        <div id="pricingTableMount"></div>
+        <div id="pricingTableLoading" class="py-16 text-center">
+          <span class="inline-block h-9 w-9 animate-spin rounded-full border-2 border-brand-500 border-t-transparent"></span>
+          <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">Loading plans…</p>
+        </div>
+        <!-- Fallback: shown when the live Clerk table can't render (e.g. Clerk Billing/
+             Commerce not enabled yet). Custom cards so the page is never blank. -->
+        <div id="pricingTableFallback" class="hidden">
+          <div class="grid md:grid-cols-3 gap-6">
+            <!-- Free -->
+            <article class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col">
+              <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Free</h3>
+              <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$0</span><span class="text-sm font-medium text-slate-400">/forever</span></p>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For trying Lumi Study out.</p>
+              <ul class="mt-5 space-y-2.5 text-sm text-slate-600 dark:text-slate-300 flex-1">
+                <li class="flex gap-2.5"><span class="pchk"></span>3,000-character notes</li>
+                <li class="flex gap-2.5"><span class="pchk"></span>5 flashcards per pack</li>
+                <li class="flex gap-2.5"><span class="pchk"></span>12-question quizzes</li>
+                <li class="flex gap-2.5"><span class="pchk"></span>2 saved study packs</li>
+                <li class="flex gap-2.5"><span class="pchk"></span>3 study packs per day</li>
+              </ul>
+              <a href="index.html#app" class="mt-6 inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition">Start for free</a>
+            </article>
+            <!-- Pro -->
+            <article class="relative rounded-3xl border-2 border-amber-400 bg-white dark:bg-slate-900 p-6 shadow-glow flex flex-col">
+              <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide text-amber-950 bg-gradient-to-r from-amber-300 to-yellow-400 shadow-soft">BEST VALUE</span>
+              <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Pro</h3>
+              <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$6.99</span><span class="text-sm font-medium text-slate-400">/month</span></p>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">$4.99/mo billed annually.</p>
+              <ul class="mt-5 space-y-2.5 text-sm text-slate-600 dark:text-slate-300 flex-1">
+                <li class="flex gap-2.5"><span class="pchk"></span><span><strong class="font-semibold text-slate-800 dark:text-white">Everything in Free</strong>, plus:</span></li>
+                <li class="flex gap-2.5"><span class="pchk"></span>10,000-character notes · 15 flashcards</li>
+                <li class="flex gap-2.5"><span class="pchk"></span><strong class="font-semibold text-slate-800 dark:text-white">LumiBot</strong> study chat assistant</li>
+                <li class="flex gap-2.5"><span class="pchk"></span>Fast AI + article summaries</li>
+                <li class="flex gap-2.5"><span class="pchk"></span>25 study packs per day</li>
+              </ul>
+              <a href="index.html#app" class="btn-shine mt-6 inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Start 3-day free trial</a>
+            </article>
+            <!-- Power -->
+            <article class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col">
+              <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Power</h3>
+              <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$12.99</span><span class="text-sm font-medium text-slate-400">/month</span></p>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">$8.99/mo billed annually.</p>
+              <ul class="mt-5 space-y-2.5 text-sm text-slate-600 dark:text-slate-300 flex-1">
+                <li class="flex gap-2.5"><span class="pchk"></span><span><strong class="font-semibold text-slate-800 dark:text-white">Everything in Pro</strong>, plus:</span></li>
+                <li class="flex gap-2.5"><span class="pchk"></span>25,000-character notes · 30 flashcards</li>
+                <li class="flex gap-2.5"><span class="pchk"></span>25-question quizzes</li>
+                <li class="flex gap-2.5"><span class="pchk"></span>Advanced AI + advanced summaries</li>
+                <li class="flex gap-2.5"><span class="pchk"></span>60 packs/day · priority &amp; early access</li>
+              </ul>
+              <a href="index.html#app" class="mt-6 inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition">Upgrade to Power</a>
+            </article>
           </div>
-          <span class="pricing-inline-status">Best value</span>
+          <p class="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">Secure card checkout is being finalized. <button id="pricingTableRetry" type="button" class="font-semibold text-brand-600 dark:text-brand-300 hover:underline">Reload plans</button></p>
         </div>
-        <p class="pricing-plan-subtitle">More space, more outputs, and a smoother study workflow for everyday use.</p>
-        <div class="pricing-plan-price">
-          <span id="pricingPlanPrice">$1.50</span>
-          <span class="pricing-plan-cycle">/ month</span>
-        </div>
-        <div class="pricing-billing-facts">
-          <p><strong>Monthly</strong><span id="pricingMonthlyPrice">$1.50 / month</span></p>
-          <p><strong>Yearly</strong><span id="pricingYearlyPrice">$12.00 / year</span></p>
-          <p><strong>Trial</strong><span id="pricingTrialDays">14 days</span></p>
-        </div>
-        <ul class="pricing-feature-list">
-          <li>Up to 10 flashcards per generation.</li>
-          <li>Up to 8000 note characters for larger study sessions.</li>
-          <li>Up to 5 saved study files tied to your account.</li>
-          <li>Fast account-based upgrades and billing management.</li>
-        </ul>
-        <button id="pricingPrimaryButton" class="primary-btn" type="button">Sign in to upgrade</button>
-        <p id="pricingPrimaryHint" class="tutorial-label">Your secure checkout opens after sign-in.</p>
-      </article>
-
-      <article id="pricingCheckoutCard" class="card pricing-checkout-card">
-        <div class="pricing-section-head">
-          <div>
-            <p class="pricing-small-label">Checkout</p>
-            <h2>Secure upgrade</h2>
-          </div>
-          <span id="pricingInlineStatus" class="pricing-inline-status">Ready when you are</span>
-        </div>
-
-        <div id="pricingAuthNotice" class="pricing-inline-notice">
-          <p>Sign in first, then choose the billing option that fits your study routine.</p>
-        </div>
-
-        <div id="pricingTableWrap" class="pricing-table-wrap hidden">
-          <div id="pricingTableMount"></div>
-        </div>
-
-        <div id="pricingFallback" class="pricing-fallback">
-          <p id="pricingFallbackTitle" class="pricing-fallback-title">Checkout appears here after sign-in.</p>
-          <p id="pricingFallbackText">
-            Once your account is ready, this section will open secure checkout so you can start Pro in just a few clicks.
-          </p>
-          <ul class="pricing-fallback-list">
-            <li>Pick monthly or yearly billing</li>
-            <li>Start a trial when available</li>
-            <li>Manage everything from your Lumi account</li>
-          </ul>
-        </div>
-      </article>
+      </div>
     </section>
 
-    <section class="pricing-meta-grid">
-      <article class="card pricing-meta-card">
-        <p class="pricing-small-label">Why upgrade</p>
-        <h2>Keep your study flow fast.</h2>
-        <p>
-          Pro is designed for students who want more room to generate, save, and revisit their study packs without hitting the free limits too quickly.
-        </p>
-      </article>
-
-      <article class="card pricing-meta-card">
-        <p class="pricing-small-label">What you get</p>
-        <h2>More capacity, same simple workflow.</h2>
-        <p>
-          Everything stays in the same Lumi experience. You just unlock bigger limits, more saved work, and a smoother path for regular studying.
-        </p>
-      </article>
-
-      <article class="card pricing-meta-card pricing-ultimate-card">
-        <div class="pricing-plan-head">
-          <div>
-            <p class="pricing-small-label">Coming later</p>
-            <h2 id="ultimatePlanName">Ultimate</h2>
-          </div>
-          <span class="pricing-coming-soon">Coming soon</span>
+    <!-- ============================================================= -->
+    <!-- COMPARE PLANS — full feature matrix (styled after the user's   -->
+    <!-- reference image; populated with Lumi's real Free/Pro/Power data)-->
+    <!-- ============================================================= -->
+    <section id="compare" class="px-4 sm:px-6 pb-24">
+      <div class="max-w-5xl mx-auto rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-soft overflow-hidden">
+        <div class="flex items-end justify-between gap-4 px-6 sm:px-8 pt-7 pb-5">
+          <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Compare all features</h2>
+          <p class="text-sm text-slate-400 dark:text-slate-500 hidden sm:block">Every plan, side by side</p>
         </div>
-        <p class="pricing-plan-subtitle">For heavier study loads, bigger limits, and future premium tools.</p>
-        <div class="pricing-plan-price pricing-plan-price-muted">
-          <span id="ultimatePlanPrice">$4.99</span>
-          <span class="pricing-plan-cycle">/ month planned</span>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[640px] border-collapse text-sm">
+            <thead>
+              <tr class="border-t border-slate-200/70 dark:border-white/10">
+                <th class="text-left font-semibold text-slate-500 dark:text-slate-400 px-6 sm:px-8 py-4 w-[44%]">Feature</th>
+                <th class="px-3 py-4 text-center"><div class="font-extrabold text-slate-900 dark:text-white">Free</div><div class="text-xs font-medium text-slate-400">Free</div></th>
+                <th class="px-3 py-4 text-center"><div class="font-extrabold text-brand-600 dark:text-brand-300">Pro</div><div class="text-xs font-medium text-slate-400">$6.99/mo</div></th>
+                <th class="px-3 py-4 text-center"><div class="font-extrabold text-slate-900 dark:text-white">Power</div><div class="text-xs font-medium text-slate-400">$12.99/mo</div></th>
+              </tr>
+            </thead>
+            <tbody id="compareBody"></tbody>
+          </table>
         </div>
-        <ul class="pricing-feature-list">
-          <li>Higher flashcard, file, and note limits.</li>
-          <li>Built for power users who study more often.</li>
-          <li>Future premium features in one plan.</li>
-        </ul>
-        <button class="secondary-btn" type="button" disabled>Coming Soon</button>
-      </article>
+        <div class="px-6 sm:px-8 py-5 border-t border-slate-200/70 dark:border-white/10 text-center">
+          <a href="index.html#app" class="btn-shine btn-lift inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Start free — no card needed
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
+          </a>
+        </div>
+      </div>
     </section>
   </main>
 
-  <script src="pricing.js?v=3"></script>
+  <!-- ============================================================= -->
+  <!-- FOOTER                                                        -->
+  <!-- ============================================================= -->
+  <footer class="border-t border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="lg:col-span-1">
+          <a href="index.html" class="flex items-center gap-2.5">
+            <img src="logo.png?v=20260701" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft" />
+            <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
+          </a>
+          <p class="mt-3 text-sm text-slate-500 dark:text-slate-400 max-w-xs">One input. A full study pack. Faster learning — for students who'd rather understand than memorize.</p>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Product</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="index.html#features" class="hover:text-brand-600 dark:hover:text-white transition">Features</a></li>
+            <li><a href="index.html#how" class="hover:text-brand-600 dark:hover:text-white transition">How it works</a></li>
+            <li><a href="index.html#demo" class="hover:text-brand-600 dark:hover:text-white transition">Try the demo</a></li>
+            <li><a href="pricing.html" class="hover:text-brand-600 dark:hover:text-white transition">Pricing</a></li>
+            <li><a href="changelog.html" class="hover:text-brand-600 dark:hover:text-white transition">Changelog</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Company</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="index.html#app" class="hover:text-brand-600 dark:hover:text-white transition">Sign in</a></li>
+            <li><a href="contact.html" class="hover:text-brand-600 dark:hover:text-white transition">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Legal</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="privacy.html" class="hover:text-brand-600 dark:hover:text-white transition">Privacy Policy</a></li>
+            <li><a href="terms.html" class="hover:text-brand-600 dark:hover:text-white transition">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Newsletter signup → Mailchimp -->
+      <div class="mt-10 pt-8 border-t border-slate-200/70 dark:border-white/10">
+        <div class="grid sm:grid-cols-2 gap-6 items-center">
+          <div>
+            <p class="text-sm font-bold text-slate-900 dark:text-white">Get study tips in your inbox</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm">Occasional updates on new features and smarter ways to study. No spam — unsubscribe anytime.</p>
+          </div>
+          <form id="newsletterForm" class="w-full sm:max-w-sm sm:justify-self-end" novalidate>
+            <div class="flex gap-2">
+              <label for="newsletterEmail" class="sr-only">Email address</label>
+              <input id="newsletterEmail" name="email" type="email" autocomplete="email" required
+                placeholder="you@example.com"
+                class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition" />
+              <button type="submit" id="newsletterBtn"
+                class="shrink-0 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 transition disabled:opacity-60 disabled:cursor-not-allowed">
+                Subscribe
+              </button>
+            </div>
+            <p id="newsletterMsg" class="hidden mt-2 text-sm" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+
+      <div class="mt-10 pt-6 border-t border-slate-200/70 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-sm text-slate-400 dark:text-slate-500">© <span id="year">2026</span> Lumi Study. Made for students, by people who hated cramming.</p>
+        <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <span class="h-2 w-2 rounded-full bg-accent-500"></span> All systems operational
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var $ = function (id) { return document.getElementById(id); };
+      document.documentElement.classList.remove("preload");
+      try { $("year").textContent = String(new Date().getFullYear()); } catch (e) {}
+
+      /* theme toggle (shared key with the app) */
+      var tt = $("themeToggle");
+      if (tt) tt.addEventListener("click", function () {
+        var d = document.documentElement.classList.toggle("dark");
+        try { localStorage.setItem("lumi-theme", d ? "dark" : "light"); } catch (e) {}
+      });
+
+      function getPubKey() {
+        var k = String((window.APP_CONFIG && window.APP_CONFIG.CLERK_PUBLISHABLE_KEY) || "").trim().replace(/^['"]|['"]$/g, "");
+        return /^pk_(test|live)_/.test(k) ? k : "";
+      }
+      function appearance() {
+        var dark = document.documentElement.classList.contains("dark");
+        var vars = { colorPrimary: "#6366F1", fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif", borderRadius: "0.85rem" };
+        if (dark) {
+          vars.colorBackground = "#0f172a"; vars.colorText = "#e2e8f0"; vars.colorTextSecondary = "#94a3b8";
+          vars.colorInputBackground = "#1e293b"; vars.colorInputText = "#e2e8f0"; vars.colorNeutral = "#cbd5e1";
+        }
+        return { variables: vars };
+      }
+      function setState(state) {
+        var mount = $("pricingTableMount"), load = $("pricingTableLoading"), fb = $("pricingTableFallback");
+        if (mount) mount.classList.toggle("hidden", state !== "ready");
+        if (load) load.classList.toggle("hidden", state !== "loading");
+        if (fb) fb.classList.toggle("hidden", state !== "fallback");
+      }
+
+      var mounted = false, busy = false;
+      async function mountPricing() {
+        var mount = $("pricingTableMount");
+        if (!mount || busy) return;
+        busy = true; setState("loading");
+        try {
+          if (!getPubKey()) { setState("fallback"); return; }
+          var tries = 0;
+          while ((!window.Clerk || !window.Clerk.loaded) && tries < 80) {
+            if (window.Clerk && !window.Clerk.loaded) { try { await window.Clerk.load(); } catch (e) {} }
+            await new Promise(function (r) { setTimeout(r, 100); }); tries++;
+          }
+          if (!window.Clerk || typeof window.Clerk.mountPricingTable !== "function") { setState("fallback"); return; }
+          if (mounted && typeof window.Clerk.unmountPricingTable === "function") { try { window.Clerk.unmountPricingTable(mount); } catch (e) {} }
+          mount.innerHTML = "";
+          await window.Clerk.mountPricingTable(mount, {
+            for: "user",
+            newSubscriptionRedirectUrl: "index.html#app",
+            appearance: appearance(),
+            checkoutProps: { appearance: appearance() }
+          });
+          // Clerk Billing/Commerce may be disabled → the table mounts but renders nothing.
+          // Detect that and show the custom cards instead of a blank panel.
+          await new Promise(function (r) { setTimeout(r, 450); });
+          if (!mount.children.length) { mounted = false; setState("fallback"); return; }
+          mounted = true; setState("ready");
+        } catch (e) {
+          mounted = false; setState("fallback");
+        } finally { busy = false; }
+      }
+
+      var retry = $("pricingTableRetry");
+      if (retry) retry.addEventListener("click", function () { mounted = false; mountPricing(); });
+
+      // Re-theme the mounted Clerk table whenever dark mode toggles (appearance is set at mount time).
+      var lastDark = document.documentElement.classList.contains("dark");
+      try {
+        new MutationObserver(function () {
+          var dark = document.documentElement.classList.contains("dark");
+          if (dark === lastDark) return;
+          lastDark = dark;
+          if (mounted) { mounted = false; mountPricing(); }
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+      } catch (e) {}
+
+      // Build the "Compare all features" matrix (Lumi's real Free/Pro/Power data).
+      function buildCompare() {
+        var body = $("compareBody");
+        if (!body) return;
+        var CHK = '<svg class="inline h-5 w-5 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+        var DASH = '<span class="text-slate-300 dark:text-slate-600">—</span>';
+        var rows = [
+          ["Smart AI study notes", "Turn messy notes, articles or photos into clean, structured notes.", true, true, true],
+          ["Flashcards & quizzes", "Auto-built from your material.", true, true, true],
+          ["Photo & PDF import", "Snap or upload your notes and Lumi reads them.", true, true, true],
+          ["Notes per pack", "How much you can paste or upload at once.", "3,000 chars", "10,000 chars", "25,000 chars"],
+          ["Flashcards per pack", "", "5", "15", "30"],
+          ["Quiz questions per pack", "", "12", "12", "25"],
+          ["Saved study packs", "Packs kept on this device.", "2", "10", "15"],
+          ["Study packs per day", "", "3", "25", "60"],
+          ["Study packs per month", "", "20", "400", "1,000"],
+          ["AI quality & speed", "", "Standard", "Fast", "Advanced"],
+          ["LumiBot study chat", "Ask about your notes and let it edit them for you.", false, true, true],
+          ["Article & link summaries", "", false, "Basic", "Advanced"],
+          ["Priority & early access", "New features land here first.", false, false, true]
+        ];
+        function cell(v) {
+          if (v === true) return CHK;
+          if (v === false) return DASH;
+          return '<span class="font-semibold text-slate-700 dark:text-slate-200">' + v + '</span>';
+        }
+        body.innerHTML = rows.map(function (r) {
+          return '<tr class="border-t border-slate-200/70 dark:border-white/10">' +
+            '<td class="px-6 sm:px-8 py-4 align-top">' +
+              '<div class="font-semibold text-slate-800 dark:text-white">' + r[0] + '</div>' +
+              (r[1] ? '<div class="text-slate-400 dark:text-slate-500 text-[13px] mt-0.5 leading-snug">' + r[1] + '</div>' : '') +
+            '</td>' +
+            '<td class="px-3 py-4 text-center">' + cell(r[2]) + '</td>' +
+            '<td class="px-3 py-4 text-center">' + cell(r[3]) + '</td>' +
+            '<td class="px-3 py-4 text-center">' + cell(r[4]) + '</td>' +
+          '</tr>';
+        }).join("");
+      }
+      buildCompare();
+
+      mountPricing();
+    })();
+  </script>
+  <!-- Newsletter signup handler (shared) → Mailchimp embedded form -->
+  <script src="newsletter.js?v=3" defer></script>
 </body>
 </html>

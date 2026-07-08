@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en" class="preload">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Changelog — Lumi Study</title>
+  <meta name="description" content="What's new in Lumi Study — every release, new feature, improvement and fix, in one place." />
+  <link rel="canonical" href="https://lumistudy.org/changelog.html" />
+  <link rel="icon" type="image/png" sizes="32x32" href="logo.png?v=20260701" />
+  <link rel="apple-touch-icon" sizes="180x180" href="logo.png?v=20260701" />
+
+  <!-- Brand font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Precompiled Tailwind (replaces the cdn.tailwindcss.com runtime build).
+       Theme/config lives in tailwind.config.js. Rebuild after class changes: npm run build:css -->
+  <link rel="stylesheet" href="/tailwind.css" />
+
+  <!-- Theme bootstrap: runs before paint so there's no flash. Default = light, honors saved choice. -->
+  <script>
+    (function initTheme() {
+      try {
+        var saved = localStorage.getItem("lumi-theme");
+        var dark = saved === "dark" || (saved === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+      } catch (e) {}
+    })();
+  </script>
+
+  <style>
+    html:not(.preload) body, html:not(.preload) body * { transition: background-color .35s ease, border-color .35s ease, color .25s ease, box-shadow .35s ease; }
+    html { scroll-behavior: smooth; }
+    section[id] { scroll-margin-top: 5rem; }
+    body { font-feature-settings: "ss01","cv01"; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .aurora::before {
+      content: ""; position: absolute; inset: -30% -10% auto -10%; height: 520px; z-index: 0;
+      background:
+        radial-gradient(48% 60% at 18% 22%, rgba(99,102,241,.26), transparent 60%),
+        radial-gradient(42% 55% at 82% 14%, rgba(16,185,129,.18), transparent 62%);
+      filter: blur(8px); pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    :focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; border-radius: 6px; }
+
+    /* Changelog timeline rail */
+    .cl-item { position: relative; padding-left: 2.25rem; }
+    .cl-item::before { /* the vertical line */
+      content: ""; position: absolute; left: 7px; top: 1.9rem; bottom: -1.75rem;
+      width: 2px; background: linear-gradient(to bottom, rgba(99,102,241,.35), rgba(99,102,241,.08));
+    }
+    .cl-item:last-child::before { display: none; }
+    .dark .cl-item::before { background: linear-gradient(to bottom, rgba(129,140,248,.4), rgba(129,140,248,.08)); }
+    .cl-dot { /* the node on the rail */
+      position: absolute; left: 0; top: 1.55rem; height: 16px; width: 16px; border-radius: 9999px;
+      background: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,.16);
+    }
+    .dark .cl-dot { background: #818cf8; box-shadow: 0 0 0 4px rgba(129,140,248,.18); }
+
+    /* Reveal-on-scroll (graceful: rows are visible without JS) */
+    .reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.in { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+  </style>
+
+  <!-- Site-wide button + transition micro-animations -->
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      a.inline-flex, button {
+        transition: transform .22s cubic-bezier(.34,1.4,.6,1), box-shadow .28s ease,
+                    background-color .25s ease, border-color .25s ease, color .2s ease, filter .2s ease !important;
+      }
+      button:active:not(:disabled), a.inline-flex:active:not(:disabled) { transform: scale(.955); }
+      .btn-lift:hover { transform: translateY(-3px); }
+      .btn-lift:active:not(:disabled) { transform: translateY(-1px) scale(.97); }
+    }
+    .btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+    .btn-shine::after {
+      content: ""; position: absolute; top: 0; bottom: 0; left: -150%; width: 55%;
+      transform: skewX(-22deg); pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+    }
+    @media (prefers-reduced-motion: no-preference) { .btn-shine:hover::after { animation: btn-sheen .85s cubic-bezier(.4,0,.2,1); } }
+    @keyframes btn-sheen { from { left: -150%; } to { left: 170%; } }
+  </style>
+  <!-- Mailchimp Connected Site (tracking + pop-up forms) -->
+  <script id="mcjs">!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/f977eb32eb487d8c218893089/5259053cb92f7d6fee3bad4d3.js");</script>
+</head>
+
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans antialiased selection:bg-brand-200 selection:text-brand-900">
+
+  <!-- ============================================================= -->
+  <!-- NAVBAR                                                        -->
+  <!-- ============================================================= -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/70 dark:border-white/10">
+    <nav class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <a href="index.html" class="flex items-center gap-2.5 group" aria-label="Lumi Study home">
+        <img src="logo.png?v=20260701" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft group-hover:scale-105 transition-transform" />
+        <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600 dark:text-slate-300">
+        <a href="index.html#features" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Features</a>
+        <a href="index.html#how" class="hover:text-brand-600 dark:hover:text-brand-300 transition">How it works</a>
+        <a href="pricing.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Pricing</a>
+        <a href="contact.html" class="hover:text-brand-600 dark:hover:text-brand-300 transition">Contact</a>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <a href="index.html#app" class="btn-shine inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Open app</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- ============================================================= -->
+    <!-- HERO                                                          -->
+    <!-- ============================================================= -->
+    <section class="relative aurora overflow-hidden">
+      <div class="relative max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-6 text-center">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">Changelog</span>
+        <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">What's new in Lumi Study</h1>
+        <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Every release, new feature, improvement and fix — in one place. We ship often.</p>
+        <p class="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">Currently on <span class="font-semibold text-slate-700 dark:text-slate-200">v1.5.4.2</span></p>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- TIMELINE                                                      -->
+    <!-- ============================================================= -->
+    <section id="changelog" class="px-4 sm:px-6 pb-24 pt-6">
+      <ol id="changelogList" class="max-w-3xl mx-auto space-y-7"></ol>
+    </section>
+  </main>
+
+  <!-- ============================================================= -->
+  <!-- FOOTER                                                        -->
+  <!-- ============================================================= -->
+  <footer class="border-t border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="lg:col-span-1">
+          <a href="index.html" class="flex items-center gap-2.5">
+            <img src="logo.png?v=20260701" alt="" class="h-9 w-9 rounded-xl object-cover shadow-soft" />
+            <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Lumi Study</span>
+          </a>
+          <p class="mt-3 text-sm text-slate-500 dark:text-slate-400 max-w-xs">One input. A full study pack. Faster learning — for students who'd rather understand than memorize.</p>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Product</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="index.html#features" class="hover:text-brand-600 dark:hover:text-white transition">Features</a></li>
+            <li><a href="index.html#how" class="hover:text-brand-600 dark:hover:text-white transition">How it works</a></li>
+            <li><a href="index.html#demo" class="hover:text-brand-600 dark:hover:text-white transition">Try the demo</a></li>
+            <li><a href="pricing.html" class="hover:text-brand-600 dark:hover:text-white transition">Pricing</a></li>
+            <li><a href="changelog.html" class="hover:text-brand-600 dark:hover:text-white transition">Changelog</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Company</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="index.html#app" class="hover:text-brand-600 dark:hover:text-white transition">Sign in</a></li>
+            <li><a href="contact.html" class="hover:text-brand-600 dark:hover:text-white transition">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">Legal</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li><a href="privacy.html" class="hover:text-brand-600 dark:hover:text-white transition">Privacy Policy</a></li>
+            <li><a href="terms.html" class="hover:text-brand-600 dark:hover:text-white transition">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Newsletter signup → Mailchimp -->
+      <div class="mt-10 pt-8 border-t border-slate-200/70 dark:border-white/10">
+        <div class="grid sm:grid-cols-2 gap-6 items-center">
+          <div>
+            <p class="text-sm font-bold text-slate-900 dark:text-white">Get study tips in your inbox</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm">Occasional updates on new features and smarter ways to study. No spam — unsubscribe anytime.</p>
+          </div>
+          <form id="newsletterForm" class="w-full sm:max-w-sm sm:justify-self-end" novalidate>
+            <div class="flex gap-2">
+              <label for="newsletterEmail" class="sr-only">Email address</label>
+              <input id="newsletterEmail" name="email" type="email" autocomplete="email" required
+                placeholder="you@example.com"
+                class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition" />
+              <button type="submit" id="newsletterBtn"
+                class="shrink-0 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 transition disabled:opacity-60 disabled:cursor-not-allowed">
+                Subscribe
+              </button>
+            </div>
+            <p id="newsletterMsg" class="hidden mt-2 text-sm" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+
+      <div class="mt-10 pt-6 border-t border-slate-200/70 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-sm text-slate-400 dark:text-slate-500">© <span id="year">2026</span> Lumi Study. Made for students, by people who hated cramming.</p>
+        <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <span class="h-2 w-2 rounded-full bg-accent-500"></span> All systems operational
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var $ = function (id) { return document.getElementById(id); };
+      document.documentElement.classList.remove("preload");
+      try { $("year").textContent = String(new Date().getFullYear()); } catch (e) {}
+
+      /* ---------------------------------------------------------------
+         Changelog data — newest first. To add a release, prepend an
+         object here; the timeline rebuilds automatically. Each change
+         has a type: "new" | "improved" | "fixed".
+      ---------------------------------------------------------------- */
+      var RELEASES = [
+        {
+          version: "v1.5.4.2",
+          date: "2026-07-06",
+          title: "Nav & footer consistency across pages",
+          changes: [
+            { type: "improved", text: "Swapped “Changelog” for “Contact” in the top nav bar on the Pricing, Changelog, Privacy, Terms, and Contact pages, so Contact is reachable from every page's header." },
+            { type: "improved", text: "Unified the footer across Pricing, Changelog, Privacy, Terms, and Contact to match the landing page — the full Product / Company / Legal link columns, newsletter signup, and “All systems operational” status bar now appear on every page." }
+          ]
+        },
+        {
+          version: "v1.5.4.1",
+          date: "2026-07-06",
+          title: "Pricing card polish & trial wording fix",
+          changes: [
+            { type: "improved", text: "The Pro plan's highlight badge is now a gold “Best Value” badge (matching the pricing page) instead of the purple “Most Popular” badge, with a matching gold card outline." },
+            { type: "fixed", text: "Pricing copy now correctly says the 3-day free trial applies to the Pro plan only, not all paid plans — Power has never included a trial." }
+          ]
+        },
+        {
+          version: "v1.5.4",
+          date: "2026-07-03",
+          title: "Landing page polish & performance",
+          changes: [
+            { type: "improved", text: "Precompiled Tailwind CSS — the landing page now loads faster with no runtime CSS build, eliminating the production warning. Rebuild with npm run build:css after editing HTML classes." },
+            { type: "improved", text: "Clerk authentication now loads lazily on first interaction or idle (~1.8s), speeding up initial page paint while keeping sign-in and plan detection seamless." },
+            { type: "improved", text: "Replaced promotional testimonials with an honest “Built for how you study” use-case section, showing real study moments Lumi supports." },
+            { type: "new", text: "Monthly / Annual pricing toggle on the pricing page — switch billing cycles to see live price updates (Pro $6.99/mo or $4.99/mo annual; Power $12.99/mo or $8.99/mo annual)." }
+          ]
+        },
+        {
+          version: "v1.5.3.2",
+          date: "2026-07-03",
+          title: "Fixed flashcard flip glitch",
+          changes: [
+            { type: "fixed", text: "Fixed a text ghosting glitch where the front and back of a flashcard could briefly overlap mid-flip inside the “A look inside” browser mockup, caused by its rounded-corner clipping breaking the 3D flip's rendering." }
+          ]
+        },
+        {
+          version: "v1.5.3.1",
+          date: "2026-07-03",
+          title: "Demo polish: flashcard styling & signed-in cleanup",
+          changes: [
+            { type: "improved", text: "The flashcard preview in the “A look inside” showcase now matches the real app's note-card look (ruled paper, red margin line, Question/Answer labels) and flips on its own in a repeating loop instead of waiting for a click." },
+            { type: "fixed", text: "The “Create a free account” prompt under the home page demo no longer shows once you're already signed in." },
+            { type: "fixed", text: "Fixed a broken quote in this changelog's v1.5.4 entry that was silently breaking the release list." }
+          ]
+        },
+        {
+          version: "v1.5.3",
+          date: "2026-07-02",
+          title: "Auto theme mode",
+          changes: [
+            { type: "new", text: "Added an Auto option to Theme in Settings → Appearance, which follows your device's light/dark preference and updates live if you change it." }
+          ]
+        },
+        {
+          version: "v1.5.2",
+          date: "2026-07-01",
+          title: "Social preview image added",
+          changes: [
+            { type: "improved", text: "Added a custom open graph image for social media link previews — when you share Lumi Study on X, Discord, or other platforms, it now displays the branded thumbnail with your glowing orb logo." }
+          ]
+        },
+        {
+          version: "v1.5.1.3",
+          date: "2026-07-01",
+          title: "Logo cropped for a tighter zoom",
+          changes: [
+            { type: "improved", text: "Cropped the site logo (favicon and header logos) to zoom in on the glowing orb, removing excess empty space." }
+          ]
+        },
+        {
+          version: "v1.5.1.2",
+          date: "2026-06-30",
+          title: "Favicon updated to new logo",
+          changes: [
+            { type: "fixed", text: "Updated the browser tab icon (favicon) across all pages to display the new glowing orb logo instead of the previous icon." }
+          ]
+        },
+        {
+          version: "v1.5.1.1",
+          date: "2026-06-30",
+          title: "Logo rollout complete",
+          changes: [
+            { type: "fixed", text: "Fixed logo display on Contact, Privacy Policy, and Terms of Service pages — they now show the new glowing orb logo consistently across the site." }
+          ]
+        },
+        {
+          version: "v1.5.1",
+          date: "2026-06-30",
+          title: "New brand logo",
+          changes: [
+            { type: "improved", text: "Refreshed the site logo — a new glowing indigo-to-teal orb that better captures the study journey and Lumi's visual identity." }
+          ]
+        },
+        {
+          version: "v1.5.0",
+          date: "2026-06-30",
+          title: "Account required · Sign-in & sign-out fixes",
+          changes: [
+            { type: "new", text: "Opening the full app now requires a free account — the landing page demo still works for everyone with no sign-in needed." },
+            { type: "fixed", text: "The Sign in button in the app now reliably opens the Clerk sign-in dialog on all browsers and configurations. After signing in, the app opens automatically right where you left off." },
+            { type: "fixed", text: "Signing out now takes you back to the home page every time instead of sometimes dropping you back inside the app." }
+          ]
+        },
+        {
+          version: "v1.4.0",
+          date: "2026-06-29",
+          title: "Save your study packs",
+          changes: [
+            { type: "new", text: "Save your study packs and pick up right where you left off. Tap “Save to library” on any finished pack, then reopen it any time from the new Saved button at the top of the app." },
+            { type: "new", text: "Your library respects your plan — keep 2 saved packs on Free, 10 on Pro, and 15 on Power — and you can delete a pack any time to free up space." },
+            { type: "improved", text: "Your latest work is now restored more reliably when you reopen the app, so an in-progress pack is no longer lost when you refresh." }
+          ]
+        },
+        {
+          version: "v1.3.4",
+          date: "2026-06-28",
+          title: "Theme in Settings & motion polish",
+          changes: [
+            { type: "improved", text: "The light/dark switch now lives only in Settings — the home page header stays clean, and your chosen theme still follows you across the whole site." },
+            { type: "improved", text: "Finished the icon refresh: every output label, subject tab, study-pack header and app option chip now uses one crisp, consistent line-icon style — no more stray emoji." },
+            { type: "improved", text: "Refined the scroll and hover animations so sections and buttons ease in more gently and smoothly." }
+          ]
+        },
+        {
+          version: "v1.3.3",
+          date: "2026-06-28",
+          title: "Cleaner hero & crisp icons",
+          changes: [
+            { type: "improved", text: "Tidied up the top of the home page — the study-pack illustration now rests on a clean stack of cards instead of the scribbled notes that used to sit behind it, so the page feels calmer and more polished the moment it loads." },
+            { type: "improved", text: "Swapped emoji for crisp, consistent line icons across the site — output labels, example subjects, study packs and the app's option chips all share one clean icon style now." }
+          ]
+        },
+        {
+          version: "v1.3.2",
+          date: "2026-06-28",
+          title: "A look inside & smoother everything",
+          changes: [
+            { type: "new", text: "A new “A look inside” section on the home page shows Lumi in action — the study-pack generator and a finished pack side by side, in matching browser windows." },
+            { type: "improved", text: "Smooth animations across the whole site: sections gently fade and slide in as you scroll, with a subtle progress bar at the top of the page." },
+            { type: "improved", text: "Buttons feel more alive everywhere — a soft press, lift, and shine on hover and tap." }
+          ]
+        },
+        {
+          version: "v1.3.1",
+          date: "2026-06-28",
+          title: "Cleaner header & free demo",
+          changes: [
+            { type: "new", text: "Try Lumi with no account — the demo on the home page is free for everyone. A free account is now needed only to open the full app and generate richer study packs you can save and sync." },
+            { type: "improved", text: "Tidied up the app's top bar: the theme and Upgrade buttons now live in Settings and your account menu, so the header stays clean." },
+            { type: "fixed", text: "The “Sign in” button now disappears properly once you're signed in." }
+          ]
+        },
+        {
+          version: "v1.3.0",
+          date: "2026-06-28",
+          title: "Account menu & Settings",
+          changes: [
+            { type: "new", text: "A redesigned account menu — click your profile for quick access to Settings, Upgrade, Contact, a promo code box, and Log out." },
+            { type: "new", text: "A new Settings panel: switch between light and dark, jump to your account settings, see which plan you're on, and set custom instructions." },
+            { type: "new", text: "Tell Lumi your grade or level (middle school through college) and add your own instructions — every study pack is now tailored to you." },
+            { type: "new", text: "Redeem a promo or access code right from your account menu." }
+          ]
+        },
+        {
+          version: "v1.2.0",
+          date: "2026-06-27",
+          title: "Contact page",
+          changes: [
+            { type: "new", text: "Added a Contact page so you can reach the team — send a message right from the site and we'll usually reply within one business day." }
+          ]
+        },
+        {
+          version: "v1.1.2",
+          date: "2026-06-26",
+          title: "Flashcard flip fix",
+          changes: [
+            { type: "fixed", text: "Flipping a flashcard now reliably shows the answer — previously the back of the card could appear blank when you tapped to flip." }
+          ]
+        },
+        {
+          version: "v1.1.1",
+          date: "2026-06-26",
+          title: "Smarter study packs",
+          changes: [
+            { type: "new", text: "Quiz short answers are now graded automatically — type your answer and Lumi tells you if you got it right, were close, and exactly which ideas to add to fix it." },
+            { type: "improved", text: "Flashcards now look like real note cards and flip with a tap to reveal the answer." },
+            { type: "improved", text: "Streamlined study packs: Key Tasks are folded into the Study Plan, so everything you need to do lives in one clear list." }
+          ]
+        },
+        {
+          version: "v1.1.0",
+          date: "2026-06-26",
+          title: "Pricing & account polish",
+          changes: [
+            { type: "improved", text: "Redesigned the pricing page with clearer Free / Pro / Power cards and a full side-by-side feature comparison." },
+            { type: "fixed", text: "Your account avatar and profile menu now appear reliably as soon as the page loads." },
+            { type: "fixed", text: "The billing and checkout window now layers correctly above the navigation bar." },
+            { type: "improved", text: "Consistent “Lumi Study” branding across the pricing page." }
+          ]
+        },
+        {
+          version: "v1.0.0",
+          date: "2026-06-25",
+          title: "The new Lumi Study",
+          changes: [
+            { type: "new", text: "A completely redesigned site and AI study-pack generator." },
+            { type: "new", text: "LumiBot — a Pro AI study chat that answers questions about your notes and can edit them for you." },
+            { type: "new", text: "Dedicated pricing page with Free, Pro, and Power plans." },
+            { type: "new", text: "Sign in with your account and manage it right from the header." },
+            { type: "improved", text: "Faster, more reliable AI generation with fair per-plan usage limits." }
+          ]
+        },
+        {
+          version: "v0.9.0",
+          date: "2026-03-14",
+          title: "Foundations",
+          changes: [
+            { type: "new", text: "Accounts and secure sign-in." },
+            { type: "improved", text: "Rebuilt the flashcard flip experience." },
+            { type: "fixed", text: "Numerous stability and reliability improvements." }
+          ]
+        },
+        {
+          version: "v0.1.0",
+          date: "2026-02-20",
+          title: "Hello, Lumi",
+          changes: [
+            { type: "new", text: "The very first build of Lumi Study — turn your notes into AI-generated flashcards, quizzes and clean study notes." }
+          ]
+        }
+      ];
+
+      var BADGE = {
+        new:      { label: "New",      cls: "bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200" },
+        improved: { label: "Improved", cls: "bg-accent-100 text-accent-700 dark:bg-accent-500/15 dark:text-accent-200" },
+        fixed:    { label: "Fixed",    cls: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200" }
+      };
+
+      function fmtDate(iso) {
+        // Parse as a local date (avoid TZ shifting the day).
+        var p = String(iso).split("-");
+        var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+      }
+      function esc(s) {
+        return String(s).replace(/[&<>"]/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+        });
+      }
+
+      function render() {
+        var list = $("changelogList");
+        if (!list) return;
+        list.innerHTML = RELEASES.map(function (r) {
+          var items = r.changes.map(function (c) {
+            var b = BADGE[c.type] || BADGE.improved;
+            return '<li class="flex items-start gap-2.5">' +
+              '<span class="mt-0.5 inline-flex shrink-0 items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ' + b.cls + '">' + b.label + '</span>' +
+              '<span class="text-slate-600 dark:text-slate-300 leading-relaxed">' + esc(c.text) + '</span>' +
+            '</li>';
+          }).join("");
+          return '<li class="cl-item reveal">' +
+            '<span class="cl-dot" aria-hidden="true"></span>' +
+            '<div class="flex flex-wrap items-center gap-x-3 gap-y-1">' +
+              '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">' + esc(r.version) + '</span>' +
+              '<time class="text-sm font-medium text-slate-500 dark:text-slate-400">' + esc(fmtDate(r.date)) + '</time>' +
+            '</div>' +
+            '<div class="mt-3 rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-soft">' +
+              (r.title ? '<h2 class="text-lg font-extrabold text-slate-900 dark:text-white">' + esc(r.title) + '</h2>' : '') +
+              '<ul class="mt-3 space-y-2.5 text-sm">' + items + '</ul>' +
+            '</div>' +
+          '</li>';
+        }).join("");
+
+        // Reveal-on-scroll
+        var rows = list.querySelectorAll(".reveal");
+        if (!("IntersectionObserver" in window)) {
+          rows.forEach(function (el) { el.classList.add("in"); });
+          return;
+        }
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+          });
+        }, { rootMargin: "0px 0px -10% 0px", threshold: 0.05 });
+        rows.forEach(function (el) { io.observe(el); });
+      }
+
+      render();
+    })();
+  </script>
+  <!-- Newsletter signup handler (shared) → Mailchimp embedded form -->
+  <script src="newsletter.js?v=3" defer></script>
+</body>
+</html>

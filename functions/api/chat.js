@@ -61,6 +61,150 @@ function extractDeltaContent(sseDataLine) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Per-plan generation rate limiting.
+// Limits mirror the Clerk plans. Enforcement is INERT until a KV namespace is
+// bound as `RATE_LIMIT`, and FAILS OPEN on any error — it can only ever return
+// a 429 when KV is bound and a verified requester is genuinely over their cap.
+// Cloudflare setup: Pages > Settings > Functions > KV namespace bindings >
+// add binding name `RATE_LIMIT`. (Optional: set CLERK_ISSUER, else it is read
+// from the verified token's `iss`.)
+// ---------------------------------------------------------------------------
+const PLAN_LIMITS = {
+  free: { day: 3, month: 20 },
+  pro: { day: 25, month: 400 },
+  power: { day: 60, month: 1000 }
+};
+
+function b64urlToStr(s) {
+  s = s.replace(/-/g, "+").replace(/_/g, "/");
+  while (s.length % 4) s += "=";
+  return atob(s);
+}
+function b64urlToBytes(s) {
+  const bin = b64urlToStr(s);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+const JWKS_CACHE = new Map(); // iss -> { keys, exp } (per-isolate)
+async function getJwks(iss) {
+  const now = Date.now();
+  const cached = JWKS_CACHE.get(iss);
+  if (cached && cached.exp > now) return cached.keys;
+  const url = iss.replace(/\/$/, "") + "/.well-known/jwks.json";
+  const res = await fetch(url, { cf: { cacheTtl: 3600 } });
+  if (!res.ok) throw new Error("JWKS fetch failed");
+  const data = await res.json();
+  const keys = Array.isArray(data.keys) ? data.keys : [];
+  JWKS_CACHE.set(iss, { keys, exp: now + 3600 * 1000 });
+  return keys;
+}
+
+// Verify a Clerk session JWT (RS256) and return its claims, or null if invalid.
+async function verifyClerkJwt(token, env) {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  const header = JSON.parse(b64urlToStr(parts[0]));
+  const payload = JSON.parse(b64urlToStr(parts[1]));
+  const now = Math.floor(Date.now() / 1000);
+  if (header.alg !== "RS256" || !header.kid) return null;
+  if (payload.exp && now >= payload.exp) return null;
+  if (payload.nbf && now < payload.nbf - 5) return null;
+  const iss = (env && env.CLERK_ISSUER) || payload.iss;
+  if (!iss) return null;
+  const jwk = (await getJwks(iss)).find((k) => k.kid === header.kid);
+  if (!jwk) return null;
+  const key = await crypto.subtle.importKey(
+    "jwk",
+    { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: "RS256", ext: true },
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["verify"]
+  );
+  const ok = await crypto.subtle.verify(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    b64urlToBytes(parts[2]),
+    new TextEncoder().encode(parts[0] + "." + parts[1])
+  );
+  return ok ? payload : null;
+}
+
+// Identify the requester (verified user id + plan) or fall back to guest-by-IP.
+async function identifyRequester(request, env) {
+  const auth = request.headers.get("Authorization") || "";
+  const match = auth.match(/^Bearer\s+(.+)$/i);
+  if (match) {
+    try {
+      const claims = await verifyClerkJwt(match[1], env);
+      if (claims && claims.sub) {
+        // Clerk Billing puts active plans in `pla` (e.g. "u:pro"). String-match
+        // is format-agnostic and safe because the JWT signature is verified.
+        const pla = String(claims.pla || claims.plan || "");
+        let plan = /power/i.test(pla) ? "power" : /pro/i.test(pla) ? "pro" : "free";
+        // An admin-set plan override (KV, written by /api/admin/plan or a
+        // power/god promo redemption) takes precedence. "god" = no limits.
+        const override = await readPlanOverride(claims.sub, env);
+        if (override) plan = override;
+        return { id: "u:" + claims.sub, plan };
+      }
+    } catch (_error) {
+      // fall through to guest
+    }
+  }
+  const ip = request.headers.get("CF-Connecting-IP") || "anon";
+  return { id: "ip:" + ip, plan: "free" };
+}
+
+// Read a server-side plan override (free|pro|power|god) for a user from the
+// ADMIN_KV namespace. Returns "" when none / not configured. Fails open.
+async function readPlanOverride(userId, env) {
+  const kv = env && env.ADMIN_KV;
+  if (!kv) return "";
+  try {
+    const value = String((await kv.get("override:" + userId)) || "").toLowerCase();
+    return ["free", "pro", "power", "god"].includes(value) ? value : "";
+  } catch (_error) {
+    return "";
+  }
+}
+
+function rateLimitResponse(message) {
+  return jsonResponse({ error: message, code: "rate_limited" }, 429);
+}
+
+// Returns a 429 Response if over limit, otherwise null (and records the hit).
+async function checkRateLimit(request, env) {
+  const kv = env && env.RATE_LIMIT;
+  if (!kv) return null; // not configured -> never blocks
+  try {
+    const { id, plan } = await identifyRequester(request, env);
+    if (plan === "god") return null; // God Mode = no generation limits.
+    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+    const iso = new Date().toISOString();
+    const dayKey = `rl:${id}:d:${iso.slice(0, 10)}`;
+    const monthKey = `rl:${id}:m:${iso.slice(0, 7)}`;
+    const [dRaw, mRaw] = await Promise.all([kv.get(dayKey), kv.get(monthKey)]);
+    const dCount = Number(dRaw || 0);
+    const mCount = Number(mRaw || 0);
+    if (dCount >= limits.day) {
+      return rateLimitResponse(`You've reached your ${plan} plan's daily limit of ${limits.day} study packs. Try again tomorrow, or upgrade for a higher cap.`);
+    }
+    if (mCount >= limits.month) {
+      return rateLimitResponse(`You've reached your ${plan} plan's monthly limit of ${limits.month} study packs. Upgrade for a higher cap.`);
+    }
+    await Promise.all([
+      kv.put(dayKey, String(dCount + 1), { expirationTtl: 60 * 60 * 48 }),
+      kv.put(monthKey, String(mCount + 1), { expirationTtl: 60 * 60 * 24 * 32 })
+    ]);
+    return null;
+  } catch (_error) {
+    return null; // fail open
+  }
+}
+
 export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: CORS_HEADERS });
 }
@@ -89,6 +233,13 @@ export async function onRequestPost(context) {
   const requestMode = payload?.mode === "ocr" ? "ocr" : payload?.mode === "vision" ? "vision" : "text";
   const notes = typeof payload?.notes === "string" ? payload.notes.trim() : "";
   const imageDataUrl = typeof payload?.imageDataUrl === "string" ? payload.imageDataUrl.trim() : "";
+  // Optional learner preferences (grade/level + custom instructions) set in the
+  // app's Settings. Sanitized + capped; ignored when absent so behavior is
+  // unchanged for callers that don't send it.
+  const customInstructions =
+    typeof payload?.customInstructions === "string"
+      ? payload.customInstructions.replace(/[\x00-\x1f\x7f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 600)
+      : "";
   const shouldStream = Boolean(payload?.stream);
   if (requestMode === "text" && !notes) {
     return jsonResponse({ error: "Missing 'notes' in request body." }, 400);
@@ -105,11 +256,23 @@ export async function onRequestPost(context) {
     }
   }
 
-  const textModel = env.OPENROUTER_MODEL || "stepfun/step-3.5-flash";
-  const visionModel = env.OPENROUTER_VISION_MODEL || "openrouter/healer-alpha";
+  // Enforce per-plan generation caps before any model work. Skips OCR so a photo
+  // study pack counts once (the follow-up text request), not twice. Inert until a
+  // RATE_LIMIT KV namespace is bound; fails open on any error.
+  if (requestMode !== "ocr") {
+    const limited = await checkRateLimit(request, env);
+    if (limited) return limited;
+  }
+
+  // AI models are hardcoded on purpose (NOT read from env vars) so a stale or wrong
+  // Cloudflare env var can never override them and silently break generation again.
+  // gemini-2.5-flash handles both text and vision and returns reliable JSON.
+  // To change the model, edit it here.
+  const textModel = "google/gemini-2.5-flash";
+  const visionModel = "google/gemini-2.5-flash";
   const model = requestMode === "vision" || requestMode === "ocr" ? visionModel : textModel;
-  const textMaxTokens = Number(env.OPENROUTER_TEXT_MAX_TOKENS || 1200);
-  const visionMaxTokens = Number(env.OPENROUTER_VISION_MAX_TOKENS || 900);
+  const textMaxTokens = 2000;
+  const visionMaxTokens = 1200;
   const maxTokens = requestMode === "vision" || requestMode === "ocr" ? visionMaxTokens : textMaxTokens;
   const siteUrl = env.OPENROUTER_SITE_URL || "https://ai-study-planner.pages.dev";
   const appName = env.OPENROUTER_APP_NAME || "Lumi Study";
@@ -122,15 +285,23 @@ export async function onRequestPost(context) {
     "Avoid filler like 'remember', 'important thing to know', 'know this', or generic reminders. " +
     "If the source does not contain enough readable study material, return empty arrays instead of guessing.";
 
+  // When the user set custom instructions, ask the model to adapt tone/level —
+  // but never to break the JSON shape or invent facts.
+  const prefsLine = customInstructions
+    ? "Learner preferences (adapt vocabulary, depth, and examples to these, but never change the required JSON shape or invent facts): " +
+      customInstructions
+    : "";
+
   const userPrompt = [
     "Convert the notes into structured study help.",
     "Make cleanNotes easy to turn into flashcards and quiz questions.",
     "Each cleanNotes line should state one concrete concept, definition, process, cause/effect, comparison, or example.",
+    prefsLine,
     "Return valid JSON only in this exact shape:",
     '{ "cleanNotes": ["..."], "studyTasks": ["..."], "studyOrder": ["..."] }',
     "Notes:",
     notes
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 
   const userVisionText = [
     "Read the uploaded image of handwritten or typed notes.",
@@ -138,9 +309,10 @@ export async function onRequestPost(context) {
     "If a part of the image is unreadable, skip that part instead of guessing.",
     "Make cleanNotes easy to turn into flashcards and quiz questions.",
     "Each cleanNotes line should state one concrete concept, definition, process, cause/effect, comparison, or example.",
+    prefsLine,
     "Return valid JSON only in this exact shape:",
     '{ "cleanNotes": ["..."], "studyTasks": ["..."], "studyOrder": ["..."] }'
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 
   const userOcrText = [
     "Read the uploaded image and extract only the text content.",
