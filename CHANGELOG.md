@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-09
+
+- Fixed missing Quiz Questions icon on the landing page: the `from-amber-400 to-amber-500` gradient tile introduced in yesterday's DESIGN_SYSTEM alignment pass was never compiled into `tailwind.css`, so the tile rendered unstyled. Rebuilt `tailwind.css` via `npm run build:css` to include the missing classes.
+
 ## 2026-07-08
 
 - Added `PRODUCT.md` capturing strategic design context: register (product), target users (stressed/cramming students), brand personality (calm, clear, trustworthy), anti-references, and design principles.
