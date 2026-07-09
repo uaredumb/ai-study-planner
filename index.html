@@ -330,16 +330,6 @@
     /* Keep AOS snappy + never let it hold content hidden too long */
     [data-aos] { pointer-events: auto; }
 
-    /* ---- Animated gradient wordmark for the hero headline ---- */
-    .text-gradient-animate {
-      background: linear-gradient(100deg, #4f46e5, #6366f1, #10b981, #6366f1, #4f46e5);
-      background-size: 260% 100%;
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-      animation: gradient-pan 9s ease-in-out infinite;
-    }
-    @keyframes gradient-pan { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-    @media (prefers-reduced-motion: reduce) { .text-gradient-animate { animation: none; } }
-
     /* ---- Premium card hover: lift + deeper shadow + brand-tinted border ---- */
     .lift-card { transition: transform .38s cubic-bezier(.16,1,.3,1), box-shadow .38s ease, border-color .38s ease; }
     @media (prefers-reduced-motion: no-preference) {
@@ -407,10 +397,6 @@
     .dark .bill-btn { color: #cbd5e1; }
     .bill-btn.is-active { background: #fff; color: #4f46e5; box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 12px -4px rgba(49,46,129,.22); }
     .dark .bill-btn.is-active { background: rgba(99,102,241,.20); color: #c7d2fe; }
-
-    /* ---- Use-case card ---- */
-    .testi { transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s ease; }
-    @media (prefers-reduced-motion: no-preference) { .testi:hover { transform: translateY(-4px); box-shadow: 0 24px 48px -20px rgba(49,46,129,.3); } }
   </style>
 
   <!-- Mailchimp Connected Site (tracking + pop-up forms) -->
@@ -485,7 +471,7 @@
     <!-- ============================================================= -->
     <section class="relative aurora overflow-hidden">
       <div class="absolute inset-0 -z-10 text-slate-200/60 dark:text-white/5 dotgrid [mask-image:radial-gradient(70%_60%_at_50%_0%,#000,transparent)]"></div>
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28 grid lg:grid-cols-2 gap-14 lg:gap-10 items-center">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 sm:pt-24 sm:pb-28 lg:pt-28 lg:pb-32 grid lg:grid-cols-2 gap-14 lg:gap-10 items-center">
 
         <!-- Copy -->
         <div class="relative z-10 text-center lg:text-left">
@@ -496,7 +482,7 @@
 
           <h1 class="mt-5 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.05] animate-fade-up">
             Stop re-reading.
-            <span class="block text-gradient-animate">Start actually learning.</span>
+            <span class="block text-brand-600 dark:text-brand-400">Start actually learning.</span>
           </h1>
 
           <p class="mt-5 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-xl mx-auto lg:mx-0 animate-fade-up" style="animation-delay:.08s">
@@ -504,13 +490,13 @@
           </p>
 
           <div class="mt-8 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center lg:justify-start animate-fade-up" style="animation-delay:.16s">
-            <a href="#app" class="btn-shine btn-lift inline-flex items-center justify-center gap-2 px-6 py-3.5 text-base font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-glow transition">
+            <a href="#app" class="btn-shine btn-lift inline-flex items-center justify-center gap-2 px-7 py-3.5 text-base font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-glow transition">
               Get my free study pack
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
-            <a href="#demo" class="group inline-flex items-center justify-center gap-2 px-2 py-2 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-white transition">
-              <span class="grid place-items-center h-9 w-9 rounded-full bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 shadow-soft group-hover:border-brand-300 transition">
-                <svg class="h-4 w-4 text-brand-500 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <a href="#demo" class="group inline-flex items-center justify-center gap-2 px-5 py-3.5 text-base font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl shadow-soft hover:bg-slate-100 dark:hover:bg-white/10 hover:border-brand-300 transition">
+              <span class="grid place-items-center h-6 w-6 rounded-full bg-brand-50 dark:bg-white/10 group-hover:bg-brand-100 transition">
+                <svg class="h-3 w-3 text-brand-600 dark:text-brand-300 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               </span>
               Try the live demo
             </a>
@@ -824,15 +810,15 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-2xl mx-auto text-center" data-aos="fade-up">
           <p class="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">What's in a study pack</p>
-          <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Five ways to learn it — from one input</h2>
-          <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Every study pack is built around how memory actually works: organize, plan, recall, test, act.</p>
+          <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Four ways to learn it — from one input</h2>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">Every study pack is built around how memory actually works: organize, plan, recall, test.</p>
         </div>
 
         <div class="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           <!-- Clean Notes (wide) -->
           <article class="spotlight lift-card group sm:col-span-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-gradient-to-br from-brand-50 to-white dark:from-brand-500/10 dark:to-transparent p-6 shadow-soft" data-aos="fade-up">
-            <div class="flex items-start gap-4">
-              <span class="shrink-0 h-12 w-12 grid place-items-center rounded-xl bg-brand-600 text-white shadow-soft transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h2M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg></span>
+            <div class="flex items-start gap-5">
+              <span class="shrink-0 h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-glow transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h2M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg></span>
               <div>
                 <h3 class="text-lg font-bold text-slate-900 dark:text-white">Clean Notes</h3>
                 <p class="mt-1.5 text-slate-600 dark:text-slate-300">Your scattered notes, rewritten into clear, organized bullet points grouped by topic — with the fluff cut and the key ideas bolded. The version you wish you'd taken in class.</p>
@@ -842,21 +828,21 @@
 
           <!-- Study Plan -->
           <article class="spotlight lift-card group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="80">
-            <span class="h-12 w-12 grid place-items-center rounded-xl bg-accent-100 dark:bg-accent-500/15 text-accent-600 dark:text-accent-300 shadow-soft transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3M16 7V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span>
+            <span class="h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-accent-500 to-accent-600 text-white shadow-glow transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3M16 7V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span>
             <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">Study Plan</h3>
             <p class="mt-1.5 text-slate-600 dark:text-slate-300">A sensible order to tackle everything, so you always know what to do next instead of staring at the pile.</p>
           </article>
 
           <!-- Flashcards -->
           <article class="spotlight lift-card group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="160">
-            <span class="h-12 w-12 grid place-items-center rounded-xl bg-indigo-100 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 shadow-soft transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="13" height="10" rx="2"/><rect x="8" y="9" width="13" height="10" rx="2" fill="currentColor" fill-opacity=".12"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 9h11a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V9z"/></svg></span>
+            <span class="h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 text-white shadow-glow transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="13" height="10" rx="2"/><rect x="8" y="9" width="13" height="10" rx="2" fill="currentColor" fill-opacity=".12"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 9h11a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V9z"/></svg></span>
             <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">Flashcards</h3>
             <p class="mt-1.5 text-slate-600 dark:text-slate-300">Active-recall cards you can flip in Study Mode. Pick how many you want, then drill until it sticks.</p>
           </article>
 
           <!-- Quiz -->
           <article class="spotlight lift-card group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="240">
-            <span class="h-12 w-12 grid place-items-center rounded-xl bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300 shadow-soft transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9.5a2.5 2.5 0 113.5 2.3c-.8.4-1 .9-1 1.7M12 17h.01"/></svg></span>
+            <span class="h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-glow transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"><svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9.5a2.5 2.5 0 113.5 2.3c-.8.4-1 .9-1 1.7M12 17h.01"/></svg></span>
             <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">Quiz Questions</h3>
             <p class="mt-1.5 text-slate-600 dark:text-slate-300">An interactive quiz that checks whether you actually get it — with instant feedback and a final score.</p>
           </article>
@@ -961,9 +947,9 @@
 
         <div class="mt-12 grid md:grid-cols-3 gap-6">
           <!-- Card 1 — paste messy notes -->
-          <div class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up">
-            <span class="h-11 w-11 grid place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300 shadow-soft">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg>
+          <div class="lift-card group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up">
+            <span class="h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-glow transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+              <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg>
             </span>
             <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">The night before an exam</h3>
             <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">Paste three weeks of messy notes and get clean notes, flashcards, and a quiz to drill your weak spots — in seconds, not hours.</p>
@@ -971,9 +957,9 @@
           </div>
 
           <!-- Card 2 — snap a photo -->
-          <div class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="120">
-            <span class="h-11 w-11 grid place-items-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-500/15 dark:text-accent-300 shadow-soft">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8a2 2 0 012-2h1l1-2h8l1 2h1a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z"/><circle cx="12" cy="12.5" r="3.2"/></svg>
+          <div class="lift-card group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="120">
+            <span class="h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-accent-500 to-accent-600 text-white shadow-glow transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+              <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8a2 2 0 012-2h1l1-2h8l1 2h1a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z"/><circle cx="12" cy="12.5" r="3.2"/></svg>
             </span>
             <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">Just a photo of the page</h3>
             <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">Snap a picture of your textbook or handwritten notes. Lumi reads the image and builds the whole pack from it — no retyping.</p>
@@ -981,9 +967,9 @@
           </div>
 
           <!-- Card 3 — from an article link -->
-          <div class="testi rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="240">
-            <span class="h-11 w-11 grid place-items-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300 shadow-soft">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+          <div class="lift-card group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft" data-aos="fade-up" data-aos-delay="240">
+            <span class="h-16 w-16 grid place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-glow transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+              <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
             </span>
             <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">From reading to real recall</h3>
             <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">Drop in an article link and walk away with flashcards and a quiz — so your time goes into testing yourself, not re-reading.</p>
@@ -1019,7 +1005,7 @@
         <div class="mt-12 grid md:grid-cols-3 gap-6 md:gap-5 items-stretch">
           <!-- Free -->
           <article class="lift-card rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col" data-aos="fade-up">
-            <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Free</h3>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Free</h3>
             <p class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$0</span><span class="text-sm font-medium text-slate-500 dark:text-slate-400">/forever</span></p>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For trying Lumi out.</p>
             <ul class="mt-5 space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
@@ -1029,13 +1015,16 @@
               <li class="flex gap-2.5"><span class="check"></span>2 saved study packs</li>
               <li class="flex gap-2.5"><span class="check"></span>3 study packs per day</li>
             </ul>
+            <div class="mt-6 pt-6 border-t border-slate-100 dark:border-white/10">
+              <a href="#app" class="inline-flex w-full items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition">Start free</a>
+            </div>
           </article>
           <!-- Pro (highlighted — the recommended plan) -->
-          <article class="plan-pro relative z-10 rounded-3xl border-2 border-amber-400 p-6 shadow-glow flex flex-col" data-aos="fade-up" data-aos-delay="100"
+          <article class="plan-pro relative z-10 rounded-3xl border-2 border-brand-400 dark:border-brand-500/60 p-6 shadow-glow flex flex-col" data-aos="fade-up" data-aos-delay="100"
             data-price-monthly="$6.99" data-price-annual="$4.99" data-period-monthly="/month" data-period-annual="/mo"
             data-note-monthly="or $4.99/mo billed annually" data-note-annual="billed annually · $59.88/yr">
             <span class="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide text-amber-950 bg-gradient-to-r from-amber-300 to-yellow-400 shadow-lift"><svg class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.7 5.6L19 9l-5.3 1.4L12 16l-1.7-5.6L5 9l5.3-1.4L12 2z"/></svg> BEST VALUE</span>
-            <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Pro</h3>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Pro</h3>
             <p class="mt-2 flex items-baseline gap-1"><span class="plan-price text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$6.99</span><span class="plan-period text-sm font-medium text-slate-500 dark:text-slate-400">/month</span></p>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For everyday studying. <span class="plan-note text-brand-600 dark:text-brand-300 font-semibold">or $4.99/mo billed annually</span></p>
             <ul class="mt-5 space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
@@ -1045,12 +1034,15 @@
               <li class="flex gap-2.5"><span class="check"></span>Fast AI + article summaries</li>
               <li class="flex gap-2.5"><span class="check"></span>25 study packs per day</li>
             </ul>
+            <div class="mt-6 pt-6 border-t border-brand-100 dark:border-white/10">
+              <a href="pricing.html" class="btn-shine btn-lift inline-flex w-full items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition">Get Pro</a>
+            </div>
           </article>
           <!-- Power -->
           <article class="lift-card rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-soft flex flex-col" data-aos="fade-up" data-aos-delay="200"
             data-price-monthly="$12.99" data-price-annual="$8.99" data-period-monthly="/month" data-period-annual="/mo"
             data-note-monthly="or $8.99/mo billed annually" data-note-annual="billed annually · $107.88/yr">
-            <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Power</h3>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Power</h3>
             <p class="mt-2 flex items-baseline gap-1"><span class="plan-price text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">$12.99</span><span class="plan-period text-sm font-medium text-slate-500 dark:text-slate-400">/month</span></p>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">For heavy course loads. <span class="plan-note text-brand-600 dark:text-brand-300 font-semibold">or $8.99/mo billed annually</span></p>
             <ul class="mt-5 space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
@@ -1060,14 +1052,17 @@
               <li class="flex gap-2.5"><span class="check"></span>Advanced AI + advanced summaries</li>
               <li class="flex gap-2.5"><span class="check"></span>60 study packs/day · priority &amp; early access</li>
             </ul>
+            <div class="mt-6 pt-6 border-t border-slate-100 dark:border-white/10">
+              <a href="pricing.html" class="inline-flex w-full items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition">Get Power</a>
+            </div>
           </article>
         </div>
 
-        <!-- Single CTA under all the cards → full pricing page -->
+        <!-- Secondary link under all the cards → full comparison table -->
         <div class="mt-10 text-center" data-aos="fade-up">
-          <a href="pricing.html" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-glow hover:-translate-y-0.5 transition">
+          <a href="pricing.html" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition">
             See full pricing &amp; compare plans in detail
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
           </a>
           <p class="mt-4 text-sm text-slate-500 dark:text-slate-500">Start free, no card needed · 3-day trial on paid plans · cancel anytime · no ads, ever.</p>
         </div>
@@ -1134,14 +1129,14 @@
     <!-- ============================================================= -->
     <section class="px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28">
       <div class="max-w-6xl mx-auto" data-aos="zoom-in">
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-600 to-brand-800 px-6 py-14 sm:px-14 sm:py-16 text-center shadow-glow">
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-600 to-brand-800 px-6 py-16 sm:px-14 sm:py-20 text-center shadow-glow">
           <div class="absolute -top-16 -right-10 h-56 w-56 bg-accent-400/30 rounded-full blur-3xl"></div>
           <div class="absolute -bottom-16 -left-10 h-56 w-56 bg-brand-300/30 rounded-full blur-3xl"></div>
-          <div class="relative">
+          <div class="relative max-w-2xl mx-auto">
             <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Your next study session starts in 10 seconds</h2>
             <p class="mt-4 text-lg text-brand-100 max-w-xl mx-auto">Turn the pile of notes into a plan you can actually follow. Free to start — no card, no catch.</p>
             <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-              <a href="#app" class="btn-shine btn-lift inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-bold text-brand-700 bg-white hover:bg-brand-50 shadow-lift transition">
+              <a href="#app" class="btn-shine btn-lift inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-brand-700 bg-white hover:bg-brand-50 shadow-lift transition">
                 Generate my first study pack
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
               </a>
