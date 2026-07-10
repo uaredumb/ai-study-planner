@@ -34,12 +34,15 @@
        class, rebuild + commit tailwind.css:  npm run build:css -->
   <link rel="stylesheet" href="/tailwind.css" />
 
-  <!-- Theme bootstrap: runs before paint so there's no flash. Default = light. -->
+  <!-- Theme bootstrap: dark mode is an app-only setting (toggled by openApp/closeApp
+       below) — the marketing landing page always renders light. The one exception is a
+       direct #app deep link, where we apply the saved theme before paint so the app
+       doesn't flash light-then-dark. -->
   <script>
     (function initTheme() {
       try {
+        if (location.hash !== "#app") return;
         var saved = localStorage.getItem("lumi-theme");
-        // Default light per product decision; honor an explicit saved choice.
         var dark = saved === "dark" ||
           (saved === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
         document.documentElement.classList.toggle("dark", dark);
@@ -2901,6 +2904,7 @@
       appView.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
       if (location.hash !== "#app") history.pushState(null, "", "#app");
+      applyThemeMode(getThemeMode()); // dark mode only applies while the app is open
       restoreState();
       refreshAuthUi();
       updateSavedCount();
@@ -2913,6 +2917,7 @@
       appView.setAttribute("aria-hidden", "true");
       document.body.style.overflow = "";
       if (location.hash === "#app") history.replaceState(null, "", location.pathname + location.search);
+      document.documentElement.classList.remove("dark"); // landing page always stays light
       closeLumibot();
       showLumibotLauncher(false);
     }
